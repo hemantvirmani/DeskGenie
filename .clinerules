@@ -1,0 +1,98 @@
+# Python Coding Conventions for GAIA Benchmark Agent
+
+## Naming Conventions
+- Private methods and functions MUST start with underscore (_)
+- Internal helper methods that are only called within the same class/module are private
+- Public API methods should NOT start with underscore
+- Class names use PascalCase
+- Functions and methods use snake_case
+- Constants use UPPER_SNAKE_CASE
+
+## Function Privacy Rules
+These functions should be private (prefixed with _):
+- Helper functions used only within the same class
+- Internal implementation details not part of public API
+- Functions only called by other functions in the same module
+
+These functions should be public (no underscore):
+- Entry points (like main())
+- Functions called from other modules
+- API endpoints
+- Functions passed as callbacks to external libraries
+
+## Function Organization
+- Helper functions used only internally should be marked private
+- Public functions should have comprehensive docstrings with Args, Returns, Raises
+- Private functions should have brief docstrings explaining their purpose
+- Group related functions together
+
+## Import Organization
+- Standard library imports first
+- Third-party imports second
+- Local application imports last
+- Separate groups with blank lines
+- Use absolute imports for clarity
+
+## Documentation
+- All public functions must have Google-style docstrings
+- Include Args, Returns, and Raises sections where applicable
+- Private functions should have brief one-line docstrings
+- Avoid redundant comments that just repeat what the code does
+
+## Code Structure
+- Prefer composition over inheritance
+- Use wrapper classes for extensibility (like MyGAIAAgents)
+- Keep functions focused on single responsibility
+- Extract complex logic into private helper methods
+- Classes should have clear, single responsibilities
+
+## Error Handling
+- Use specific exception types, not bare except clauses
+- Validate inputs at API boundaries using validators module
+- Log errors with context information
+- Use custom exception classes where appropriate (like ValidationError)
+
+## Testing Philosophy
+- Public API should be easily testable
+- Private methods don't need direct tests (tested via public API)
+- Test behavior, not implementation
+
+## Project-Specific Architecture Rules
+- Agent implementations should be in separate files (e.g., langgraphagent.py)
+- All agent classes must implement __call__(question, file_name) method
+- Configuration should be centralized in config.py
+- Use ResultFormatter for all output formatting
+- Use QuestionLoader for all question fetching
+- Use AgentRunner for agent execution orchestration
+
+## Type Hints
+- Use type hints for all function signatures
+- Import types from typing module
+- Use Optional[] for nullable parameters
+- Use List[], Dict[], Tuple[] for collections
+
+## Async/Concurrency
+- Not currently used in this project
+- If added, use async/await consistently
+- Document async functions clearly
+
+## File Organization
+- One class per file for major components
+- Related utility functions can share a module
+- Keep files under 500 lines when possible
+
+## Comments
+- Use # for single-line comments
+- Use """docstrings""" for function/class documentation
+- Avoid obvious comments like "# increment counter"
+- Explain WHY, not WHAT (code shows what, comments explain why)
+
+## Git Commit Messages
+- Use conventional commit format
+- Include "Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>" for AI-assisted code
+- Explain both what changed and why
+
+## External Libraries
+- scorer.py is copied from official GAIA - do NOT modify function names
+- Prefer using existing utilities over creating new ones
+- Document external dependencies clearly
