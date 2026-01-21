@@ -56,8 +56,6 @@ ERROR_MESSAGE_LENGTH = 100  # Characters to show in error messages
 SEPARATOR_WIDTH = 60  # Width of separator lines
 
 # Environment Variables
-SPACE_HOST = os.getenv("SPACE_HOST")
-SPACE_ID = os.getenv("SPACE_ID")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Agent Type Constants

@@ -28,7 +28,12 @@ except ImportError:
     TESSERACT_AVAILABLE = False
 
 # Video/Audio handling
-from moviepy.editor import VideoFileClip, AudioFileClip
+try:
+    # moviepy 2.0+ uses moviepy directly
+    from moviepy import VideoFileClip, AudioFileClip
+except ImportError:
+    # moviepy 1.x uses moviepy.editor
+    from moviepy.editor import VideoFileClip, AudioFileClip
 
 # ============================================================================
 # PDF Tools

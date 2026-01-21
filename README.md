@@ -1,21 +1,14 @@
 ---
 title: DeskGenie - Desktop AI Agent
 emoji: 🧞‍♂️
-colorFrom: purple
-colorTo: blue
-sdk: gradio
-sdk_version: 6.2.0
 app_file: app.py
-pinned: false
-hf_oauth: true
-hf_oauth_expiration_minutes: 480
 ---
 
 # DeskGenie 🧞‍♂️
 
 **Your Intelligent Desktop Assistant** - An AI-powered desktop agent that performs file operations, document manipulation, media processing, and more using natural language commands.
 
-Built on top of the [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent), DeskGenie extends the intelligent agent capabilities to everyday desktop tasks.
+Originally built on top of my own learning code [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent), DeskGenie extends the intelligent agent capabilities to everyday desktop tasks.
 
 ## Features
 
@@ -110,9 +103,33 @@ ollama pull llama3.2  # or your preferred model
 ```
 
 6. **Run DeskGenie**:
+
+**Development Mode** (with hot reload):
+
 ```bash
+# Terminal 1 - Backend
+python app.py
+
+# Terminal 2 - Frontend
+cd frontend
+npm install
+npm run dev
+```
+Open http://localhost:5173 (Vite proxies API calls to port 8000)
+
+**Production Mode**:
+
+```bash
+# Build frontend first
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Start server (serves both API and frontend)
 python app.py
 ```
+Open http://localhost:8000
 
 ### System Dependencies
 
@@ -333,9 +350,18 @@ explanation = ollama_code_explain.invoke({
 ```
 DeskGenie/
 ├── app.py                  # Main application entry point
+├── genie_api.py            # FastAPI backend (REST API)
 ├── config.py               # Configuration settings
 ├── agents.py               # Agent wrapper/factory
 ├── agent_runner.py         # Execution orchestrator
+│
+├── frontend/               # React + Tailwind CSS frontend
+│   ├── src/
+│   │   ├── App.jsx         # Main React app
+│   │   ├── components/     # UI components (ChatWindow, Sidebar, etc.)
+│   │   └── index.css       # Tailwind CSS
+│   ├── package.json        # Node.js dependencies
+│   └── vite.config.js      # Vite bundler config
 │
 ├── DESKTOP TOOLS:
 ├── desktop_tools.py        # PDF, image, file, document, media tools
@@ -348,7 +374,6 @@ DeskGenie/
 ├── AGENT IMPLEMENTATIONS:
 ├── langgraphagent.py       # Custom LangGraph agent
 ├── reactlanggraphagent.py  # LangGraph ReAct agent
-├── llamaindexagent.py      # LlamaIndex agent
 │
 ├── UTILITIES:
 ├── utils.py                # Helper functions
@@ -422,10 +447,12 @@ This project is open-source and available under the MIT License.
 ## Acknowledgments
 
 - Built on [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent)
-- Uses Google's Gemini model via LangChain
+- Uses Google's Gemini model via LangGraph
 - Local LLM support via [Ollama](https://ollama.ai/)
 - LangGraph framework by LangChain
-- Gradio for web interface
+- React + Tailwind CSS for web interface
+- FastAPI + Uvicorn for backend API
+- Claude Code for help with the code
 
 ## Contact
 

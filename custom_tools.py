@@ -72,7 +72,7 @@ def _get_file_content(file_name: str, mode: str = 'binary'):
     file_name = result  # Use sanitized name
     file_path = f"files/{file_name}"
 
-    # Try local file first
+    # Read local file
     if os.path.exists(file_path):
         try:
             if mode == 'binary':
@@ -83,26 +83,8 @@ def _get_file_content(file_name: str, mode: str = 'binary'):
                     return True, f.read()
         except Exception as e:
             return False, f"Error reading local file: {e}"
-
-    # If not local, try fetching from remote URL (HF Spaces)
     else:
-        try:
-            base_url = os.getenv("SPACE_HOST", "agents-course-unit4-scoring.hf.space")
-            if not base_url.startswith("http"):
-                file_url = f"https://{base_url}/files/{file_name}"
-            else:
-                file_url = f"{base_url}/files/{file_name}"
-
-            print(f"Fetching file from URL: {file_url}")
-            response = requests.get(file_url, timeout=30)
-            response.raise_for_status()
-
-            if mode == 'binary':
-                return True, response.content
-            else:  # text mode
-                return True, response.text
-        except Exception as e:
-            return False, f"Error fetching remote file: {e}"
+        return False, f"File not found: {file_path}"
 
 def _get_mime_type(file_name: str) -> str:
     """Helper function to determine MIME type from file extension."""

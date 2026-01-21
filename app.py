@@ -18,9 +18,6 @@ logging.getLogger('asyncio').setLevel(logging.ERROR)
 # Import configuration
 import config
 
-# Agent-related code is imported via agent_runner module
-# Import Gradio UI creation function
-from gradioapp import create_ui
 # Import scoring function for answer verification
 from scorer import question_scorer
 
@@ -32,7 +29,7 @@ from langfuse_tracking import track_session
 
 # --- Run Modes ---
 class RunMode(Enum):
-    UI = "ui"   # Gradio UI mode
+    UI = "ui"   # Web UI mode (FastAPI + React)
     CLI = "cli" # Command-line test mode
 
 
@@ -262,31 +259,19 @@ def main() -> None:
     # Determine run mode
     run_mode = RunMode.CLI if (args.test or args.testall) else RunMode.UI
 
-    # Print environment info only in UI mode
-    if run_mode == RunMode.UI:
-        space_host = config.SPACE_HOST
-        space_id = config.SPACE_ID
-
-        if space_host:
-            print(f"[OK] SPACE_HOST found: {space_host}")
-            print(f"   Runtime URL should be: https://{space_host}.hf.space")
-        else:
-            print("[INFO] SPACE_HOST environment variable not found (running locally?).")
-
-        if space_id:
-            print(f"[OK] SPACE_ID found: {space_id}")
-            print(f"   Repo URL: https://huggingface.co/spaces/{space_id}")
-            print(f"   Repo Tree URL: https://huggingface.co/spaces/{space_id}/tree/main")
-        else:
-            print("[INFO] SPACE_ID environment variable not found (running locally?). Repo URL cannot be determined.")
-
     print(f"{'-' * (60 + len(' App Starting '))}\n")
 
     # Execute based on run mode
     if run_mode == RunMode.UI:
-        print("Launching Gradio Interface for Basic Agent Evaluation...")
-        grTestApp = create_ui(run_and_verify, run_test_code)
-        grTestApp.launch()
+        import uvicorn
+        from genie_api import app
+
+        print("Launching DeskGenie Web UI...")
+        print("  Backend API: http://localhost:8000")
+        print("  Frontend:    http://localhost:8000 (production) or http://localhost:5173 (dev)")
+        print("\nFor development, run 'cd frontend && npm run dev' in a separate terminal.")
+
+        uvicorn.run(app, host="0.0.0.0", port=8000)
 
     else:  # RunMode.CLI
         # Determine test filter based on which CLI flag was used
