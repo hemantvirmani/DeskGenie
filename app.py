@@ -6,6 +6,8 @@ import time
 import warnings
 import logging
 from enum import Enum
+from dataclasses import dataclass
+from typing import Optional, Tuple
 from colorama import init
 
 # Initialize colorama for Windows compatibility
@@ -31,6 +33,16 @@ from langfuse_tracking import track_session
 class RunMode(Enum):
     UI = "ui"   # Web UI mode (FastAPI + React)
     CLI = "cli" # Command-line test mode
+
+
+@dataclass
+class CLIConfig:
+    """Configuration parsed from command-line arguments."""
+    run_mode: RunMode
+    active_agent: Optional[str] = None
+    test_query: Optional[str] = None  # For --testq
+    test_filter: Optional[Tuple[int, ...]] = None  # For --test/--testall
+    error: Optional[str] = None  # Parsing error message
 
 
 def load_questions(file_path: str = config.QUESTIONS_FILE) -> list:
@@ -179,38 +191,134 @@ def run_gaia_questions(filter=None, active_agent=None) -> pd.DataFrame:
     return pd.DataFrame(logs_for_display)
 
 
-def main() -> None:
-    """Main entry point for the application."""
+def run_single_query(query: str, active_agent: str = None) -> str:
+    """Run a single query through the agent (same path as UI chat).
+
+    Args:
+        query: The question or command to execute
+        active_agent: Optional agent type to use
+
+    Returns:
+        str: The agent's response
+    """
+    from agents import MyGAIAAgents
+    from langfuse_tracking import track_session
+
+    print(f"\n{'=' * 60}")
+    print(f"Query: {query}")
+    print(f"{'=' * 60}\n")
+
+    with track_session("CLI_Query", {
+        "agent_type": active_agent or config.ACTIVE_AGENT,
+        "query_length": len(query),
+        "mode": "cli_query"
+    }):
+        agent = MyGAIAAgents(active_agent=active_agent)
+        result = agent(query, None)
+
+    print(f"\n{'=' * 60}")
+    print("Response:")
+    print(f"{'=' * 60}")
+    print(result)
+    print(f"{'=' * 60}\n")
+
+    return result
+
+
+def _parse_cli_args() -> CLIConfig:
+    """Parse command-line arguments and return configuration.
+
+    Returns:
+        CLIConfig: Parsed configuration with run mode, agent, and test parameters
+    """
     parser = argparse.ArgumentParser(description="Run the agent application.")
-    parser.add_argument("--test", type=str, nargs='?', const='default', help="Run local tests on selected questions and exit. Optionally provide comma-separated question indices (e.g., --test 2,4,6). If no indices provided, uses default test questions.")
-    parser.add_argument("--testall", action="store_true", help="Run local tests on all questions and exit.")
-    parser.add_argument("--agent", type=str, choices=['langgraph', 'reactlangg'], help="Agent to use in CLI mode (case-insensitive). Options: langgraph, reactlangg. Default: uses config.ACTIVE_AGENT")
+    parser.add_argument(
+        "--test", type=str, nargs='?', const='default',
+        help="Run GAIA benchmark on selected questions. Optionally provide comma-separated indices (e.g., --test 2,4,6)."
+    )
+    parser.add_argument(
+        "--testall", action="store_true",
+        help="Run GAIA benchmark on all questions."
+    )
+    parser.add_argument(
+        "--testq", type=str,
+        help="Run a single query through the agent (same as UI chat). Example: --testq \"What is the capital of France?\""
+    )
+    parser.add_argument(
+        "--agent", type=str, choices=['langgraph', 'reactlangg'],
+        help="Agent to use. Options: langgraph, reactlangg. Default: uses config.ACTIVE_AGENT"
+    )
     args = parser.parse_args()
 
-    # Map agent name to config constant (case-insensitive)
+    # Map agent name to config constant
     agent_mapping = {
         'langgraph': config.AGENT_LANGGRAPH,
         'reactlangg': config.AGENT_REACT_LANGGRAPH,
     }
 
-    active_agent = None
+    # Parse agent
+    active_agent = AGENT_REACT_LANGGRAPH  # Default agent
     if args.agent:
-        agent_key = args.agent.lower()
-        active_agent = agent_mapping.get(agent_key)
+        active_agent = agent_mapping.get(args.agent.lower())
         if not active_agent:
-            print(f"Error: Unknown agent '{args.agent}'. Valid options: langgraph, reactlangg")
-            return
-        print(f"[CLI] Using agent: {active_agent}")
+            return CLIConfig(
+                run_mode=RunMode.CLI,
+                error=f"Unknown agent '{args.agent}'. Valid options: langgraph, reactlangg"
+            )
 
-    print(f"\n{'-' * 30} App Starting {'-' * 30}")
+    # Handle --testq (single query mode)
+    if args.testq:
+        return CLIConfig(
+            run_mode=RunMode.CLI,
+            active_agent=active_agent,
+            test_query=args.testq
+        )
 
-    # Determine run mode
-    run_mode = RunMode.CLI if (args.test or args.testall) else RunMode.UI
+    # Handle --test or --testall (GAIA benchmark mode)
+    if args.test or args.testall:
+        test_filter = None
+        if args.test:
+            if args.test == 'default':
+                test_filter = config.DEFAULT_TEST_FILTER
+            else:
+                try:
+                    test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
+                except ValueError:
+                    return CLIConfig(
+                        run_mode=RunMode.CLI,
+                        error=f"Invalid test indices '{args.test}'. Must be comma-separated integers (e.g., 2,4,6)"
+                    )
+
+        return CLIConfig(
+            run_mode=RunMode.CLI,
+            active_agent=active_agent,
+            test_filter=test_filter
+        )
+
+    # Default: UI mode
+    return CLIConfig(
+        run_mode=RunMode.UI,
+        active_agent=active_agent
+    )
+
+
+def main() -> None:
+    """Main entry point for the application."""
+    cli_config = _parse_cli_args()
+
+    # Handle parsing errors
+    if cli_config.error:
+        print(f"Error: {cli_config.error}")
+        return
+
+    # Print agent info if specified
+    if cli_config.active_agent:
+        print(f"[CLI] Using agent: {cli_config.active_agent}")
 
     print(f"{'-' * (60 + len(' App Starting '))}\n")
 
     # Execute based on run mode
-    if run_mode == RunMode.UI:
+    if cli_config.run_mode == RunMode.UI:
         import uvicorn
         from genie_api import app
 
@@ -221,27 +329,17 @@ def main() -> None:
 
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
-    else:  # RunMode.CLI
-        # Determine test filter based on which CLI flag was used
-        if args.test:
-            # Check if custom indices were provided
-            if args.test == 'default':
-                # No indices provided, use default
-                test_filter = config.DEFAULT_TEST_FILTER
-            else:
-                # Parse comma-separated indices
-                try:
-                    test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
-                except ValueError:
-                    print(f"Error: Invalid test indices '{args.test}'. Must be comma-separated integers (e.g., 2,4,6)")
-                    return
-        else:  # args.testall
-            test_filter = None  # Test all questions
+    elif cli_config.test_query:
+        # Single query mode (--testq)
+        run_single_query(cli_config.test_query, active_agent=cli_config.active_agent)
 
-        print(f"Running test code on {len(test_filter) if test_filter else 'ALL'} questions (CLI mode)...")
-        result = run_gaia_questions(filter=test_filter, active_agent=active_agent)
+    else:
+        # GAIA benchmark mode (--test or --testall)
+        filter_desc = len(cli_config.test_filter) if cli_config.test_filter else 'ALL'
+        print(f"Running GAIA benchmark on {filter_desc} questions...")
 
-        # Print results
+        result = run_gaia_questions(filter=cli_config.test_filter, active_agent=cli_config.active_agent)
+
         if isinstance(result, pd.DataFrame):
             ResultFormatter.print_dataframe(result)
         else:
