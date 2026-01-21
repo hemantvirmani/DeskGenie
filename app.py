@@ -36,8 +36,8 @@ class RunMode(Enum):
 
 
 @dataclass
-class CLIConfig:
-    """Configuration parsed from command-line arguments."""
+class AppOptions:
+    """Options parsed from command-line arguments."""
     run_mode: RunMode
     active_agent: Optional[str] = None
     test_query: Optional[str] = None  # For --testq
@@ -225,11 +225,11 @@ def run_single_query(query: str, active_agent: str = None) -> str:
     return result
 
 
-def _parse_cli_args() -> CLIConfig:
+def _parse_cli_args() -> AppOptions:
     """Parse command-line arguments and return configuration.
 
     Returns:
-        CLIConfig: Parsed configuration with run mode, agent, and test parameters
+        AppOptions: Parsed configuration with run mode, agent, and test parameters
     """
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument(
@@ -257,18 +257,18 @@ def _parse_cli_args() -> CLIConfig:
     }
 
     # Parse agent
-    active_agent = AGENT_REACT_LANGGRAPH  # Default agent
+    active_agent = config.AGENT_REACT_LANGGRAPH  # Default agent
     if args.agent:
         active_agent = agent_mapping.get(args.agent.lower())
         if not active_agent:
-            return CLIConfig(
+            return AppOptions(
                 run_mode=RunMode.CLI,
                 error=f"Unknown agent '{args.agent}'. Valid options: langgraph, reactlangg"
             )
 
     # Handle --testq (single query mode)
     if args.testq:
-        return CLIConfig(
+        return AppOptions(
             run_mode=RunMode.CLI,
             active_agent=active_agent,
             test_query=args.testq
@@ -284,19 +284,19 @@ def _parse_cli_args() -> CLIConfig:
                 try:
                     test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
                 except ValueError:
-                    return CLIConfig(
+                    return AppOptions(
                         run_mode=RunMode.CLI,
                         error=f"Invalid test indices '{args.test}'. Must be comma-separated integers (e.g., 2,4,6)"
                     )
 
-        return CLIConfig(
+        return AppOptions(
             run_mode=RunMode.CLI,
             active_agent=active_agent,
             test_filter=test_filter
         )
 
     # Default: UI mode
-    return CLIConfig(
+    return AppOptions(
         run_mode=RunMode.UI,
         active_agent=active_agent
     )
@@ -304,21 +304,21 @@ def _parse_cli_args() -> CLIConfig:
 
 def main() -> None:
     """Main entry point for the application."""
-    cli_config = _parse_cli_args()
+    options = _parse_cli_args()
 
     # Handle parsing errors
-    if cli_config.error:
-        print(f"Error: {cli_config.error}")
+    if options.error:
+        print(f"Error: {options.error}")
         return
 
     # Print agent info if specified
-    if cli_config.active_agent:
-        print(f"[CLI] Using agent: {cli_config.active_agent}")
+    if options.active_agent:
+        print(f"[CLI] Using agent: {options.active_agent}")
 
     print(f"{'-' * (60 + len(' App Starting '))}\n")
 
     # Execute based on run mode
-    if cli_config.run_mode == RunMode.UI:
+    if options.run_mode == RunMode.UI:
         import uvicorn
         from genie_api import app
 
@@ -329,16 +329,16 @@ def main() -> None:
 
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
-    elif cli_config.test_query:
+    elif options.test_query:
         # Single query mode (--testq)
-        run_single_query(cli_config.test_query, active_agent=cli_config.active_agent)
+        run_single_query(options.test_query, active_agent=options.active_agent)
 
     else:
         # GAIA benchmark mode (--test or --testall)
-        filter_desc = len(cli_config.test_filter) if cli_config.test_filter else 'ALL'
+        filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
         print(f"Running GAIA benchmark on {filter_desc} questions...")
 
-        result = run_gaia_questions(filter=cli_config.test_filter, active_agent=cli_config.active_agent)
+        result = run_gaia_questions(filter=options.test_filter, active_agent=options.active_agent)
 
         if isinstance(result, pd.DataFrame):
             ResultFormatter.print_dataframe(result)
