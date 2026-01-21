@@ -1,16 +1,12 @@
 """Ollama chat interface for DeskGenie - local LLM chat functionality."""
 
-import os
 import json
 import requests
 from typing import Optional, Generator, List, Dict, Any
 from dataclasses import dataclass, field
 from langchain_core.tools import tool
 from langfuse_tracking import track_tool_call
-
-# Default Ollama configuration
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+import config
 
 
 @dataclass
@@ -23,7 +19,7 @@ class ChatMessage:
 @dataclass
 class ChatSession:
     """Manages a chat conversation session."""
-    model: str = OLLAMA_DEFAULT_MODEL
+    model: str = config.OLLAMA_DEFAULT_MODEL
     messages: List[ChatMessage] = field(default_factory=list)
     system_prompt: Optional[str] = None
     temperature: float = 0.7
@@ -50,7 +46,7 @@ class ChatSession:
 class OllamaClient:
     """Client for interacting with Ollama API."""
 
-    def __init__(self, base_url: str = OLLAMA_BASE_URL):
+    def __init__(self, base_url: str = config.OLLAMA_BASE_URL):
         self.base_url = base_url.rstrip("/")
 
     def is_running(self) -> bool:
@@ -98,7 +94,7 @@ class OllamaClient:
     def chat(
         self,
         messages: List[Dict[str, str]],
-        model: str = OLLAMA_DEFAULT_MODEL,
+        model: str = config.OLLAMA_DEFAULT_MODEL,
         temperature: float = 0.7,
         stream: bool = False,
         context_length: int = 4096
@@ -164,7 +160,7 @@ class OllamaClient:
     def generate(
         self,
         prompt: str,
-        model: str = OLLAMA_DEFAULT_MODEL,
+        model: str = config.OLLAMA_DEFAULT_MODEL,
         system: Optional[str] = None,
         temperature: float = 0.7,
         stream: bool = False
@@ -260,7 +256,7 @@ def get_ollama_client() -> OllamaClient:
 
 @tool
 @track_tool_call("ollama_chat")
-def ollama_chat(message: str, model: str = OLLAMA_DEFAULT_MODEL, system_prompt: str = "") -> str:
+def ollama_chat(message: str, model: str = config.OLLAMA_DEFAULT_MODEL, system_prompt: str = "") -> str:
     """
     Send a message to Ollama and get a response. Uses local LLM for chat.
 
@@ -379,7 +375,7 @@ def ollama_model_info(model_name: str) -> str:
 
 @tool
 @track_tool_call("ollama_summarize")
-def ollama_summarize(text: str, model: str = OLLAMA_DEFAULT_MODEL, style: str = "concise") -> str:
+def ollama_summarize(text: str, model: str = config.OLLAMA_DEFAULT_MODEL, style: str = "concise") -> str:
     """
     Summarize text using Ollama local LLM.
 
@@ -422,7 +418,7 @@ def ollama_summarize(text: str, model: str = OLLAMA_DEFAULT_MODEL, style: str = 
 
 @tool
 @track_tool_call("ollama_translate")
-def ollama_translate(text: str, target_language: str, model: str = OLLAMA_DEFAULT_MODEL) -> str:
+def ollama_translate(text: str, target_language: str, model: str = config.OLLAMA_DEFAULT_MODEL) -> str:
     """
     Translate text to a target language using Ollama.
 
@@ -458,7 +454,7 @@ def ollama_translate(text: str, target_language: str, model: str = OLLAMA_DEFAUL
 
 @tool
 @track_tool_call("ollama_code_explain")
-def ollama_code_explain(code: str, language: str = "auto", model: str = OLLAMA_DEFAULT_MODEL) -> str:
+def ollama_code_explain(code: str, language: str = "auto", model: str = config.OLLAMA_DEFAULT_MODEL) -> str:
     """
     Explain code using Ollama. Works best with code-focused models like codellama.
 
@@ -496,7 +492,7 @@ def ollama_code_explain(code: str, language: str = "auto", model: str = OLLAMA_D
 
 @tool
 @track_tool_call("ollama_rewrite")
-def ollama_rewrite(text: str, style: str = "professional", model: str = OLLAMA_DEFAULT_MODEL) -> str:
+def ollama_rewrite(text: str, style: str = "professional", model: str = config.OLLAMA_DEFAULT_MODEL) -> str:
     """
     Rewrite text in a different style using Ollama.
 
