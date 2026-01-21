@@ -1,4 +1,4 @@
-"""Langfuse tracking integration for GAIA Benchmark Agent.
+"""Langfuse tracking integration for DeskGenie Desktop Agent.
 
 This module provides decorators and context managers for tracking:
 - Agent execution sessions
@@ -12,6 +12,8 @@ import functools
 import time
 from typing import Any, Optional, Dict
 from contextlib import contextmanager
+
+import config
 
 # Langfuse will be imported conditionally
 langfuse = None
@@ -30,6 +32,7 @@ class LangfuseTracker:
     _instance = None
     _client = None
     _enabled = False
+    _project_name = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -42,6 +45,7 @@ class LangfuseTracker:
             public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
             secret_key = os.getenv("LANGFUSE_SECRET_KEY")
             host = os.getenv("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
+            self._project_name = config.LANGFUSE_PROJECT_NAME
 
             if public_key and secret_key:
                 self._client = Langfuse(
@@ -50,7 +54,7 @@ class LangfuseTracker:
                     host=host
                 )
                 self._enabled = True
-                print(f"[LANGFUSE] Tracking enabled (host: {host})")
+                print(f"[LANGFUSE] Tracking enabled (project: {self._project_name}, host: {host})")
             else:
                 print("[LANGFUSE] Tracking disabled. Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable.")
 
@@ -63,6 +67,11 @@ class LangfuseTracker:
     def client(self):
         """Get Langfuse client instance."""
         return self._client if self.enabled else None
+
+    @property
+    def project_name(self) -> str:
+        """Get project name for tagging traces."""
+        return self._project_name or "DeskGenie"
 
 
 # Global tracker instance
@@ -261,10 +270,15 @@ def track_session(session_name: str, metadata: Optional[Dict[str, Any]] = None):
         yield
         return
 
+    # Add project name to metadata for filtering in Langfuse dashboard
+    session_metadata = metadata.copy() if metadata else {}
+    session_metadata["project"] = tracker.project_name
+
     # Use start_as_current_span to create a root span/trace for the session
     with tracker.client.start_as_current_span(
-        name=session_name,
-        metadata=metadata or {}
+        name=f"{tracker.project_name}_{session_name}",
+        metadata=session_metadata,
+        tags=[tracker.project_name]  # Add as tag for easy filtering
     ) as span:
         try:
             yield span

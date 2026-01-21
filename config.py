@@ -84,3 +84,10 @@ RETRY_BACKOFF_FACTOR = 2.0
 ENABLE_OLLAMA = os.getenv("ENABLE_OLLAMA", "true").lower() == "true"
 ENABLE_DESKTOP_TOOLS = os.getenv("ENABLE_DESKTOP_TOOLS", "true").lower() == "true"
 ENABLE_OCR = os.getenv("ENABLE_OCR", "true").lower() == "true"  # Requires Tesseract
+
+# =============================================================================
+# Langfuse Observability
+# =============================================================================
+
+# Project name for Langfuse tagging (helps distinguish from other projects)
+LANGFUSE_PROJECT_NAME = os.getenv("LANGFUSE_PROJECT_NAME", "DeskGenie")
