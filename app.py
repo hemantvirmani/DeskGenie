@@ -1,6 +1,5 @@
 import os
 import argparse
-import requests
 import pandas as pd
 import json
 import time
@@ -29,7 +28,6 @@ from scorer import question_scorer
 from result_formatter import ResultFormatter
 from agent_runner import AgentRunner
 from validators import InputValidator, ValidationError
-from utils import retry_with_backoff
 from langfuse_tracking import track_session
 
 # --- Run Modes ---
@@ -46,110 +44,19 @@ def load_questions(file_path: str = config.QUESTIONS_FILE) -> list:
         return questions
 
 
-@retry_with_backoff(max_retries=3, initial_delay=2.0)
-def _submit_to_server(submit_url: str, submission_data: dict) -> dict:
-    """Internal function to submit to server (with retries)."""
-    response = requests.post(submit_url, json=submission_data, timeout=config.SUBMIT_TIMEOUT)
-    response.raise_for_status()
-    return response.json()
-
-def submit_and_score(username: str, results: list) -> str:
+def run_and_verify(active_agent: str = None) -> tuple:
     """
-    Submit answers to the GAIA scoring server and return status message.
+    Fetches all questions, runs the agent on them, and verifies answers locally.
 
     Args:
-        username: Hugging Face username for submission
-        results: List of tuples (task_id, question_text, answer)
-
-    Returns:
-        str: Status message (success or error details)
-    """
-    # Validate username
-    try:
-        username = InputValidator.validate_username(username)
-    except ValidationError as e:
-        error_msg = f"Invalid username: {e}"
-        print(error_msg)
-        return error_msg
-
-    # Format results for API submission
-    answers_payload = ResultFormatter.format_for_api(results)
-
-    if not answers_payload:
-        error_msg = "No answers to submit."
-        print(error_msg)
-        return error_msg
-
-    space_id = config.SPACE_ID
-    submit_url = f"{config.DEFAULT_API_URL}/submit"
-    agent_code = f"https://huggingface.co/spaces/{space_id}/tree/main"
-
-    # Prepare submission data
-    submission_data = {
-        "username": username,
-        "agent_code": agent_code,
-        "answers": answers_payload
-    }
-
-    print(f"\n{'=' * config.SEPARATOR_WIDTH}")
-    print(f"Submitting {len(answers_payload)} answers for user '{username}'...")
-    print(f"{'=' * config.SEPARATOR_WIDTH}\n")
-
-    # Submit to server
-    print(f"Submitting to: {submit_url}")
-    try:
-        result_data = _submit_to_server(submit_url, submission_data)
-
-        final_status = (
-            f"Submission Successful!\n"
-            f"User: {result_data.get('username')}\n"
-            f"Overall Score: {result_data.get('score', 'N/A')}% "
-            f"({result_data.get('correct_count', '?')}/{result_data.get('total_attempted', '?')} correct)\n"
-            f"Message: {result_data.get('message', 'No message received.')}"
-        )
-        print("Submission successful.")
-        return final_status
-
-    except requests.exceptions.HTTPError as e:
-        error_detail = f"Server responded with status {e.response.status_code}."
-        try:
-            error_json = e.response.json()
-            error_detail += f" Detail: {error_json.get('detail', e.response.text)}"
-        except requests.exceptions.JSONDecodeError:
-            error_detail += f" Response: {e.response.text[:500]}"
-        status_message = f"Submission Failed: {error_detail}"
-        print(status_message)
-        return status_message
-
-    except requests.exceptions.Timeout:
-        status_message = "Submission Failed: The request timed out."
-        print(status_message)
-        return status_message
-
-    except requests.exceptions.RequestException as e:
-        status_message = f"Submission Failed: Network error - {e}"
-        print(status_message)
-        return status_message
-
-    except Exception as e:
-        status_message = f"An unexpected error occurred during submission: {e}"
-        print(status_message)
-        return status_message
-
-
-def run_and_submit_all(username: str, active_agent: str = None) -> tuple:
-    """
-    Fetches all questions, runs the GAIA agent on them, submits all answers,
-    and displays the results.
-
-    Args:
-        username: Hugging Face username for submission
-        active_agent: The agent type to use (default: config.AGENT_LANGGRAPH)
+        active_agent: The agent type to use (default: config.ACTIVE_AGENT)
 
     Returns:
         tuple: (status_message: str, results_df: pd.DataFrame)
     """
-    # Fetch questions from API (always online for submission)
+    start_time = time.time()
+
+    # Load questions from local file
     try:
         questions_data = load_questions()
     except Exception as e:
@@ -162,19 +69,27 @@ def run_and_submit_all(username: str, active_agent: str = None) -> tuple:
         return f"Invalid questions data: {e}", None
 
     # Run agent on all questions with specified agent type (with Langfuse session tracking)
-    with track_session("Submit_All", {
+    with track_session("Verify_All", {
         "agent": active_agent or config.ACTIVE_AGENT,
-        "username": username,
         "question_count": len(questions_data),
-        "mode": "submission"
+        "mode": "verification"
     }):
         results = AgentRunner(active_agent=active_agent).run_on_questions(questions_data)
 
     if results is None:
         return "Error initializing agent.", None
 
-    # Submit answers and get score (formatting happens inside submit_and_score)
-    status_message = submit_and_score(username, results)
+    # Calculate runtime
+    elapsed_time = time.time() - start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+
+    # Verify answers locally
+    verification_log = []
+    _verify_answers(results, verification_log, runtime=(minutes, seconds))
+
+    # Build status message from verification results
+    status_message = "\n".join(verification_log)
 
     # Format results for UI display
     results_for_display = ResultFormatter.format_for_display(results)
@@ -324,14 +239,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument("--test", type=str, nargs='?', const='default', help="Run local tests on selected questions and exit. Optionally provide comma-separated question indices (e.g., --test 2,4,6). If no indices provided, uses default test questions.")
     parser.add_argument("--testall", action="store_true", help="Run local tests on all questions and exit.")
-    parser.add_argument("--agent", type=str, choices=['langgraph', 'reactlangg', 'llamaindex'], help="Agent to use in CLI mode (case-insensitive). Options: langgraph, react langgraph, llamaindex. Default: uses config.ACTIVE_AGENT")
+    parser.add_argument("--agent", type=str, choices=['langgraph', 'reactlangg'], help="Agent to use in CLI mode (case-insensitive). Options: langgraph, reactlangg. Default: uses config.ACTIVE_AGENT")
     args = parser.parse_args()
 
     # Map agent name to config constant (case-insensitive)
     agent_mapping = {
         'langgraph': config.AGENT_LANGGRAPH,
         'reactlangg': config.AGENT_REACT_LANGGRAPH,
-        'llamaindex': config.AGENT_LLAMAINDEX,
     }
 
     active_agent = None
@@ -339,7 +253,7 @@ def main() -> None:
         agent_key = args.agent.lower()
         active_agent = agent_mapping.get(agent_key)
         if not active_agent:
-            print(f"Error: Unknown agent '{args.agent}'. Valid options: langgraph, react, llamaindex")
+            print(f"Error: Unknown agent '{args.agent}'. Valid options: langgraph, reactlangg")
             return
         print(f"[CLI] Using agent: {active_agent}")
 
@@ -371,7 +285,7 @@ def main() -> None:
     # Execute based on run mode
     if run_mode == RunMode.UI:
         print("Launching Gradio Interface for Basic Agent Evaluation...")
-        grTestApp = create_ui(run_and_submit_all, run_test_code)
+        grTestApp = create_ui(run_and_verify, run_test_code)
         grTestApp.launch()
 
     else:  # RunMode.CLI
