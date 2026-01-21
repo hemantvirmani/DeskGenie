@@ -25,8 +25,7 @@ from gradioapp import create_ui
 # Import scoring function for answer verification
 from scorer import question_scorer
 
-# Import new utilities
-from question_loader import QuestionLoader
+# Import utilities
 from result_formatter import ResultFormatter
 from agent_runner import AgentRunner
 from validators import InputValidator, ValidationError
@@ -37,6 +36,14 @@ from langfuse_tracking import track_session
 class RunMode(Enum):
     UI = "ui"   # Gradio UI mode
     CLI = "cli" # Command-line test mode
+
+
+def load_questions(file_path: str = config.QUESTIONS_FILE) -> list:
+    """Load questions from local JSON file."""
+    with open(file_path, 'r', encoding='utf-8') as f:
+        questions = json.load(f)
+        print(f"[INFO] Loaded {len(questions)} questions from {file_path}")
+        return questions
 
 
 @retry_with_backoff(max_retries=3, initial_delay=2.0)
@@ -144,7 +151,7 @@ def run_and_submit_all(username: str, active_agent: str = None) -> tuple:
     """
     # Fetch questions from API (always online for submission)
     try:
-        questions_data = QuestionLoader().get_questions(test_mode=False)
+        questions_data = load_questions()
     except Exception as e:
         return f"Error loading questions: {e}", None
 
@@ -265,7 +272,7 @@ def run_test_code(filter=None, active_agent=None) -> pd.DataFrame:
 
     # Fetch questions (OFFLINE for testing)
     try:
-        questions_data = QuestionLoader().get_questions(test_mode=True)
+        questions_data = load_questions()
     except Exception as e:
         return pd.DataFrame([f"Error loading questions: {e}"])
 
