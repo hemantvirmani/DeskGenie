@@ -13,6 +13,7 @@ import os
 import config
 from agents import MyGAIAAgents
 from agent_runner import AgentRunner
+from app import run_gaia_questions
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -61,6 +62,14 @@ class ConfigInfo(BaseModel):
     ollama_enabled: bool
     desktop_tools_enabled: bool
     ollama_model: str
+
+class BenchmarkRequest(BaseModel):
+    filter_indices: Optional[list[int]] = None  # e.g., [0, 2, 5] or None for all
+    agent_type: Optional[str] = None
+
+class BenchmarkResponse(BaseModel):
+    task_id: str
+    status: str
 
 # --- API Endpoints ---
 
@@ -165,6 +174,52 @@ async def chat_sync(request: ChatRequest):
         return {"status": "completed", "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Benchmark Endpoints ---
+
+@app.post("/api/benchmark", response_model=BenchmarkResponse)
+async def run_benchmark(request: BenchmarkRequest):
+    """Run benchmark tests on GAIA questions."""
+    task_id = str(uuid.uuid4())
+
+    # Store task as pending
+    tasks_store[task_id] = {
+        "status": "pending",
+        "result": None,
+        "error": None
+    }
+
+    # Run benchmark in background
+    asyncio.create_task(run_benchmark_task(
+        task_id=task_id,
+        filter_indices=request.filter_indices,
+        agent_type=request.agent_type
+    ))
+
+    return BenchmarkResponse(task_id=task_id, status="pending")
+
+async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_type: str = None):
+    """Run benchmark task in background."""
+    try:
+        tasks_store[task_id]["status"] = "running"
+
+        # Convert list to tuple if provided
+        filter_tuple = tuple(filter_indices) if filter_indices else None
+
+        # Run benchmark in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        result_df = await loop.run_in_executor(
+            None,
+            lambda: run_gaia_questions(filter=filter_tuple, active_agent=agent_type)
+        )
+
+        # Convert DataFrame to string for display
+        tasks_store[task_id]["status"] = "completed"
+        tasks_store[task_id]["result"] = result_df.to_string() if hasattr(result_df, 'to_string') else str(result_df)
+
+    except Exception as e:
+        tasks_store[task_id]["status"] = "error"
+        tasks_store[task_id]["error"] = str(e)
 
 # --- Static Files (Production) ---
 

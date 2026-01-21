@@ -1,4 +1,52 @@
+import { useState } from 'react'
+
 function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
+  const [benchmarkStatus, setBenchmarkStatus] = useState(null) // null, 'running', 'completed', 'error'
+  const [benchmarkResult, setBenchmarkResult] = useState(null)
+  const [showBenchmarkModal, setShowBenchmarkModal] = useState(false)
+
+  const runBenchmark = async () => {
+    setBenchmarkStatus('running')
+    setBenchmarkResult(null)
+
+    try {
+      // Start benchmark
+      const response = await fetch('/api/benchmark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filter_indices: null, // Run all questions
+          agent_type: selectedAgent
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to start benchmark')
+
+      const { task_id } = await response.json()
+
+      // Poll for results
+      const pollInterval = setInterval(async () => {
+        const statusRes = await fetch(`/api/task/${task_id}`)
+        const statusData = await statusRes.json()
+
+        if (statusData.status === 'completed') {
+          clearInterval(pollInterval)
+          setBenchmarkStatus('completed')
+          setBenchmarkResult(statusData.result)
+          setShowBenchmarkModal(true)
+        } else if (statusData.status === 'error') {
+          clearInterval(pollInterval)
+          setBenchmarkStatus('error')
+          setBenchmarkResult(statusData.error)
+          setShowBenchmarkModal(true)
+        }
+      }, 2000)
+    } catch (error) {
+      setBenchmarkStatus('error')
+      setBenchmarkResult(error.message)
+      setShowBenchmarkModal(true)
+    }
+  }
   // Group tools by category
   const toolsByCategory = tools.reduce((acc, tool) => {
     if (!acc[tool.category]) {
@@ -94,7 +142,63 @@ function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
             </span>
           </div>
         </div>
+
+        {/* Benchmark Button */}
+        <button
+          onClick={runBenchmark}
+          disabled={benchmarkStatus === 'running'}
+          className={`w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            benchmarkStatus === 'running'
+              ? 'bg-yellow-900/50 text-yellow-400 cursor-wait'
+              : 'bg-primary-600 hover:bg-primary-700 text-white'
+          }`}
+        >
+          {benchmarkStatus === 'running' ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Running Benchmark...
+            </span>
+          ) : (
+            'Run GAIA Benchmark'
+          )}
+        </button>
       </div>
+
+      {/* Benchmark Results Modal */}
+      {showBenchmarkModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white">
+                Benchmark Results
+                <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
+                  benchmarkStatus === 'completed'
+                    ? 'bg-green-900/50 text-green-400'
+                    : 'bg-red-900/50 text-red-400'
+                }`}>
+                  {benchmarkStatus === 'completed' ? 'Completed' : 'Error'}
+                </span>
+              </h3>
+              <button
+                onClick={() => setShowBenchmarkModal(false)}
+                className="p-1 hover:bg-slate-700 rounded"
+              >
+                <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              <pre className="text-sm text-slate-300 whitespace-pre-wrap font-mono bg-slate-900 p-3 rounded">
+                {benchmarkResult || 'No results'}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tools List */}
       <div className="flex-1 overflow-y-auto p-4">

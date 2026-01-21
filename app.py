@@ -41,58 +41,6 @@ def load_questions(file_path: str = config.QUESTIONS_FILE) -> list:
         return questions
 
 
-def run_and_verify(active_agent: str = None) -> tuple:
-    """
-    Fetches all questions, runs the agent on them, and verifies answers locally.
-
-    Args:
-        active_agent: The agent type to use (default: config.ACTIVE_AGENT)
-
-    Returns:
-        tuple: (status_message: str, results_df: pd.DataFrame)
-    """
-    start_time = time.time()
-
-    # Load questions from local file
-    try:
-        questions_data = load_questions()
-    except Exception as e:
-        return f"Error loading questions: {e}", None
-
-    # Validate questions data
-    try:
-        questions_data = InputValidator.validate_questions_data(questions_data)
-    except ValidationError as e:
-        return f"Invalid questions data: {e}", None
-
-    # Run agent on all questions with specified agent type (with Langfuse session tracking)
-    with track_session("Verify_All", {
-        "agent": active_agent or config.ACTIVE_AGENT,
-        "question_count": len(questions_data),
-        "mode": "verification"
-    }):
-        results = AgentRunner(active_agent=active_agent).run_on_questions(questions_data)
-
-    if results is None:
-        return "Error initializing agent.", None
-
-    # Calculate runtime
-    elapsed_time = time.time() - start_time
-    minutes = int(elapsed_time // 60)
-    seconds = int(elapsed_time % 60)
-
-    # Verify answers locally
-    verification_log = []
-    _verify_answers(results, verification_log, runtime=(minutes, seconds))
-
-    # Build status message from verification results
-    status_message = "\n".join(verification_log)
-
-    # Format results for UI display
-    results_for_display = ResultFormatter.format_for_display(results)
-    results_df = pd.DataFrame(results_for_display)
-    return status_message, results_df
-
 def _load_ground_truth(file_path: str = config.METADATA_FILE) -> dict:
     """Load ground truth data indexed by task_id.
 
@@ -166,8 +114,8 @@ def _verify_answers(results: list, log_output: list, runtime: tuple = None) -> N
             log_output.append(f"Runtime: {minutes}m {seconds}s")
         log_output.append("=" * config.SEPARATOR_WIDTH)
 
-def run_test_code(filter=None, active_agent=None) -> pd.DataFrame:
-    """Run test code on selected questions.
+def run_gaia_questions(filter=None, active_agent=None) -> pd.DataFrame:
+    """Run GAIA benchmark questions.
 
     Args:
         filter: Optional tuple/list of question indices to test (e.g., (4, 7, 15)).
@@ -291,7 +239,7 @@ def main() -> None:
             test_filter = None  # Test all questions
 
         print(f"Running test code on {len(test_filter) if test_filter else 'ALL'} questions (CLI mode)...")
-        result = run_test_code(filter=test_filter, active_agent=active_agent)
+        result = run_gaia_questions(filter=test_filter, active_agent=active_agent)
 
         # Print results
         if isinstance(result, pd.DataFrame):
