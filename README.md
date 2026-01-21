@@ -1,8 +1,8 @@
 ---
-title: GAIA Benchmark Agent
-emoji: 🕵🏻‍♂️
-colorFrom: indigo
-colorTo: indigo
+title: DeskGenie - Desktop AI Agent
+emoji: 🧞‍♂️
+colorFrom: purple
+colorTo: blue
 sdk: gradio
 sdk_version: 6.2.0
 app_file: app.py
@@ -11,288 +11,409 @@ hf_oauth: true
 hf_oauth_expiration_minutes: 480
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+# DeskGenie 🧞‍♂️
 
+**Your Intelligent Desktop Assistant** - An AI-powered desktop agent that performs file operations, document manipulation, media processing, and more using natural language commands.
 
-# GAIA Benchmark Agent
-
-A LangGraph-based AI agent designed to solve questions from the GAIA (General AI Assistants) benchmark. This agent uses Google's Gemini model with custom tools for web search, file processing, and multimodal analysis to answer complex questions requiring reasoning and information gathering.
+Built on top of the [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent), DeskGenie extends the intelligent agent capabilities to everyday desktop tasks.
 
 ## Features
 
-- **LangGraph Architecture**: Implements a state-graph agent workflow with tool calling capabilities
-- **Multimodal Capabilities**:
-  - Image analysis (PNG, JPG, JPEG, GIF, WebP, BMP)
-  - YouTube video analysis and transcript extraction
-  - Audio transcription (MP3)
-  - PDF and Excel file processing
-- **Web Research Tools**:
-  - DuckDuckGo web search
-  - Wikipedia integration
-  - ArXiv academic paper search
-  - Web page content extraction
-- **Mathematical Operations**: Basic arithmetic and modulus operations
-- **Gradio Interface**: User-friendly web UI for testing and evaluation
-- **Automated Evaluation**: Fetches questions from API, processes them, and submits answers
-- **Observability**: Built-in integration with Langfuse for tracking traces and metrics
+### 📄 PDF Operations
+- **Extract Pages**: "Extract the last 2 pages from report.pdf"
+- **Delete Pages**: "Delete pages 5-7 from document.pdf"
+- **Merge PDFs**: "Combine invoice1.pdf and invoice2.pdf"
+- **Split PDFs**: "Split presentation.pdf into individual pages"
+- **Convert to Images**: "Convert each page of brochure.pdf to PNG"
 
-## Project Structure
+### 🖼️ Image Processing
+- **Format Conversion**: "Convert photo.heic to jpg" (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF)
+- **Resize Images**: "Resize image.png to 800x600"
+- **Compress Images**: "Compress photo.jpg to under 500KB"
+- **Batch Convert**: "Convert all images in Downloads to JPG"
 
-```
-GAIA_Benchmark_Agent/
-├── app.py              # Main application entry point
-├── agents.py           # LangGraph agent implementation
-├── custom_tools.py     # Tool definitions for web search, files, etc.
-├── system_prompt.py    # Agent system prompt and instructions
-├── gradioapp.py        # Gradio UI components
-├── requirements.txt    # Python dependencies
-└── files/
-    └── metadata.jsonl  # Ground truth data for local testing
-```
+### 📁 File Management
+- **Batch Rename**: "Rename all files matching 'IMG_*' to 'vacation_{n}.jpg'"
+- **Organize Files**: "Organize my Downloads folder by file type"
+- **Find Duplicates**: "Find duplicate files in my Documents"
+
+### 📝 Document Tools
+- **Word to PDF**: "Convert report.docx to PDF"
+- **Extract Text**: "Extract all text from manual.pdf"
+- **OCR**: "Extract text from screenshot.png using OCR"
+
+### 🎬 Media Tools
+- **Extract Audio**: "Extract audio from video.mp4 as MP3"
+- **Compress Video**: "Compress movie.mp4 to under 100MB"
+- **Media Info**: "Get details about video.mp4"
+
+### 💬 Ollama Chat Integration
+- **Chat**: Natural conversation with local LLMs
+- **Summarize**: "Summarize this article"
+- **Translate**: "Translate this to Spanish"
+- **Code Explanation**: "Explain this Python code"
+- **Rewrite**: "Rewrite this email professionally"
+
+### 🔍 Research & Web Tools (from GAIA Agent)
+- Web search via DuckDuckGo
+- Wikipedia integration
+- ArXiv academic paper search
+- YouTube video analysis
+- Web page content extraction
 
 ## Installation
 
-1. Clone the repository:
+### Prerequisites
+
+- Python 3.10+
+- [Ollama](https://ollama.ai/) (for local LLM chat features)
+- [FFmpeg](https://ffmpeg.org/) (for audio/video processing)
+- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) (optional, for OCR features)
+
+### Quick Start
+
+1. **Clone the repository**:
 ```bash
-git clone https://github.com/yourusername/GAIA_Benchmark_Agent.git
-cd GAIA_Benchmark_Agent
+git clone https://github.com/hemantvirmani/DeskGenie.git
+cd DeskGenie
 ```
 
-2. Install dependencies:
+2. **Create virtual environment**:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install dependencies**:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
+4. **Set up environment variables**:
 ```bash
+# Required for AI features
 export GOOGLE_API_KEY="your_google_api_key"
-export HUGGINGFACEHUB_API_TOKEN="your_hf_token"  # Optional.  not yet used
 
-# Langfuse Observability (Optional)
+# Optional: Ollama configuration (defaults shown)
+export OLLAMA_BASE_URL="http://localhost:11434"
+export OLLAMA_MODEL="llama3.2"
+
+# Optional: Langfuse observability
 export LANGFUSE_PUBLIC_KEY="pk-lf-..."
 export LANGFUSE_SECRET_KEY="sk-lf-..."
-export LANGFUSE_HOST="https://cloud.langfuse.com" # Optional
 ```
 
-## Requirements
+5. **Start Ollama** (for chat features):
+```bash
+ollama serve
+ollama pull llama3.2  # or your preferred model
+```
 
-- Python 3.8+
-- Google API Key (for Gemini model)
-- ffmpeg (optional, for audio processing)
-
-### Key Dependencies
-
-- `langchain-core`, `langgraph` - Agent framework
-- `langchain-google-genai` - Google Gemini integration
-- `gradio` - Web UI
-- `requests`, `beautifulsoup4` - Web scraping
-- `pypdf`, `pandas` - File processing
-- `youtube-transcript-api` - YouTube integration
-- `ddgs` - DuckDuckGo search
-
-## Usage
-
-### Running the Gradio Interface
-
-Launch the web interface for interactive testing:
-
+6. **Run DeskGenie**:
 ```bash
 python app.py
 ```
 
-This will start a Gradio app where you can:
-- Log in with your Hugging Face account
-- Run evaluation on all questions
-- Test individual questions
-- View results and scores
+### System Dependencies
 
-### Running Local Tests
-
-Test the agent on specific questions without the web interface:
-
+#### FFmpeg (for audio/video)
 ```bash
-python app.py --test
+# macOS
+brew install ffmpeg
+
+# Ubuntu/Debian
+sudo apt-get install ffmpeg
+
+# Windows (via Chocolatey)
+choco install ffmpeg
 ```
 
-Edit the question indices in [app.py:196](app.py#L196) to customize which questions to test.
+#### Tesseract OCR (optional)
+```bash
+# macOS
+brew install tesseract
 
-### Using the Agent Programmatically
+# Ubuntu/Debian
+sudo apt-get install tesseract-ocr
+
+# Windows
+# Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
+```
+
+## Usage Examples
+
+### Using Natural Language
+
+DeskGenie understands natural language commands. Here are some examples:
+
+```
+"Delete the last 2 pages from my thesis.pdf and save as thesis_trimmed.pdf"
+
+"Convert all HEIC photos in my iPhone_Photos folder to JPG"
+
+"Extract the audio from my_video.mp4 and save it as podcast.mp3"
+
+"Organize my Downloads folder by file type"
+
+"Summarize this research paper using Ollama"
+
+"What's the duration and resolution of video.mp4?"
+```
+
+### Programmatic Usage
 
 ```python
 from agents import MyGAIAAgents
+from desktop_tools import get_desktop_tools_list
+from ollama_chat import get_ollama_tools_list
 
-# Initialize agent (automatically uses ACTIVE_AGENT from config)
+# Initialize agent with desktop tools
 agent = MyGAIAAgents()
 
-# Ask a question
-answer = agent("What is the capital of France?")
-print(answer)
+# PDF operations
+result = agent("Extract pages 1-5 from report.pdf and save as summary.pdf")
 
-# Ask a question with a file reference
-answer = agent(
-    "What data is in this spreadsheet?",
-    file_name="data.xlsx"
-)
-print(answer)
+# Image conversion
+result = agent("Convert photo.heic to photo.jpg with 90% quality")
+
+# Ollama chat
+result = agent("Using Ollama, explain what this Python code does: [code]")
 ```
 
-## How It Works
+### Using Individual Tools
 
-### Agent Architecture
+```python
+from desktop_tools import (
+    pdf_extract_pages,
+    image_convert,
+    video_to_audio,
+    organize_files_by_type
+)
 
-The agent is built using LangGraph with the following workflow:
+# Extract last 3 pages from PDF
+pdf_extract_pages.invoke({
+    "input_pdf": "document.pdf",
+    "output_pdf": "last_pages.pdf",
+    "page_range": "last3"
+})
 
-1. **Initialize**: Loads the question and system prompt
-2. **Assistant Node**: Calls the LLM (Gemini) to decide on tool usage
-3. **Tool Node**: Executes requested tools (search, file reading, etc.)
-4. **Iteration**: Loops between assistant and tools until answer is found
-5. **Termination**: Returns final answer or hits step limit (25 steps max)
+# Convert HEIC to JPG
+image_convert.invoke({
+    "input_image": "photo.heic",
+    "output_image": "photo.jpg",
+    "quality": 85
+})
 
-### Available Tools
+# Extract audio from video
+video_to_audio.invoke({
+    "input_video": "movie.mp4",
+    "output_audio": "soundtrack.mp3"
+})
 
-**Search & Research:**
-- `websearch` - DuckDuckGo web search
-- `wiki_search` - Wikipedia articles
-- `arvix_search` - Academic papers
-- `get_webpage_content` - Extract webpage text
-- `get_youtube_transcript` - YouTube video transcripts
-- `analyze_youtube_video` - AI analysis of YouTube videos
+# Organize files by type
+organize_files_by_type.invoke({
+    "source_dir": "/Users/me/Downloads",
+    "organize_by": "type"
+})
+```
 
-**File Processing:**
-- `read_excel_file` - Read Excel spreadsheets
-- `read_python_script` - Read Python source code
-- `parse_audio_file` - Transcribe MP3 files
-- `analyze_image` - AI vision analysis of images
+### Ollama Chat Examples
 
-**Utilities:**
-- Math operations: `add`, `subtract`, `multiply`, `divide`, `power`, `modulus`
-- `string_reverse` - Reverse encoded/gibberish text
-- `get_current_time_in_timezone` - Get time in any timezone
+```python
+from ollama_chat import (
+    ollama_chat,
+    ollama_summarize,
+    ollama_translate,
+    ollama_code_explain
+)
 
-### System Prompt
+# Chat with local LLM
+response = ollama_chat.invoke({
+    "message": "What's the best way to learn Python?",
+    "model": "llama3.2"
+})
 
-The agent follows strict output formatting rules defined in [system_prompt.py](system_prompt.py):
-- Returns only the final answer (no conversational filler)
-- No markdown formatting or JSON structures
-- Uses tools instead of guessing
-- Handles encoded/reversed text
-- Verifies answers before output
+# Summarize text
+summary = ollama_summarize.invoke({
+    "text": long_article,
+    "style": "bullet"  # or "detailed", "brief"
+})
+
+# Translate
+translated = ollama_translate.invoke({
+    "text": "Hello, how are you?",
+    "target_language": "Japanese"
+})
+
+# Explain code
+explanation = ollama_code_explain.invoke({
+    "code": "def fibonacci(n): return n if n < 2 else fibonacci(n-1) + fibonacci(n-2)",
+    "language": "python"
+})
+```
+
+## Available Tools
+
+### PDF Tools
+| Tool | Description |
+|------|-------------|
+| `pdf_extract_pages` | Extract specific pages from PDF (supports "last2", "first5", "1-10", "1,3,5") |
+| `pdf_delete_pages` | Delete pages from PDF |
+| `pdf_merge` | Combine multiple PDFs into one |
+| `pdf_split` | Split PDF into multiple files |
+| `pdf_to_images` | Convert PDF pages to images (PNG/JPG) |
+
+### Image Tools
+| Tool | Description |
+|------|-------------|
+| `image_convert` | Convert between formats (HEIC, PNG, JPG, WebP, etc.) |
+| `image_resize` | Resize images with aspect ratio control |
+| `image_compress` | Compress to target file size |
+| `batch_convert_images` | Convert all images in a directory |
+
+### File Management Tools
+| Tool | Description |
+|------|-------------|
+| `batch_rename_files` | Rename files using patterns ({n} for numbers, {date} for date) |
+| `organize_files_by_type` | Organize into folders by extension, type, or date |
+| `find_duplicate_files` | Find duplicate files by size or content |
+
+### Document Tools
+| Tool | Description |
+|------|-------------|
+| `word_to_pdf` | Convert Word documents to PDF |
+| `extract_text_from_pdf` | Extract all text from PDF |
+| `ocr_image` | Extract text from images using OCR |
+
+### Media Tools
+| Tool | Description |
+|------|-------------|
+| `video_to_audio` | Extract audio track from video |
+| `compress_video` | Compress video to target size |
+| `get_media_info` | Get detailed media file information |
+
+### Ollama Tools
+| Tool | Description |
+|------|-------------|
+| `ollama_chat` | Chat with local LLM |
+| `ollama_list_models` | List installed Ollama models |
+| `ollama_model_info` | Get model details |
+| `ollama_summarize` | Summarize text (concise/detailed/brief) |
+| `ollama_translate` | Translate to any language |
+| `ollama_code_explain` | Explain code snippets |
+| `ollama_rewrite` | Rewrite in different styles |
 
 ## Configuration
 
-### Change Agent Type
+### Environment Variables
 
-Edit the `ACTIVE_AGENT` variable in [config.py:32](config.py#L32):
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GOOGLE_API_KEY` | - | Google API key for Gemini model |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_MODEL` | `llama3.2` | Default Ollama model |
+| `DESKGENIE_MODE` | `desktop` | App mode: 'desktop' or 'benchmark' |
+| `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
+| `ENABLE_OLLAMA` | `true` | Enable Ollama features |
+| `ENABLE_DESKTOP_TOOLS` | `true` | Enable desktop tools |
+| `ENABLE_OCR` | `true` | Enable OCR features |
 
-```python
-# Valid values: "LangGraph", "ReActLangGraph", "LLamaIndex", "SMOL"
-ACTIVE_AGENT = "LangGraph"  # Currently only LangGraph is implemented
+### Recommended Ollama Models
+
+| Model | Best For | Size |
+|-------|----------|------|
+| `llama3.2` | General chat, instructions | 2GB |
+| `llama3.2:1b` | Fast responses, simple tasks | 1.3GB |
+| `mistral` | Balanced performance | 4GB |
+| `codellama` | Code explanation & generation | 4GB |
+| `llama3.2-vision` | Image understanding | 5GB |
+
+## Project Structure
+
+```
+DeskGenie/
+├── app.py                  # Main application entry point
+├── config.py               # Configuration settings
+├── agents.py               # Agent wrapper/factory
+├── agent_runner.py         # Execution orchestrator
+│
+├── DESKTOP TOOLS:
+├── desktop_tools.py        # PDF, image, file, document, media tools
+├── ollama_chat.py          # Ollama LLM chat integration
+│
+├── ORIGINAL GAIA TOOLS:
+├── custom_tools.py         # Web search, analysis tools
+├── system_prompt.py        # Agent instructions
+│
+├── AGENT IMPLEMENTATIONS:
+├── langgraphagent.py       # Custom LangGraph agent
+├── reactlanggraphagent.py  # LangGraph ReAct agent
+├── llamaindexagent.py      # LlamaIndex agent
+│
+├── UTILITIES:
+├── utils.py                # Helper functions
+├── langfuse_tracking.py    # Observability
+│
+├── requirements.txt        # Python dependencies
+└── README.md               # This file
 ```
 
-The `MyGAIAAgents` wrapper class will automatically instantiate the correct agent based on this configuration.
+## GAIA Benchmark Mode
 
-### Adjust Step Limits
+DeskGenie retains full GAIA benchmark capabilities. To run benchmark evaluations:
 
-Modify the maximum iteration count in [agents.py:169](agents.py#L169):
+```bash
+# Set mode to benchmark
+export DESKGENIE_MODE=benchmark
 
-```python
-if step_count >= 25:  # Change this value
-    # ...
+# Run evaluation
+python app.py
+
+# Or test specific questions
+python app.py --test
 ```
 
-### Customize Tools
-
-Add or modify tools in [custom_tools.py](custom_tools.py) using the `@tool` decorator:
-
-```python
-from langchain_core.tools import tool
-
-@tool
-def my_custom_tool(param: str) -> str:
-    """Tool description for the LLM."""
-    # Implementation
-    return result
-```
-
-## API Integration
-
-The agent integrates with the GAIA benchmark API:
-
-- **Questions Endpoint**: `https://agents-course-unit4-scoring.hf.space/questions`
-- **Submit Endpoint**: `https://agents-course-unit4-scoring.hf.space/submit`
-
-Questions may include file references which are automatically fetched from:
-- Local `files/` directory (if available)
-- Remote API endpoint (fallback)
-
-## Testing
-
-### Local Ground Truth Verification
-
-The app includes local verification against ground truth data in `files/metadata.jsonl`. This allows you to test your agent's performance before submitting to the evaluation server.
-
-### Test Mode
-
-Run specific questions in test mode by modifying [app.py:196](app.py#L196):
-
-```python
-my_questions = [
-    {
-        "question": my_questions_data[i]["question"],
-        "file_name": my_questions_data[i].get("file_name")
-    }
-    for i in (0, 5, 17) if i < len(my_questions_data)  # Customize indices
-]
-```
-
-## Performance Considerations
-
-- **Timeout**: Agent has 180-second timeout per question
-- **Step Limit**: Maximum 25 reasoning steps to prevent infinite loops
-- **Tool Timeouts**: Individual tools have their own timeout settings
-- **Cost**: Uses Google Gemini API (gemini-2.5-flash model)
-
-## Deployment
-
-### Hugging Face Spaces
-
-This project is designed to run on Hugging Face Spaces:
-
-1. Create a new Space on Hugging Face
-2. Set SDK to Gradio (version 6.2.0+)
-3. Add environment variables: `GOOGLE_API_KEY`, `SPACE_ID`, `SPACE_HOST`
-4. Enable OAuth authentication
-
-The app will automatically detect the Hugging Face environment and configure URLs accordingly.
-
-### Local Deployment
-
-Simply run `python app.py` locally. The app will detect it's not in a Hugging Face Space and adjust behavior accordingly.
+See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAIA_Benchmark_Agent) for benchmark details.
 
 ## Troubleshooting
 
 ### Common Issues
 
-**"GOOGLE_API_KEY not found"**
-- Set the environment variable: `export GOOGLE_API_KEY="your_key"`
+**"Ollama is not running"**
+- Start Ollama: `ollama serve`
+- Or ensure the Ollama app is running
 
-**Audio parsing fails**
-- Install ffmpeg: `apt-get install ffmpeg` (Linux) or `brew install ffmpeg` (macOS)
+**"HEIC conversion fails"**
+- Ensure pillow-heif is installed: `pip install pillow-heif`
 
-**Tool timeouts**
-- Adjust timeout values in respective tool functions in [custom_tools.py](custom_tools.py)
+**"Video processing fails"**
+- Install FFmpeg (see installation section)
+- Ensure FFmpeg is in your system PATH
 
-**Agent exceeds step limit**
-- Increase limit in [agents.py:169](agents.py#L169) or optimize tool usage in system prompt
+**"OCR not working"**
+- Install Tesseract OCR (see installation section)
+- On Windows, add Tesseract to PATH or set `TESSDATA_PREFIX`
+
+**"Word to PDF fails on Linux/Mac"**
+- docx2pdf requires LibreOffice on non-Windows systems
+- Install: `sudo apt-get install libreoffice` or `brew install --cask libreoffice`
+
+### Performance Tips
+
+- Use `llama3.2:1b` for faster Ollama responses
+- For large PDF operations, process in batches
+- Enable GPU acceleration in Ollama for better performance
 
 ## Contributing
 
 Contributions are welcome! Areas for improvement:
-- Add more tools (database access, code execution, etc.)
-- Move the Benchmark from 50% to 100%
-- Improve error handling and retry logic
-- Try with smaller LLMs
-- Make it work with Ollama
+
+- Add more file format support
+- Improve natural language understanding
+- Add cloud storage integration (Google Drive, Dropbox)
+- Create a native desktop UI
+- Add scheduled/automated tasks
+- Improve error handling and recovery
 
 ## License
 
@@ -300,8 +421,9 @@ This project is open-source and available under the MIT License.
 
 ## Acknowledgments
 
-- Built for the GAIA (General AI Assistants) benchmark
+- Built on [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent)
 - Uses Google's Gemini model via LangChain
+- Local LLM support via [Ollama](https://ollama.ai/)
 - LangGraph framework by LangChain
 - Gradio for web interface
 
