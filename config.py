@@ -63,9 +63,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # Agent Type Constants
 AGENT_LANGGRAPH = "LangGraph"
 AGENT_REACT_LANGGRAPH = "ReActLangGraph"
-AGENT_LLAMAINDEX = "LLamaIndex"
-AGENT_SMOL = "SMOL"
-AGENT_DESKGENIE = "DeskGenie"  # New desktop-focused agent
+AGENT_DESKGENIE = "DeskGenie"  # Desktop-focused agent alias
 
 ACTIVE_AGENT = AGENT_REACT_LANGGRAPH  # Active agent to use by default
 

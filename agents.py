@@ -1,4 +1,4 @@
-"""Agent wrapper module for GAIA Benchmark."""
+"""Agent wrapper module for DeskGenie."""
 
 import config
 
@@ -29,14 +29,11 @@ class MyGAIAAgents:
         elif active_agent == config.AGENT_REACT_LANGGRAPH:
             from reactlanggraphagent import ReActLangGraphAgent
             self.agent = ReActLangGraphAgent()
-        elif active_agent == config.AGENT_LLAMAINDEX:
-            from llamaindexagent import LlamaIndexAgent
-            self.agent = LlamaIndexAgent()
         else:
-            # Default to LangGraph if unknown agent type
-            print(f"[WARNING] Unknown agent type '{active_agent}', defaulting to {config.AGENT_LANGGRAPH}")
-            from langgraphagent import LangGraphAgent
-            self.agent = LangGraphAgent()
+            # Default to ReActLangGraph if unknown agent type
+            print(f"[WARNING] Unknown agent type '{active_agent}', defaulting to {config.AGENT_REACT_LANGGRAPH}")
+            from reactlanggraphagent import ReActLangGraphAgent
+            self.agent = ReActLangGraphAgent()
 
     def __call__(self, question: str, file_name: str = None) -> str:
         """Invoke the active agent with the given question.
