@@ -14,6 +14,7 @@ import config
 from agents import MyGAIAAgents
 from agent_runner import AgentRunner
 from app import run_gaia_questions
+from langfuse_tracking import track_session
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -132,13 +133,21 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
     try:
         tasks_store[task_id]["status"] = "running"
 
-        # Run agent in thread pool to avoid blocking
+        # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
-        agent = MyGAIAAgents(active_agent=agent_type)
-        result = await loop.run_in_executor(
-            None,
-            lambda: agent(message, file_name)
-        )
+
+        def execute_with_tracking():
+            with track_session("Chat_Request", {
+                "task_id": task_id,
+                "agent_type": agent_type or config.ACTIVE_AGENT,
+                "has_file": file_name is not None,
+                "message_length": len(message),
+                "mode": "chat"
+            }):
+                agent = MyGAIAAgents(active_agent=agent_type)
+                return agent(message, file_name)
+
+        result = await loop.run_in_executor(None, execute_with_tracking)
 
         tasks_store[task_id]["status"] = "completed"
         tasks_store[task_id]["result"] = result
@@ -166,11 +175,18 @@ async def chat_sync(request: ChatRequest):
     """Synchronous chat endpoint (waits for response)."""
     try:
         loop = asyncio.get_event_loop()
-        agent = MyGAIAAgents(active_agent=request.agent_type)
-        result = await loop.run_in_executor(
-            None,
-            lambda: agent(request.message, request.file_name)
-        )
+
+        def execute_with_tracking():
+            with track_session("Chat_Sync", {
+                "agent_type": request.agent_type or config.ACTIVE_AGENT,
+                "has_file": request.file_name is not None,
+                "message_length": len(request.message),
+                "mode": "chat_sync"
+            }):
+                agent = MyGAIAAgents(active_agent=request.agent_type)
+                return agent(request.message, request.file_name)
+
+        result = await loop.run_in_executor(None, execute_with_tracking)
         return {"status": "completed", "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -206,12 +222,20 @@ async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_ty
         # Convert list to tuple if provided
         filter_tuple = tuple(filter_indices) if filter_indices else None
 
-        # Run benchmark in thread pool to avoid blocking
+        # Run benchmark in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
-        result_df = await loop.run_in_executor(
-            None,
-            lambda: run_gaia_questions(filter=filter_tuple, active_agent=agent_type)
-        )
+
+        def execute_with_tracking():
+            with track_session("Benchmark_Run", {
+                "task_id": task_id,
+                "agent_type": agent_type or config.ACTIVE_AGENT,
+                "filter_indices": str(filter_indices) if filter_indices else "all",
+                "question_count": len(filter_indices) if filter_indices else "all",
+                "mode": "benchmark"
+            }):
+                return run_gaia_questions(filter=filter_tuple, active_agent=agent_type)
+
+        result_df = await loop.run_in_executor(None, execute_with_tracking)
 
         # Convert DataFrame to string for display
         tasks_store[task_id]["status"] = "completed"
