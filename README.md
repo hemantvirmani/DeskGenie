@@ -332,7 +332,6 @@ explanation = ollama_code_explain.invoke({
 | `DESKGENIE_MODE` | `desktop` | App mode: 'desktop' or 'benchmark' |
 | `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
 | `ENABLE_OLLAMA` | `true` | Enable Ollama features |
-| `ENABLE_DESKTOP_TOOLS` | `true` | Enable desktop tools |
 | `ENABLE_OCR` | `true` | Enable OCR features |
 
 ### Recommended Ollama Models

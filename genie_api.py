@@ -61,7 +61,6 @@ class ConfigInfo(BaseModel):
     active_agent: str
     available_agents: list[str]
     ollama_enabled: bool
-    desktop_tools_enabled: bool
     ollama_model: str
 
 class BenchmarkRequest(BaseModel):
@@ -86,7 +85,6 @@ async def get_config():
         active_agent=config.ACTIVE_AGENT,
         available_agents=[config.AGENT_LANGGRAPH, config.AGENT_REACT_LANGGRAPH],
         ollama_enabled=config.ENABLE_OLLAMA,
-        desktop_tools_enabled=config.ENABLE_DESKTOP_TOOLS,
         ollama_model=config.OLLAMA_DEFAULT_MODEL
     )
 

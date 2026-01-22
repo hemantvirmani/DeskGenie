@@ -24,20 +24,8 @@ from system_prompt import SYSTEM_PROMPT
 from utils import cleanup_answer, extract_text_from_content
 import config
 
-# Import desktop and Ollama tools (with graceful fallback)
-try:
-    from desktop_tools import get_desktop_tools_list
-    DESKTOP_TOOLS_AVAILABLE = True
-except ImportError:
-    DESKTOP_TOOLS_AVAILABLE = False
-    print("WARNING: desktop_tools not available - desktop utilities disabled")
-
-try:
-    from ollama_chat import get_ollama_tools_list
-    OLLAMA_TOOLS_AVAILABLE = True
-except ImportError:
-    OLLAMA_TOOLS_AVAILABLE = False
-    print("WARNING: ollama_chat not available - Ollama features disabled")
+from desktop_tools import get_desktop_tools_list
+from ollama_chat import get_ollama_tools_list
 from langfuse_tracking import track_agent_execution, track_llm_call
 
 # Suppress BeautifulSoup GuessedAtParserWarning
@@ -68,17 +56,16 @@ class LangGraphAgent:
         self.graph = self._build_graph()
 
     def _get_all_tools(self) -> list:
-        """Get all available tools based on configuration and availability."""
+        """Get all available tools."""
         tools = get_custom_tools_list()
 
-        # Add desktop tools if available and enabled
-        if DESKTOP_TOOLS_AVAILABLE and config.ENABLE_DESKTOP_TOOLS:
-            desktop_tools = get_desktop_tools_list()
-            tools.extend(desktop_tools)
-            print(f"[TOOLS] Loaded {len(desktop_tools)} desktop tools")
+        # Add desktop tools
+        desktop_tools = get_desktop_tools_list()
+        tools.extend(desktop_tools)
+        print(f"[TOOLS] Loaded {len(desktop_tools)} desktop tools")
 
-        # Add Ollama tools if available and enabled
-        if OLLAMA_TOOLS_AVAILABLE and config.ENABLE_OLLAMA:
+        # Add Ollama tools if enabled
+        if config.ENABLE_OLLAMA:
             ollama_tools = get_ollama_tools_list()
             tools.extend(ollama_tools)
             print(f"[TOOLS] Loaded {len(ollama_tools)} Ollama tools")

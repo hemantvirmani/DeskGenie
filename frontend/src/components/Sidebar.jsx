@@ -129,18 +129,6 @@ function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
               {config?.ollama_enabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300">Desktop Tools</span>
-            <span
-              className={`px-2 py-0.5 rounded text-xs ${
-                config?.desktop_tools_enabled
-                  ? 'bg-green-900/50 text-green-400'
-                  : 'bg-red-900/50 text-red-400'
-              }`}
-            >
-              {config?.desktop_tools_enabled ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
         </div>
 
         {/* Benchmark Button */}
