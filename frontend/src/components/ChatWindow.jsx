@@ -3,16 +3,8 @@ import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 
 function ChatWindow({ selectedAgent }) {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      role: 'assistant',
-      content: 'Hello! I\'m DeskGenie, your desktop AI assistant. I can help you with:\n\n- PDF operations (merge, split, extract pages)\n- Image processing (convert, resize, compress)\n- File management (rename, organize, find duplicates)\n- Document tasks (Word to PDF, OCR)\n- Media processing (video to audio, compress)\n- Chat with Ollama LLM\n\nWhat would you like to do?',
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [currentTaskId, setCurrentTaskId] = useState(null)
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -23,131 +15,106 @@ function ChatWindow({ selectedAgent }) {
     scrollToBottom()
   }, [messages])
 
-  // Poll for task status
-  useEffect(() => {
-    if (!currentTaskId) return
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/task/${currentTaskId}`)
-        const data = await res.json()
-
-        if (data.status === 'completed') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              role: 'assistant',
-              content: data.result || 'Task completed.',
-              timestamp: new Date(),
-            },
-          ])
-          setIsLoading(false)
-          setCurrentTaskId(null)
-        } else if (data.status === 'error') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              role: 'assistant',
-              content: `Error: ${data.error}`,
-              timestamp: new Date(),
-              isError: true,
-            },
-          ])
-          setIsLoading(false)
-          setCurrentTaskId(null)
-        }
-      } catch (err) {
-        console.error('Failed to poll task status:', err)
-      }
-    }, 1000)
-
-    return () => clearInterval(pollInterval)
-  }, [currentTaskId])
-
-  const handleSendMessage = async (content, file) => {
+  const handleSendMessage = async (content) => {
     // Add user message
-    const userMessage = {
-      id: Date.now(),
-      role: 'user',
-      content,
-      file: file?.name,
-      timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, userMessage])
+    const userMessage = { role: 'user', content }
+    setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
+    // Add placeholder for assistant response
+    const assistantPlaceholder = { role: 'assistant', content: '', status: 'loading' }
+    setMessages(prev => [...prev, assistantPlaceholder])
+
     try {
-      const res = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: content,
-          file_name: file?.name,
-          agent_type: selectedAgent,
-        }),
+          agent_type: selectedAgent
+        })
       })
 
-      const data = await res.json()
-      setCurrentTaskId(data.task_id)
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          role: 'assistant',
-          content: `Failed to send message: ${err.message}`,
-          timestamp: new Date(),
-          isError: true,
-        },
-      ])
-      setIsLoading(false)
-    }
-  }
+      if (!response.ok) throw new Error('Failed to send message')
 
-  const handleClearChat = () => {
-    setMessages([
-      {
-        id: Date.now(),
-        role: 'assistant',
-        content: 'Chat cleared. How can I help you?',
-        timestamp: new Date(),
-      },
-    ])
+      const { task_id } = await response.json()
+
+      // Poll for response
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/task/${task_id}`)
+          const statusData = await statusRes.json()
+
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval)
+            setIsLoading(false)
+            setMessages(prev => {
+              const newMessages = [...prev]
+              newMessages[newMessages.length - 1] = {
+                role: 'assistant',
+                content: statusData.result || 'No response'
+              }
+              return newMessages
+            })
+          } else if (statusData.status === 'error') {
+            clearInterval(pollInterval)
+            setIsLoading(false)
+            setMessages(prev => {
+              const newMessages = [...prev]
+              newMessages[newMessages.length - 1] = {
+                role: 'assistant',
+                content: `Error: ${statusData.error}`
+              }
+              return newMessages
+            })
+          }
+        } catch (err) {
+          clearInterval(pollInterval)
+          setIsLoading(false)
+          setMessages(prev => {
+            const newMessages = [...prev]
+            newMessages[newMessages.length - 1] = {
+              role: 'assistant',
+              content: `Error: ${err.message}`
+            }
+            return newMessages
+          })
+        }
+      }, 1000)
+    } catch (error) {
+      setIsLoading(false)
+      setMessages(prev => {
+        const newMessages = [...prev]
+        newMessages[newMessages.length - 1] = {
+          role: 'assistant',
+          content: `Error: ${error.message}`
+        }
+        return newMessages
+      })
+    }
   }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages Area */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex items-center gap-2 text-slate-400">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-primary-400 rounded-full typing-dot" />
-              <div className="w-2 h-2 bg-primary-400 rounded-full typing-dot" />
-              <div className="w-2 h-2 bg-primary-400 rounded-full typing-dot" />
+        {messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-slate-500">
+              <p className="text-lg mb-2">Welcome to DeskGenie!</p>
+              <p className="text-sm">Ask a question or give a command to get started.</p>
             </div>
-            <span className="text-sm">Processing...</span>
           </div>
+        ) : (
+          messages.map((message, index) => (
+            <MessageBubble key={index} message={message} />
+          ))
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <ChatInput
-        onSendMessage={handleSendMessage}
-        onClearChat={handleClearChat}
-        disabled={isLoading}
-      />
+      {/* Input */}
+      <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
     </div>
   )
 }

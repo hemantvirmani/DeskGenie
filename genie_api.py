@@ -1,10 +1,11 @@
 """FastAPI backend for DeskGenie."""
 
 import asyncio
+import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 import uuid
@@ -14,6 +15,7 @@ import config
 from agents import MyGAIAAgents
 from question_runner import run_gaia_questions
 from langfuse_tracking import track_session
+from log_streamer import LogStreamer, create_logger
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -123,8 +125,12 @@ async def chat(request: ChatRequest):
 
 async def run_agent_task(task_id: str, message: str, file_name: str = None, agent_type: str = None):
     """Run agent task in background."""
+    # Create logger for this task
+    logger = create_logger(task_id, streaming=True)
+
     try:
         tasks_store[task_id]["status"] = "running"
+        logger.info(f"Starting chat task with agent: {agent_type or config.ACTIVE_AGENT}")
 
         # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -137,17 +143,21 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
                 "message_length": len(message),
                 "mode": "chat"
             }):
-                agent = MyGAIAAgents(active_agent=agent_type)
+                agent = MyGAIAAgents(active_agent=agent_type, logger=logger)
                 return agent(message, file_name)
 
         result = await loop.run_in_executor(None, execute_with_tracking)
 
         tasks_store[task_id]["status"] = "completed"
         tasks_store[task_id]["result"] = result
+        logger.success("Chat task completed")
 
     except Exception as e:
         tasks_store[task_id]["status"] = "error"
         tasks_store[task_id]["error"] = str(e)
+        logger.error(f"Chat task failed: {str(e)}")
+    finally:
+        logger.close()
 
 @app.get("/api/task/{task_id}", response_model=TaskStatus)
 async def get_task_status(task_id: str):
@@ -209,11 +219,16 @@ async def run_benchmark(request: BenchmarkRequest):
 
 async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_type: str = None):
     """Run benchmark task in background."""
+    # Create logger for this task
+    logger = create_logger(task_id, streaming=True)
+
     try:
         tasks_store[task_id]["status"] = "running"
 
         # Convert list to tuple if provided
         filter_tuple = tuple(filter_indices) if filter_indices else None
+        question_desc = f"indices {filter_indices}" if filter_indices else "all questions"
+        logger.info(f"Starting benchmark with {question_desc}")
 
         # Run benchmark in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -226,17 +241,81 @@ async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_ty
                 "question_count": len(filter_indices) if filter_indices else "all",
                 "mode": "benchmark"
             }):
-                return run_gaia_questions(filter=filter_tuple, active_agent=agent_type)
+                run_gaia_questions(filter=filter_tuple, active_agent=agent_type, logger=logger)
 
-        result_df = await loop.run_in_executor(None, execute_with_tracking)
+        await loop.run_in_executor(None, execute_with_tracking)
 
-        # Convert DataFrame to string for display
         tasks_store[task_id]["status"] = "completed"
-        tasks_store[task_id]["result"] = result_df.to_string() if hasattr(result_df, 'to_string') else str(result_df)
+        tasks_store[task_id]["result"] = "Benchmark completed - see logs for details"
+        logger.success("Benchmark completed")
 
     except Exception as e:
         tasks_store[task_id]["status"] = "error"
         tasks_store[task_id]["error"] = str(e)
+        logger.error(f"Benchmark failed: {str(e)}")
+    finally:
+        logger.close()
+
+
+# --- SSE Endpoints for Log Streaming ---
+
+@app.get("/api/task/{task_id}/logs")
+async def get_task_logs(task_id: str, since: float = 0):
+    """Get logs for a task (polling endpoint)."""
+    logger = LogStreamer.get(task_id)
+    if not logger:
+        return {"logs": []}
+    return {"logs": logger.get_logs(since=since)}
+
+
+@app.get("/api/task/{task_id}/logs/stream")
+async def stream_task_logs(task_id: str):
+    """Stream logs for a task via SSE."""
+
+    async def event_generator():
+        logger = LogStreamer.get(task_id)
+
+        # Wait for logger to be created (task may not have started yet)
+        wait_count = 0
+        while not logger and wait_count < 50:  # Wait up to 5 seconds
+            await asyncio.sleep(0.1)
+            logger = LogStreamer.get(task_id)
+            wait_count += 1
+
+        if not logger:
+            yield f"data: {json.dumps({'error': 'Task not found'})}\n\n"
+            return
+
+        # Subscribe to new logs
+        queue = await logger.subscribe()
+
+        try:
+            # First, send any existing logs
+            for log in logger.get_logs():
+                yield f"data: {json.dumps(log)}\n\n"
+
+            # Then stream new logs
+            while True:
+                try:
+                    entry = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    if entry is None:  # Stream closed
+                        break
+                    yield f"data: {json.dumps(entry.to_dict())}\n\n"
+                except asyncio.TimeoutError:
+                    # Send keepalive
+                    yield f": keepalive\n\n"
+        finally:
+            logger.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 # --- Static Files (Production) ---
 

@@ -1,32 +1,34 @@
 """Agent execution functionality for running questions through the GAIA agent."""
 
 from typing import Optional, Tuple, List, Dict
-from colorama import Fore, Style
 from agents import MyGAIAAgents
 import config
 from langfuse_tracking import track_question_processing
+from log_streamer import ConsoleLogger, Logger
 
 
 class AgentRunner:
     """Handles agent execution and question processing.
     """
 
-    def __init__(self, active_agent: str = None):
+    def __init__(self, active_agent: str = None, logger: Logger = None):
         """Initialize the AgentRunner.
 
         Args:
             active_agent: The agent type to use. If None, uses config.ACTIVE_AGENT.
+            logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
         """
         self.agent = None
         self.active_agent = active_agent
+        self.logger = logger or ConsoleLogger()
 
     def _initialize_agent(self) -> bool:
         """Initialize the agent. Returns True if successful."""
         try:
-            self.agent = MyGAIAAgents(active_agent=self.active_agent)
+            self.agent = MyGAIAAgents(active_agent=self.active_agent, logger=self.logger)
             return True
         except Exception as e:
-            print(f"{Fore.RED}Error instantiating agent: {e}{Style.RESET_ALL}")
+            self.logger.error(f"Error instantiating agent: {e}")
             return False
 
     def run_on_questions(self, questions_data: List[Dict]) -> Optional[List[Tuple]]:
@@ -36,7 +38,7 @@ class AgentRunner:
 
         results = []
         total = len(questions_data)
-        print(f"{Fore.CYAN}Running agent on {total} questions...{Style.RESET_ALL}")
+        self.logger.info(f"Running agent on {total} questions...")
 
         for idx, item in enumerate(questions_data, 1):
             task_id = item.get("task_id")
@@ -44,12 +46,10 @@ class AgentRunner:
             file_name = item.get("file_name")
 
             if not task_id or question_text is None:
-                print(f"\n{Fore.YELLOW}Skipping item with missing task_id or question: {item}{Style.RESET_ALL}\n")
+                self.logger.warning(f"Skipping item with missing task_id or question: {item}")
                 continue
 
-            print(f"\n{'#' * config.SEPARATOR_WIDTH}")
-            print(f"{Fore.CYAN}Processing Question {idx}/{total} - Task ID: {task_id}{Style.RESET_ALL}")
-            print(f"{'#' * config.SEPARATOR_WIDTH}")
+            self.logger.step(f"Processing Question {idx}/{total} - Task ID: {task_id}")
 
             try:
                 # Track individual question processing with Langfuse
@@ -58,12 +58,12 @@ class AgentRunner:
                     if span:
                         span.update(output={"answer": str(answer)[:300]})
 
-                print(f"\n{Fore.GREEN}[RESULT] Task ID: {task_id}{Style.RESET_ALL}")
-                print(f"Question: {question_text[:config.QUESTION_PREVIEW_LENGTH]}{'...' if len(question_text) > config.QUESTION_PREVIEW_LENGTH else ''}")
-                print(f"Answer: {answer}")
+                self.logger.result(f"Task {task_id}: {answer[:100]}{'...' if len(str(answer)) > 100 else ''}")
+                self.logger.info(f"Question: {question_text[:config.QUESTION_PREVIEW_LENGTH]}{'...' if len(question_text) > config.QUESTION_PREVIEW_LENGTH else ''}")
+                self.logger.info(f"Answer: {answer}")
                 results.append((task_id, question_text, answer))
             except Exception as e:
-                print(f"{Fore.RED}[ERROR] Exception running agent on task {task_id}: {e}{Style.RESET_ALL}")
+                self.logger.error(f"Exception running agent on task {task_id}: {e}")
                 error_msg = f"AGENT ERROR: {str(e)[:config.ERROR_MESSAGE_LENGTH]}"
                 results.append((task_id, question_text, error_msg))
 

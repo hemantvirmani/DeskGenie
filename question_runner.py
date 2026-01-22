@@ -6,32 +6,35 @@ verifying answers against ground truth, and formatting results.
 
 import json
 import time
-import pandas as pd
 
 import config
 from scorer import question_scorer
 from agent_runner import AgentRunner
 from validators import InputValidator, ValidationError
 from langfuse_tracking import track_session
+from log_streamer import ConsoleLogger, Logger
 
 
-def load_questions(file_path: str = config.QUESTIONS_FILE) -> list:
+def load_questions(file_path: str = config.QUESTIONS_FILE, logger: Logger = None) -> list:
     """Load questions from local JSON file."""
+    logger = logger or ConsoleLogger()
     with open(file_path, 'r', encoding='utf-8') as f:
         questions = json.load(f)
-        print(f"[INFO] Loaded {len(questions)} questions from {file_path}")
+        logger.info(f"Loaded {len(questions)} questions from {file_path}")
         return questions
 
 
-def _load_ground_truth(file_path: str = config.METADATA_FILE) -> dict:
+def _load_ground_truth(file_path: str = config.METADATA_FILE, logger: Logger = None) -> dict:
     """Load ground truth data indexed by task_id.
 
     Args:
         file_path: Path to the metadata file
+        logger: Optional logger
 
     Returns:
         dict: Mapping of task_id -> {"question": str, "answer": str}
     """
+    logger = logger or ConsoleLogger()
     truth_mapping = {}
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -46,20 +49,21 @@ def _load_ground_truth(file_path: str = config.METADATA_FILE) -> dict:
                         "answer": answer
                     }
     except Exception as e:
-        print(f"Error loading ground truth: {e}")
+        logger.error(f"Error loading ground truth: {e}")
     return truth_mapping
 
 
-def _verify_answers(results: list, log_output: list, runtime: tuple = None) -> None:
+def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None) -> None:
     """Verify answers against ground truth using the official GAIA scorer.
 
     Args:
         results: List of tuples (task_id, question_text, answer)
-        log_output: List to append verification results to
+        logger: Optional logger for streaming
         runtime: Optional tuple of (minutes, seconds) for total runtime
     """
-    ground_truth = _load_ground_truth()
-    log_output.append("\n=== Verification Results ===")
+    logger = logger or ConsoleLogger()
+    ground_truth = _load_ground_truth(logger=logger)
+    logger.info("=== Verification Results ===")
 
     correct_count = 0
     total_count = 0
@@ -77,28 +81,26 @@ def _verify_answers(results: list, log_output: list, runtime: tuple = None) -> N
                 correct_count += 1
             total_count += 1
 
-            log_output.append(f"Task ID: {task_id}")
-            log_output.append(f"Question: {question_text[:config.ERROR_MESSAGE_LENGTH]}...")
-            log_output.append(f"Expected: {correct_answer}")
-            log_output.append(f"Got: {answer}")
-            log_output.append(f"Match: {'✓ Correct' if is_correct else '✗ Incorrect'}\n")
+            # Stream to logger
+            if is_correct:
+                logger.success(f"Task {task_id}: ✓ Correct")
+            else:
+                logger.error(f"Task {task_id}: ✗ Incorrect (expected: {correct_answer}, got: {answer})")
         else:
-            log_output.append(f"Task ID: {task_id}")
-            log_output.append(f"Question: {question_text[:config.ERROR_MESSAGE_LENGTH]}...")
-            log_output.append(f"No ground truth found.\n")
+            logger.warning(f"Task {task_id}: No ground truth found")
 
     # Add summary statistics
     if total_count > 0:
         accuracy = (correct_count / total_count) * 100
-        log_output.append("=" * config.SEPARATOR_WIDTH)
-        log_output.append(f"SUMMARY: {correct_count}/{total_count} correct ({accuracy:.1f}%)")
+        summary = f"SUMMARY: {correct_count}/{total_count} correct ({accuracy:.1f}%)"
+        logger.result(summary)
         if runtime:
             minutes, seconds = runtime
-            log_output.append(f"Runtime: {minutes}m {seconds}s")
-        log_output.append("=" * config.SEPARATOR_WIDTH)
+            runtime_str = f"Runtime: {minutes}m {seconds}s"
+            logger.info(runtime_str)
 
 
-def run_gaia_questions(filter=None, active_agent=None) -> pd.DataFrame:
+def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
     """Run GAIA benchmark questions.
 
     Args:
@@ -106,39 +108,44 @@ def run_gaia_questions(filter=None, active_agent=None) -> pd.DataFrame:
                 If None, processes all questions.
         active_agent: Optional agent type to use (e.g., "LangGraph", "ReActLangGraph", "LLamaIndex").
                       If None, uses config.ACTIVE_AGENT.
+        logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
 
     Returns:
-        pd.DataFrame: Results and verification output
+        None (results are streamed via logger)
     """
+    logger = logger or ConsoleLogger()
+
     start_time = time.time()
-    logs_for_display = []
-    logs_for_display.append("=== Processing Example Questions One by One ===")
+    logger.info("=== Processing Example Questions One by One ===")
 
     # Fetch questions (OFFLINE for testing)
     try:
-        questions_data = load_questions()
+        questions_data = load_questions(logger=logger)
     except Exception as e:
-        return pd.DataFrame([f"Error loading questions: {e}"])
+        logger.error(f"Error loading questions: {e}")
+        return
 
     # Validate questions data
     try:
         questions_data = InputValidator.validate_questions_data(questions_data)
     except ValidationError as e:
-        return pd.DataFrame([f"Invalid questions data: {e}"])
+        logger.error(f"Invalid questions data: {e}")
+        return
 
     # Validate and apply filter
     try:
         filter = InputValidator.validate_filter_indices(filter, len(questions_data))
     except ValidationError as e:
-        return pd.DataFrame([f"Invalid filter: {e}"])
+        logger.error(f"Invalid filter: {e}")
+        return
 
     # Apply filter or use all questions
     if filter is not None:
         questions_to_process = [questions_data[i] for i in filter]
-        logs_for_display.append(f"Testing {len(questions_to_process)} selected questions (indices: {filter})")
+        logger.info(f"Testing {len(questions_to_process)} selected questions (indices: {filter})")
     else:
         questions_to_process = questions_data
-        logs_for_display.append(f"Testing all {len(questions_to_process)} questions")
+        logger.info(f"Testing all {len(questions_to_process)} questions")
 
     # Run agent on selected questions with specified agent type (with Langfuse session tracking)
     with track_session("Test_Run", {
@@ -147,17 +154,17 @@ def run_gaia_questions(filter=None, active_agent=None) -> pd.DataFrame:
         "filter": str(filter) if filter else "all",
         "mode": "test"
     }):
-        results = AgentRunner(active_agent=active_agent).run_on_questions(questions_to_process)
+        results = AgentRunner(active_agent=active_agent, logger=logger).run_on_questions(questions_to_process)
 
     if results is None:
-        return pd.DataFrame(["Error initializing agent."])
+        logger.error("Error initializing agent.")
+        return
 
-    logs_for_display.append("\n=== Completed Example Questions ===")
+    logger.success("=== Completed Example Questions ===")
 
     # Calculate runtime
     elapsed_time = time.time() - start_time
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
 
-    _verify_answers(results, logs_for_display, runtime=(minutes, seconds))
-    return pd.DataFrame(logs_for_display)
+    _verify_answers(results, logger=logger, runtime=(minutes, seconds))
