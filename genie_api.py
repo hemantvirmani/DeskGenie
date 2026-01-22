@@ -12,8 +12,7 @@ import os
 
 import config
 from agents import MyGAIAAgents
-from agent_runner import AgentRunner
-from app import run_gaia_questions
+from question_runner import run_gaia_questions
 from langfuse_tracking import track_session
 
 # Initialize FastAPI app
