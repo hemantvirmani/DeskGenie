@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import signal
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,11 +19,31 @@ from question_runner import run_gaia_questions
 from langfuse_tracking import track_session
 from log_streamer import LogStreamer, create_logger
 
+# Track background tasks for cleanup
+_background_tasks = set()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle startup and shutdown events."""
+    print("[API] Server starting...")
+    yield
+    # Cleanup on shutdown
+    print("[API] Server shutting down, cancelling background tasks...")
+    for task in _background_tasks:
+        task.cancel()
+    if _background_tasks:
+        await asyncio.gather(*_background_tasks, return_exceptions=True)
+    _background_tasks.clear()
+    print("[API] Shutdown complete.")
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="DeskGenie API",
     description="Desktop AI Agent API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware for development
@@ -113,19 +135,20 @@ async def chat(request: ChatRequest):
         "error": None
     }
 
-    # Run agent in background
-    asyncio.create_task(run_agent_task(
+    # Run agent in background (track for cleanup)
+    task = asyncio.create_task(run_agent_task(
         task_id=task_id,
         message=request.message,
         file_name=request.file_name,
         agent_type=request.agent_type
     ))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
     return ChatResponse(task_id=task_id, status="pending")
 
 async def run_agent_task(task_id: str, message: str, file_name: str = None, agent_type: str = None):
     """Run agent task in background."""
-    # Create logger for this task
     logger = create_logger(task_id, streaming=True)
 
     try:
@@ -208,12 +231,14 @@ async def run_benchmark(request: BenchmarkRequest):
         "error": None
     }
 
-    # Run benchmark in background
-    asyncio.create_task(run_benchmark_task(
+    # Run benchmark in background (track for cleanup)
+    task = asyncio.create_task(run_benchmark_task(
         task_id=task_id,
         filter_indices=request.filter_indices,
         agent_type=request.agent_type
     ))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
     return BenchmarkResponse(task_id=task_id, status="pending")
 

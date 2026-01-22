@@ -1,5 +1,4 @@
 import argparse
-import pandas as pd
 import warnings
 import logging
 from enum import Enum
@@ -16,9 +15,6 @@ logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 # Import configuration
 import config
-
-# Import utilities
-from result_formatter import ResultFormatter
 
 # Import benchmark runner
 from question_runner import run_gaia_questions
@@ -183,12 +179,8 @@ def main() -> None:
         filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
         print(f"Running GAIA benchmark on {filter_desc} questions...")
 
-        result = run_gaia_questions(filter=options.test_filter, active_agent=options.active_agent)
-
-        if isinstance(result, pd.DataFrame):
-            ResultFormatter.print_dataframe(result)
-        else:
-            print(result)
+        # Results are streamed via logger, function returns None
+        run_gaia_questions(filter=options.test_filter, active_agent=options.active_agent)
 
 
 if __name__ == "__main__":

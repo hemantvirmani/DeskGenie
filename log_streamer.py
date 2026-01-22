@@ -64,7 +64,7 @@ class LogStreamer:
 
     # Global registry of active streamers by task_id
     _streamers: Dict[str, "LogStreamer"] = {}
-    _lock = threading.Lock()
+    _lock = threading.RLock()  # Reentrant lock to avoid deadlock in create_or_get -> __init__
 
     def __init__(self, task_id: str, max_logs: int = 1000, console_output: bool = True):
         """Initialize a new LogStreamer.
