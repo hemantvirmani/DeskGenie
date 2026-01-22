@@ -49,8 +49,6 @@ class AgentRunner:
                 self.logger.warning(f"Skipping item with missing task_id or question: {item}")
                 continue
 
-            self.logger.step(f"Processing Question {idx}/{total} - Task ID: {task_id}")
-
             try:
                 # Track individual question processing with Langfuse
                 with track_question_processing(task_id, question_text) as span:
@@ -59,9 +57,7 @@ class AgentRunner:
                         span.update(output={"answer": str(answer)[:300]})
 
                 self.logger.result(f"Task {task_id}: {answer[:100]}{'...' if len(str(answer)) > 100 else ''}")
-                self.logger.info(f"Question: {question_text[:config.QUESTION_PREVIEW_LENGTH]}{'...' if len(question_text) > config.QUESTION_PREVIEW_LENGTH else ''}")
-                self.logger.info(f"Answer: {answer}")
-                results.append((task_id, question_text, answer))
+                self.logger.info(f"Question: {question_text}")
             except Exception as e:
                 self.logger.error(f"Exception running agent on task {task_id}: {e}")
                 error_msg = f"AGENT ERROR: {str(e)[:config.ERROR_MESSAGE_LENGTH]}"
