@@ -275,10 +275,11 @@ def track_session(session_name: str, metadata: Optional[Dict[str, Any]] = None):
     session_metadata["project"] = tracker.project_name
 
     # Use start_as_current_span to create a root span/trace for the session
+    # Note: tags must be added via metadata since start_as_current_span doesn't support tags parameter
+    session_metadata["tags"] = [tracker.project_name]
     with tracker.client.start_as_current_span(
         name=f"{tracker.project_name}_{session_name}",
-        metadata=session_metadata,
-        tags=[tracker.project_name]  # Add as tag for easy filtering
+        metadata=session_metadata
     ) as span:
         try:
             yield span
