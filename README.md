@@ -257,7 +257,6 @@ organize_files_by_type.invoke({
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GOOGLE_API_KEY` | - | Google API key for Gemini model |
-| `DESKGENIE_MODE` | `desktop` | App mode: 'desktop' or 'benchmark' |
 | `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
 | `ENABLE_OCR` | `true` | Enable OCR features |
 

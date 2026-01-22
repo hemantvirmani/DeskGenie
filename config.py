@@ -6,9 +6,6 @@ import os
 # DeskGenie Desktop Agent Configuration
 # =============================================================================
 
-# Application Mode
-APP_MODE = os.getenv("DESKGENIE_MODE", "desktop")  # 'desktop' or 'benchmark'
-
 # Desktop Agent Settings
 DESKTOP_FILES_DIR = os.getenv("DESKGENIE_FILES_DIR", os.path.expanduser("~/Desktop"))
 DESKTOP_DOWNLOADS_DIR = os.getenv("DESKGENIE_DOWNLOADS_DIR", os.path.expanduser("~/Downloads"))
@@ -27,8 +24,6 @@ TOOL_CATEGORIES = {
 # GAIA Benchmark Configuration (Original)
 # =============================================================================
 
-# API Configuration
-DEFAULT_API_URL = "https://agents-course-unit4-scoring.hf.space"
 AGENT_TIMEOUT_SECONDS = 180  # 3 minutes max per question
 
 # File Paths
@@ -55,7 +50,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # Agent Type Constants
 AGENT_LANGGRAPH = "LangGraph"
 AGENT_REACT_LANGGRAPH = "ReActLangGraph"
-AGENT_DESKGENIE = "DeskGenie"  # Desktop-focused agent alias
 
 ACTIVE_AGENT = AGENT_REACT_LANGGRAPH  # Active agent to use by default
 
@@ -75,11 +69,12 @@ RETRY_BACKOFF_FACTOR = 2.0
 # Feature Flags
 # =============================================================================
 
-ENABLE_OCR = os.getenv("ENABLE_OCR", "true").lower() == "true"  # Requires Tesseract
+ENABLE_OCR = "true"  # Requires Tesseract
 
 # =============================================================================
 # Langfuse Observability
 # =============================================================================
 
 # Project name for Langfuse tagging (helps distinguish from other projects)
-LANGFUSE_PROJECT_NAME = os.getenv("LANGFUSE_PROJECT_NAME", "DeskGenie")
+LANGFUSE_PROJECT_NAME = "DeskGenie"
+
