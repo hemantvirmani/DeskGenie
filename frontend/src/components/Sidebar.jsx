@@ -82,11 +82,6 @@ function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
         <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
       </svg>
     ),
-    chat: (
-      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-      </svg>
-    ),
   }
 
   if (!isOpen) {
@@ -113,24 +108,8 @@ function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
         </select>
       </div>
 
-      {/* Status */}
+      {/* Benchmark */}
       <div className="p-4 border-b border-slate-700">
-        <h3 className="text-sm font-medium text-slate-400 mb-2">Status</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300">Ollama</span>
-            <span
-              className={`px-2 py-0.5 rounded text-xs ${
-                config?.ollama_enabled
-                  ? 'bg-green-900/50 text-green-400'
-                  : 'bg-red-900/50 text-red-400'
-              }`}
-            >
-              {config?.ollama_enabled ? 'Enabled' : 'Disabled'}
-            </span>
-          </div>
-        </div>
-
         {/* Benchmark Button */}
         <button
           onClick={runBenchmark}
@@ -217,7 +196,6 @@ function Sidebar({ isOpen, tools, config, selectedAgent, onAgentChange }) {
       {/* Footer */}
       <div className="p-4 border-t border-slate-700 text-xs text-slate-500">
         <p>DeskGenie v1.0.0</p>
-        <p className="mt-1">Model: {config?.ollama_model || 'N/A'}</p>
       </div>
     </aside>
   )

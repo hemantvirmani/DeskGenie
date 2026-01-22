@@ -14,11 +14,6 @@ DESKTOP_FILES_DIR = os.getenv("DESKGENIE_FILES_DIR", os.path.expanduser("~/Deskt
 DESKTOP_DOWNLOADS_DIR = os.getenv("DESKGENIE_DOWNLOADS_DIR", os.path.expanduser("~/Downloads"))
 DESKTOP_OUTPUT_DIR = os.getenv("DESKGENIE_OUTPUT_DIR", os.path.expanduser("~/DeskGenie_Output"))
 
-# Ollama Configuration
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
-OLLAMA_TIMEOUT = 120  # seconds
-
 # Tool Categories (for UI organization)
 TOOL_CATEGORIES = {
     "pdf": ["pdf_extract_pages", "pdf_delete_pages", "pdf_merge", "pdf_split", "pdf_to_images"],
@@ -26,7 +21,6 @@ TOOL_CATEGORIES = {
     "file": ["batch_rename_files", "organize_files_by_type", "find_duplicate_files"],
     "document": ["word_to_pdf", "extract_text_from_pdf", "ocr_image"],
     "media": ["video_to_audio", "compress_video", "get_media_info"],
-    "chat": ["ollama_chat", "ollama_summarize", "ollama_translate", "ollama_code_explain", "ollama_rewrite"],
 }
 
 # =============================================================================
@@ -81,7 +75,6 @@ RETRY_BACKOFF_FACTOR = 2.0
 # Feature Flags
 # =============================================================================
 
-ENABLE_OLLAMA = os.getenv("ENABLE_OLLAMA", "true").lower() == "true"
 ENABLE_OCR = os.getenv("ENABLE_OCR", "true").lower() == "true"  # Requires Tesseract
 
 # =============================================================================

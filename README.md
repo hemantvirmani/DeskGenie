@@ -40,13 +40,6 @@ Originally built on top of my own learning code [GAIA Benchmark Agent](https://g
 - **Compress Video**: "Compress movie.mp4 to under 100MB"
 - **Media Info**: "Get details about video.mp4"
 
-### 💬 Ollama Chat Integration
-- **Chat**: Natural conversation with local LLMs
-- **Summarize**: "Summarize this article"
-- **Translate**: "Translate this to Spanish"
-- **Code Explanation**: "Explain this Python code"
-- **Rewrite**: "Rewrite this email professionally"
-
 ### 🔍 Research & Web Tools (from GAIA Agent)
 - Web search via DuckDuckGo
 - Wikipedia integration
@@ -59,7 +52,6 @@ Originally built on top of my own learning code [GAIA Benchmark Agent](https://g
 ### Prerequisites
 
 - Python 3.10+
-- [Ollama](https://ollama.ai/) (for local LLM chat features)
 - [FFmpeg](https://ffmpeg.org/) (for audio/video processing)
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) (optional, for OCR features)
 
@@ -87,22 +79,12 @@ pip install -r requirements.txt
 # Required for AI features
 export GOOGLE_API_KEY="your_google_api_key"
 
-# Optional: Ollama configuration (defaults shown)
-export OLLAMA_BASE_URL="http://localhost:11434"
-export OLLAMA_MODEL="llama3.2"
-
 # Optional: Langfuse observability
 export LANGFUSE_PUBLIC_KEY="pk-lf-..."
 export LANGFUSE_SECRET_KEY="sk-lf-..."
 ```
 
-5. **Start Ollama** (for chat features):
-```bash
-ollama serve
-ollama pull llama3.2  # or your preferred model
-```
-
-6. **Run DeskGenie**:
+5. **Run DeskGenie**:
 
 **Development Mode** (with hot reload):
 
@@ -172,8 +154,6 @@ DeskGenie understands natural language commands. Here are some examples:
 
 "Organize my Downloads folder by file type"
 
-"Summarize this research paper using Ollama"
-
 "What's the duration and resolution of video.mp4?"
 ```
 
@@ -182,7 +162,6 @@ DeskGenie understands natural language commands. Here are some examples:
 ```python
 from agents import MyGAIAAgents
 from desktop_tools import get_desktop_tools_list
-from ollama_chat import get_ollama_tools_list
 
 # Initialize agent with desktop tools
 agent = MyGAIAAgents()
@@ -192,9 +171,6 @@ result = agent("Extract pages 1-5 from report.pdf and save as summary.pdf")
 
 # Image conversion
 result = agent("Convert photo.heic to photo.jpg with 90% quality")
-
-# Ollama chat
-result = agent("Using Ollama, explain what this Python code does: [code]")
 ```
 
 ### Using Individual Tools
@@ -231,41 +207,6 @@ video_to_audio.invoke({
 organize_files_by_type.invoke({
     "source_dir": "/Users/me/Downloads",
     "organize_by": "type"
-})
-```
-
-### Ollama Chat Examples
-
-```python
-from ollama_chat import (
-    ollama_chat,
-    ollama_summarize,
-    ollama_translate,
-    ollama_code_explain
-)
-
-# Chat with local LLM
-response = ollama_chat.invoke({
-    "message": "What's the best way to learn Python?",
-    "model": "llama3.2"
-})
-
-# Summarize text
-summary = ollama_summarize.invoke({
-    "text": long_article,
-    "style": "bullet"  # or "detailed", "brief"
-})
-
-# Translate
-translated = ollama_translate.invoke({
-    "text": "Hello, how are you?",
-    "target_language": "Japanese"
-})
-
-# Explain code
-explanation = ollama_code_explain.invoke({
-    "code": "def fibonacci(n): return n if n < 2 else fibonacci(n-1) + fibonacci(n-2)",
-    "language": "python"
 })
 ```
 
@@ -309,17 +250,6 @@ explanation = ollama_code_explain.invoke({
 | `compress_video` | Compress video to target size |
 | `get_media_info` | Get detailed media file information |
 
-### Ollama Tools
-| Tool | Description |
-|------|-------------|
-| `ollama_chat` | Chat with local LLM |
-| `ollama_list_models` | List installed Ollama models |
-| `ollama_model_info` | Get model details |
-| `ollama_summarize` | Summarize text (concise/detailed/brief) |
-| `ollama_translate` | Translate to any language |
-| `ollama_code_explain` | Explain code snippets |
-| `ollama_rewrite` | Rewrite in different styles |
-
 ## Configuration
 
 ### Environment Variables
@@ -327,22 +257,9 @@ explanation = ollama_code_explain.invoke({
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GOOGLE_API_KEY` | - | Google API key for Gemini model |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `llama3.2` | Default Ollama model |
 | `DESKGENIE_MODE` | `desktop` | App mode: 'desktop' or 'benchmark' |
 | `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
-| `ENABLE_OLLAMA` | `true` | Enable Ollama features |
 | `ENABLE_OCR` | `true` | Enable OCR features |
-
-### Recommended Ollama Models
-
-| Model | Best For | Size |
-|-------|----------|------|
-| `llama3.2` | General chat, instructions | 2GB |
-| `llama3.2:1b` | Fast responses, simple tasks | 1.3GB |
-| `mistral` | Balanced performance | 4GB |
-| `codellama` | Code explanation & generation | 4GB |
-| `llama3.2-vision` | Image understanding | 5GB |
 
 ## Project Structure
 
@@ -364,7 +281,6 @@ DeskGenie/
 │
 ├── DESKTOP TOOLS:
 ├── desktop_tools.py        # PDF, image, file, document, media tools
-├── ollama_chat.py          # Ollama LLM chat integration
 │
 ├── ORIGINAL GAIA TOOLS:
 ├── custom_tools.py         # Web search, analysis tools
@@ -409,10 +325,6 @@ See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAI
 
 ### Common Issues
 
-**"Ollama is not running"**
-- Start Ollama: `ollama serve`
-- Or ensure the Ollama app is running
-
 **"HEIC conversion fails"**
 - Ensure pillow-heif is installed: `pip install pillow-heif`
 
@@ -430,9 +342,8 @@ See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAI
 
 ### Performance Tips
 
-- Use `llama3.2:1b` for faster Ollama responses
 - For large PDF operations, process in batches
-- Enable GPU acceleration in Ollama for better performance
+- Use batch operations for multiple files
 
 ## Contributing
 
@@ -453,7 +364,6 @@ This project is open-source and available under the MIT License.
 
 - Built on [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent)
 - Uses Google's Gemini model via LangGraph
-- Local LLM support via [Ollama](https://ollama.ai/)
 - LangGraph framework by LangChain
 - React + Tailwind CSS for web interface
 - FastAPI + Uvicorn for backend API

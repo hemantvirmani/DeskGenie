@@ -60,8 +60,6 @@ class ToolInfo(BaseModel):
 class ConfigInfo(BaseModel):
     active_agent: str
     available_agents: list[str]
-    ollama_enabled: bool
-    ollama_model: str
 
 class BenchmarkRequest(BaseModel):
     filter_indices: Optional[list[int]] = None  # e.g., [0, 2, 5] or None for all
@@ -83,9 +81,7 @@ async def get_config():
     """Get current configuration."""
     return ConfigInfo(
         active_agent=config.ACTIVE_AGENT,
-        available_agents=[config.AGENT_LANGGRAPH, config.AGENT_REACT_LANGGRAPH],
-        ollama_enabled=config.ENABLE_OLLAMA,
-        ollama_model=config.OLLAMA_DEFAULT_MODEL
+        available_agents=[config.AGENT_LANGGRAPH, config.AGENT_REACT_LANGGRAPH]
     )
 
 @app.get("/api/tools", response_model=list[ToolInfo])

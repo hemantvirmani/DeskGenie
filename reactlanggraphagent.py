@@ -20,7 +20,6 @@ import config
 from langfuse_tracking import track_agent_execution
 
 from desktop_tools import get_desktop_tools_list
-from ollama_chat import get_ollama_tools_list
 
 # Suppress BeautifulSoup GuessedAtParserWarning
 try:
@@ -56,12 +55,6 @@ class ReActLangGraphAgent:
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
         print(f"[TOOLS] Loaded {len(desktop_tools)} desktop tools")
-
-        # Add Ollama tools if enabled
-        if config.ENABLE_OLLAMA:
-            ollama_tools = get_ollama_tools_list()
-            tools.extend(ollama_tools)
-            print(f"[TOOLS] Loaded {len(ollama_tools)} Ollama tools")
 
         print(f"[TOOLS] Total tools available: {len(tools)}")
         return tools
