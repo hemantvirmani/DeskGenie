@@ -234,11 +234,7 @@ def _parse_cli_args() -> AppOptions:
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument(
         "--test", type=str, nargs='?', const='default',
-        help="Run GAIA benchmark on selected questions. Optionally provide comma-separated indices (e.g., --test 2,4,6)."
-    )
-    parser.add_argument(
-        "--testall", action="store_true",
-        help="Run GAIA benchmark on all questions."
+        help="Run GAIA benchmark. Use '--test all' for all questions, '--test' for default filter, or '--test 2,4,6' for specific indices."
     )
     parser.add_argument(
         "--testq", type=str,
@@ -274,20 +270,21 @@ def _parse_cli_args() -> AppOptions:
             test_query=args.testq
         )
 
-    # Handle --test or --testall (GAIA benchmark mode)
-    if args.test or args.testall:
+    # Handle --test (GAIA benchmark mode)
+    if args.test:
         test_filter = None
-        if args.test:
-            if args.test == 'default':
-                test_filter = config.DEFAULT_TEST_FILTER
-            else:
-                try:
-                    test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
-                except ValueError:
-                    return AppOptions(
-                        run_mode=RunMode.CLI,
-                        error=f"Invalid test indices '{args.test}'. Must be comma-separated integers (e.g., 2,4,6)"
-                    )
+        if args.test == 'default':
+            test_filter = config.DEFAULT_TEST_FILTER
+        elif args.test.lower() == 'all':
+            test_filter = None  # None means all questions
+        else: #we will parse specific indices
+            try:
+                test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
+            except ValueError:
+                return AppOptions(
+                    run_mode=RunMode.CLI,
+                    error=f"Invalid test indices '{args.test}'. Use 'all', or comma-separated integers (e.g., 2,4,6)"
+                )
 
         return AppOptions(
             run_mode=RunMode.CLI,

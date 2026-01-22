@@ -388,14 +388,20 @@ DeskGenie/
 DeskGenie retains full GAIA benchmark capabilities. To run benchmark evaluations:
 
 ```bash
-# Set mode to benchmark
-export DESKGENIE_MODE=benchmark
+# Run all benchmark questions
+python app.py --test all
 
-# Run evaluation
-python app.py
-
-# Or test specific questions
+# Run default filter (quick test)
 python app.py --test
+
+# Run specific question indices
+python app.py --test 2,4,6
+
+# Run a single query (same as UI chat)
+python app.py --testq "What is the capital of France?"
+
+# Use a specific agent
+python app.py --test all --agent reactlangg
 ```
 
 See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAIA_Benchmark_Agent) for benchmark details.
