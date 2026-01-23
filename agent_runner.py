@@ -5,6 +5,7 @@ from agents import MyGAIAAgents
 import config
 from langfuse_tracking import track_question_processing
 from log_streamer import ConsoleLogger, Logger
+from ui_strings import AgentStrings as S
 
 
 class AgentRunner:
@@ -28,7 +29,7 @@ class AgentRunner:
             self.agent = MyGAIAAgents(active_agent=self.active_agent, logger=self.logger)
             return True
         except Exception as e:
-            self.logger.error(f"Error instantiating agent: {e}")
+            self.logger.error(S.ERROR_INSTANTIATING_AGENT.format(error=e))
             return False
 
     def run_on_questions(self, questions_data: List[Dict]) -> Optional[List[Tuple]]:
@@ -38,7 +39,7 @@ class AgentRunner:
 
         results = []
         total = len(questions_data)
-        self.logger.info(f"Running agent on {total} questions...")
+        self.logger.info(S.RUNNING_AGENT_ON_QUESTIONS.format(total=total))
 
         for idx, item in enumerate(questions_data, 1):
             task_id = item.get("task_id")
@@ -46,7 +47,7 @@ class AgentRunner:
             file_name = item.get("file_name")
 
             if not task_id or question_text is None:
-                self.logger.warning(f"Skipping item with missing task_id or question: {item}")
+                self.logger.warning(S.SKIPPING_MISSING_DATA.format(item=item))
                 continue
 
             try:
@@ -56,11 +57,12 @@ class AgentRunner:
                     if span:
                         span.update(output={"answer": str(answer)[:300]})
 
-                self.logger.result(f"Task {task_id}: {answer[:100]}{'...' if len(str(answer)) > 100 else ''}")
-                self.logger.info(f"Question: {question_text}")
+                truncated_answer = f"{answer[:100]}..." if len(str(answer)) > 100 else answer
+                self.logger.result(S.TASK_RESULT.format(task_id=task_id, answer=truncated_answer))
+                self.logger.info(S.QUESTION_TEXT.format(question=question_text))
                 results.append((task_id, question_text, answer))
             except Exception as e:
-                self.logger.error(f"Exception running agent on task {task_id}: {e}")
+                self.logger.error(S.EXCEPTION_RUNNING_AGENT.format(task_id=task_id, error=e))
                 error_msg = f"AGENT ERROR: {str(e)[:config.ERROR_MESSAGE_LENGTH]}"
                 results.append((task_id, question_text, error_msg))
 

@@ -13,6 +13,7 @@ from agent_runner import AgentRunner
 from validators import InputValidator, ValidationError
 from langfuse_tracking import track_session
 from log_streamer import ConsoleLogger, Logger
+from ui_strings import QuestionRunnerStrings as S
 
 
 def load_questions(file_path: str = config.QUESTIONS_FILE, logger: Logger = None) -> list:
@@ -20,7 +21,7 @@ def load_questions(file_path: str = config.QUESTIONS_FILE, logger: Logger = None
     logger = logger or ConsoleLogger()
     with open(file_path, 'r', encoding='utf-8') as f:
         questions = json.load(f)
-        logger.info(f"Loaded {len(questions)} questions from {file_path}")
+        logger.info(S.LOADED_QUESTIONS.format(count=len(questions), file_path=file_path))
         return questions
 
 
@@ -49,7 +50,7 @@ def _load_ground_truth(file_path: str = config.METADATA_FILE, logger: Logger = N
                         "answer": answer
                     }
     except Exception as e:
-        logger.error(f"Error loading ground truth: {e}")
+        logger.error(S.ERROR_LOADING_GROUND_TRUTH.format(error=e))
     return truth_mapping
 
 
@@ -63,8 +64,8 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
     """
     logger = logger or ConsoleLogger()
     ground_truth = _load_ground_truth(logger=logger)
-    logger.info("=== Verification Results ===")
-    logger.info(f"Verifying {len(results)} results against {len(ground_truth)} ground truth entries")
+    logger.info(S.VERIFICATION_HEADER)
+    logger.info(S.VERIFYING_RESULTS.format(results=len(results), truth=len(ground_truth)))
 
     correct_count = 0
     total_count = 0
@@ -85,21 +86,19 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
 
             # Stream to logger (q_num is 1-based index)
             if is_correct:
-                logger.success(f"Q{q_num}: ✓ Correct")
+                logger.success(S.QUESTION_CORRECT.format(num=q_num))
             else:
-                logger.error(f"Q{q_num}: ✗ Incorrect (expected: {correct_answer}, got: {answer})")
+                logger.error(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
         else:
-            logger.warning(f"Q{q_num}: No ground truth found")
+            logger.warning(S.QUESTION_NO_TRUTH.format(num=q_num))
 
     # Add summary statistics
     if total_count > 0:
         accuracy = (correct_count / total_count) * 100
-        summary = f"SUMMARY: {correct_count}/{total_count} correct ({accuracy:.1f}%)"
-        logger.result(summary)
+        logger.result(S.SUMMARY.format(correct=correct_count, total=total_count, accuracy=accuracy))
         if runtime:
             minutes, seconds = runtime
-            runtime_str = f"Runtime: {minutes}m {seconds}s"
-            logger.info(runtime_str)
+            logger.info(S.RUNTIME.format(minutes=minutes, seconds=seconds))
 
 
 def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
@@ -118,36 +117,36 @@ def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
     logger = logger or ConsoleLogger()
 
     start_time = time.time()
-    logger.info("=== Processing GAIA Questions ===")
+    logger.info(S.PROCESSING_HEADER)
 
     # Fetch questions (OFFLINE for testing)
     try:
         questions_data = load_questions(logger=logger)
     except Exception as e:
-        logger.error(f"Error loading questions: {e}")
+        logger.error(S.ERROR_LOADING_QUESTIONS.format(error=e))
         return
 
     # Validate questions data
     try:
         questions_data = InputValidator.validate_questions_data(questions_data)
     except ValidationError as e:
-        logger.error(f"Invalid questions data: {e}")
+        logger.error(S.INVALID_QUESTIONS_DATA.format(error=e))
         return
 
     # Validate and apply filter
     try:
         filter = InputValidator.validate_filter_indices(filter, len(questions_data))
     except ValidationError as e:
-        logger.error(f"Invalid filter: {e}")
+        logger.error(S.INVALID_FILTER.format(error=e))
         return
 
     # Apply filter or use all questions
     if filter is not None:
         questions_to_process = [questions_data[i] for i in filter]
-        logger.info(f"Testing {len(questions_to_process)} selected questions (indices: {filter})")
+        logger.info(S.TESTING_SELECTED.format(count=len(questions_to_process), indices=filter))
     else:
         questions_to_process = questions_data
-        logger.info(f"Testing all {len(questions_to_process)} questions")
+        logger.info(S.TESTING_ALL.format(count=len(questions_to_process)))
 
     # Run agent on selected questions with specified agent type (with Langfuse session tracking)
     with track_session("Test_Run", {
@@ -159,10 +158,10 @@ def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
         results = AgentRunner(active_agent=active_agent, logger=logger).run_on_questions(questions_to_process)
 
     if results is None:
-        logger.error("Error initializing agent.")
+        logger.error(S.ERROR_INITIALIZING_AGENT)
         return
 
-    logger.success("=== Completed GAIA Questions ===")
+    logger.success(S.COMPLETED_HEADER)
 
     # Calculate runtime
     elapsed_time = time.time() - start_time

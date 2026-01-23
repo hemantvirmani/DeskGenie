@@ -19,6 +19,7 @@ from utils import cleanup_answer, extract_text_from_content
 import config
 from langfuse_tracking import track_agent_execution
 from log_streamer import ConsoleLogger, Logger
+from ui_strings import AgentStrings as S
 
 from desktop_tools import get_desktop_tools_list
 
@@ -49,7 +50,7 @@ class ReActLangGraphAgent:
 
         # Validate API keys
         if not os.getenv("GOOGLE_API_KEY"):
-            self.logger.warning("GOOGLE_API_KEY not found - analyze_youtube_video will fail")
+            self.logger.warning(S.GOOGLE_API_KEY_NOT_FOUND)
 
         self.tools = self._get_all_tools()
         self.llm = self._create_llm_client()
@@ -62,9 +63,9 @@ class ReActLangGraphAgent:
         # Add desktop tools
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
-        self.logger.info(f"Loaded {len(desktop_tools)} desktop tools")
+        self.logger.info(S.LOADED_DESKTOP_TOOLS.format(count=len(desktop_tools)))
 
-        self.logger.info(f"Total tools available: {len(tools)}")
+        self.logger.info(S.TOTAL_TOOLS_AVAILABLE.format(count=len(tools)))
         return tools
 
     def _create_llm_client(self):
@@ -103,10 +104,11 @@ class ReActLangGraphAgent:
         Returns:
             The agent's answer as a string
         """
-        self.logger.info("=" * 60)
-        self.logger.step(f"ReAct Agent starting - Question: {question[:100]}{'...' if len(question) > 100 else ''}")
+        self.logger.info(S.LANGGRAPH_SEPARATOR)
+        truncated_q = f"{question[:100]}..." if len(question) > 100 else question
+        self.logger.step(S.REACT_STARTING.format(question=truncated_q))
         if file_name:
-            self.logger.info(f"File: {file_name}")
+            self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))
 
         start_time = time.time()
 
@@ -135,29 +137,29 @@ class ReActLangGraphAgent:
                     # Check if this is a 504 DEADLINE_EXCEEDED error
                     if "504" in error_msg and "DEADLINE_EXCEEDED" in error_msg:
                         if attempt < max_retries:
-                            self.logger.warning(f"Attempt {attempt + 1}/{max_retries} failed with 504 DEADLINE_EXCEEDED")
-                            self.logger.info(f"Retrying in {delay:.1f} seconds...")
+                            self.logger.warning(S.RETRY_ATTEMPT.format(attempt=attempt + 1, max_retries=max_retries))
+                            self.logger.info(S.RETRY_WAITING.format(delay=delay))
                             time.sleep(delay)
                             delay *= config.RETRY_BACKOFF_FACTOR
                             continue
                         else:
-                            self.logger.error(f"All {max_retries} retries exhausted for 504 error")
-                            self.logger.error(f"Agent invocation failed after retries: {e}")
+                            self.logger.error(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))
+                            self.logger.error(S.AGENT_INVOCATION_FAILED_RETRIES.format(error=e))
                             return f"Error: Agent failed after {max_retries} retries - {str(e)[:100]}"
                     else:
                         # Not a 504 error - fail immediately without retry
-                        self.logger.error(f"Agent invocation failed: {e}")
+                        self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
                         return f"Error: Agent failed - {str(e)[:100]}"
 
             elapsed_time = time.time() - start_time
-            self.logger.success(f"ReAct Agent completed in {elapsed_time:.2f}s")
+            self.logger.success(S.REACT_COMPLETED.format(time=elapsed_time))
 
             # Extract the answer from the response
             # LangGraph's create_react_agent returns the last message in the messages list
             messages = response.get("messages", [])
 
             if not messages:
-                self.logger.warning("Agent completed but returned no messages")
+                self.logger.warning(S.REACT_NO_MESSAGES)
                 return "Error: No answer generated"
 
             # Get the last message (the agent's final response)
@@ -173,16 +175,17 @@ class ReActLangGraphAgent:
             answer = extract_text_from_content(content)
 
             if not answer or answer is None:
-                self.logger.warning("Agent completed but returned None as answer")
+                self.logger.warning(S.REACT_NULL_ANSWER)
                 return "Error: No answer generated"
 
             # Clean up the answer using utility function
             answer = cleanup_answer(answer)
 
-            self.logger.result(f"Final answer: {answer[:200]}{'...' if len(answer) > 200 else ''}")
+            truncated_ans = f"{answer[:200]}..." if len(answer) > 200 else answer
+            self.logger.result(S.FINAL_ANSWER.format(answer=truncated_ans))
             return answer
 
         except Exception as e:
             elapsed_time = time.time() - start_time
-            self.logger.error(f"ReAct Agent failed after {elapsed_time:.2f}s: {e}")
+            self.logger.error(S.REACT_FAILED.format(time=elapsed_time, error=e))
             return f"Error: {str(e)[:100]}"

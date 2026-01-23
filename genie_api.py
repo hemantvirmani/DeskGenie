@@ -18,6 +18,7 @@ from agents import MyGAIAAgents
 from question_runner import run_gaia_questions
 from langfuse_tracking import track_session
 from log_streamer import LogStreamer, create_logger
+from ui_strings import APIStrings as S
 
 # Track background tasks for cleanup
 _background_tasks = set()
@@ -153,7 +154,7 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
 
     try:
         tasks_store[task_id]["status"] = "running"
-        logger.info(f"Starting chat task with agent: {agent_type or config.ACTIVE_AGENT}")
+        logger.info(S.STARTING_CHAT_TASK.format(agent=agent_type or config.ACTIVE_AGENT))
 
         # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -173,12 +174,12 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
 
         tasks_store[task_id]["status"] = "completed"
         tasks_store[task_id]["result"] = result
-        logger.success("Chat task completed")
+        logger.success(S.CHAT_COMPLETED)
 
     except Exception as e:
         tasks_store[task_id]["status"] = "error"
         tasks_store[task_id]["error"] = str(e)
-        logger.error(f"Chat task failed: {str(e)}")
+        logger.error(S.CHAT_FAILED.format(error=str(e)))
     finally:
         logger.close()
 
@@ -253,7 +254,7 @@ async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_ty
         # Convert list to tuple if provided
         filter_tuple = tuple(filter_indices) if filter_indices else None
         question_desc = f"indices {filter_indices}" if filter_indices else "all questions"
-        logger.info(f"Starting Benchmark with {question_desc}")
+        logger.info(S.STARTING_BENCHMARK.format(description=question_desc))
 
         # Run benchmark in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -272,12 +273,12 @@ async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_ty
 
         tasks_store[task_id]["status"] = "completed"
         tasks_store[task_id]["result"] = "Benchmark completed - see logs for details"
-        logger.success("Benchmark completed")
+        logger.success(S.BENCHMARK_COMPLETED)
 
     except Exception as e:
         tasks_store[task_id]["status"] = "error"
         tasks_store[task_id]["error"] = str(e)
-        logger.error(f"Benchmark failed: {str(e)}")
+        logger.error(S.BENCHMARK_FAILED.format(error=str(e)))
     finally:
         logger.close()
 

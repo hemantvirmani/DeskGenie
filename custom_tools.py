@@ -17,6 +17,7 @@ from pytube import extract
 from langchain_core.tools import tool
 from langfuse_tracking import track_tool_call
 from log_streamer import ConsoleLogger
+from ui_strings import ToolStrings as S
 
 import pandas as pd
 import speech_recognition as sr
@@ -218,11 +219,11 @@ def websearch(query: str) -> str:
     """
 
     try:
-        _logger.tool(f"websearch called: {query}")
+        _logger.tool(S.WEBSEARCH_CALLED.format(query=query))
         with DDGS() as ddgs:
             results = ddgs.text(query, max_results=5, timelimit='y')  # Limit to past year for faster results
             if results:
-                _logger.info(f"websearch results: {len(results)}")
+                _logger.info(S.WEBSEARCH_RESULTS.format(count=len(results)))
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
             return "No results found. Try search with a different query."
     except Exception as e:
@@ -236,7 +237,7 @@ def wiki_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        _logger.tool(f"wiki_search called: {query}")
+        _logger.tool(S.WIKI_SEARCH_CALLED.format(query=query))
 
         search_docs = WikipediaLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
@@ -244,7 +245,7 @@ def wiki_search(query: str) -> str:
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content}\n</Document>'
                 for doc in search_docs
             ])
-        _logger.info(f"wiki_results: {len(formatted_search_docs)} characters")
+        _logger.info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
         return {"wiki_results": formatted_search_docs}
     except Exception as e:
         return f"Error performing wikipedia search: {e}. try again."
@@ -257,7 +258,7 @@ def arvix_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        _logger.tool(f"arvix_search called: {query}")
+        _logger.tool(S.ARXIV_SEARCH_CALLED.format(query=query))
 
         search_docs = ArxivLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
@@ -266,7 +267,7 @@ def arvix_search(query: str) -> str:
                 for doc in search_docs
             ])
 
-        _logger.info(f"arvix_results: {len(formatted_search_docs)} characters")
+        _logger.info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
         return {"arvix_results": formatted_search_docs}
     except Exception as e:
         return f"Error performing arxiv search: {e}. try again."
@@ -279,7 +280,7 @@ def get_youtube_transcript(page_url: str) -> str:
     Args:
         page_url (str): YouTube URL of the video
     """
-    _logger.tool(f"get_youtube_transcript called: {page_url}")
+    _logger.tool(S.YOUTUBE_TRANSCRIPT_CALLED.format(url=page_url))
 
     try:
         # get video ID from URL
@@ -291,10 +292,10 @@ def get_youtube_transcript(page_url: str) -> str:
 
         # keep only text
         txt = '\n'.join([s.text for s in transcript.snippets])
-        _logger.info(f"youtube_transcript: {len(txt)} characters")
+        _logger.info(S.YOUTUBE_TRANSCRIPT_RESULT.format(count=len(txt)))
         return txt
     except Exception as e:
-        msg = f"get_youtube_transcript failed: {e}"
+        msg = S.YOUTUBE_TRANSCRIPT_ERROR.format(url=page_url, error=e)
         _logger.error(msg)
         return msg
 
@@ -311,7 +312,7 @@ def get_webpage_content(page_url: str) -> str:
    """
 
     try:
-        _logger.tool(f"get_webpage_content called: with url {page_url}")
+        _logger.tool(S.WEBPAGE_CONTENT_CALLED.format(url=page_url))
         r = requests.get(page_url, timeout=30)  # Add 30s timeout
         r.raise_for_status()
         text = ""
@@ -329,7 +330,7 @@ def get_webpage_content(page_url: str) -> str:
             else:
                 # return the raw content
                 text = r.text
-        _logger.info(f"webpage_content: {len(text)} characters")
+        _logger.info(S.WEBPAGE_CONTENT_RESULT.format(count=len(text)))
         return text
     except Exception as e:
         return f"get_webpage_content failed: {e}"
@@ -349,7 +350,7 @@ def read_excel_file(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(f"read_excel_file called: with file {file_name}")
+        _logger.tool(S.READ_EXCEL_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
@@ -379,7 +380,7 @@ def read_python_script(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(f"read_python_script called: with file {file_name}")
+        _logger.tool(S.READ_PYTHON_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='text')
@@ -406,7 +407,7 @@ def parse_audio_file(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(f"parse_audio_file called: with file {file_name}")
+        _logger.tool(S.PARSE_AUDIO_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
@@ -447,7 +448,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
     """
 
     try:
-        _logger.tool(f"analyze_youtube_video called: {youtube_url} with question: {question}")
+        _logger.tool(S.ANALYZE_YOUTUBE_CALLED.format(url=youtube_url, question=question))
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -472,7 +473,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
         )
         return response.text
     except Exception as e:
-        error_msg = f"Error analyzing video: {str(e)[:config.QUESTION_PREVIEW_LENGTH]}"
+        error_msg = S.ANALYZE_YOUTUBE_ERROR.format(url=youtube_url, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
         _logger.error(error_msg)
         return error_msg
 
@@ -492,7 +493,7 @@ def analyze_image(question: str, file_name: str) -> str:
     """
 
     try:
-        _logger.tool(f"analyze_image called: {file_name} with question: {question}")
+        _logger.tool(S.ANALYZE_IMAGE_CALLED.format(file_name=file_name, question=question))
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -525,7 +526,7 @@ def analyze_image(question: str, file_name: str) -> str:
         return response.text
 
     except Exception as e:
-        error_msg = f"Error analyzing image: {str(e)[:config.QUESTION_PREVIEW_LENGTH]}"
+        error_msg = S.ANALYZE_IMAGE_ERROR.format(file_name=file_name, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
         _logger.error(error_msg)
         return error_msg
 

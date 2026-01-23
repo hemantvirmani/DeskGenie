@@ -27,6 +27,7 @@ import config
 from desktop_tools import get_desktop_tools_list
 from langfuse_tracking import track_agent_execution, track_llm_call
 from log_streamer import ConsoleLogger, Logger
+from ui_strings import AgentStrings as S
 
 # Suppress BeautifulSoup GuessedAtParserWarning
 try:
@@ -56,7 +57,7 @@ class LangGraphAgent:
 
         # Validate API keys
         if not os.getenv("GOOGLE_API_KEY"):
-            self.logger.warning("GOOGLE_API_KEY not found - analyze_youtube_video will fail")
+            self.logger.warning(S.GOOGLE_API_KEY_NOT_FOUND)
 
         self.tools = self._get_all_tools()
         self.llm_client_with_tools = self._create_llm_client()
@@ -69,9 +70,9 @@ class LangGraphAgent:
         # Add desktop tools
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
-        self.logger.info(f"Loaded {len(desktop_tools)} desktop tools")
+        self.logger.info(S.LOADED_DESKTOP_TOOLS.format(count=len(desktop_tools)))
 
-        self.logger.info(f"Total tools available: {len(tools)}")
+        self.logger.info(S.TOTAL_TOOLS_AVAILABLE.format(count=len(tools)))
         return tools
 
     def _create_llm_client(self, model_provider: str = "google"):
@@ -125,7 +126,7 @@ class LangGraphAgent:
 
         # Track and log current step
         current_step = state.get("step_count", 0) + 1
-        self.logger.step(f"Step {current_step}: Calling LLM with {len(state['messages'])} messages")
+        self.logger.step(S.STEP_CALLING_LLM.format(step=current_step, count=len(state['messages'])))
 
         # Invoke LLM with tools enabled, with retry logic for 504 errors
         max_retries = config.MAX_RETRIES
@@ -142,14 +143,14 @@ class LangGraphAgent:
                 # Check if this is a 504 DEADLINE_EXCEEDED error
                 if "504" in error_msg and "DEADLINE_EXCEEDED" in error_msg:
                     if attempt < max_retries:
-                        self.logger.warning(f"Attempt {attempt + 1}/{max_retries} failed with 504 DEADLINE_EXCEEDED")
-                        self.logger.info(f"Retrying in {delay:.1f} seconds...")
+                        self.logger.warning(S.RETRY_ATTEMPT.format(attempt=attempt + 1, max_retries=max_retries))
+                        self.logger.info(S.RETRY_WAITING.format(delay=delay))
                         time.sleep(delay)
                         delay *= config.RETRY_BACKOFF_FACTOR
                         continue
                     else:
-                        self.logger.error(f"All {max_retries} retries exhausted for 504 error")
-                        self.logger.error(f"LLM invocation failed after retries: {e}")
+                        self.logger.error(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))
+                        self.logger.error(S.LLM_INVOCATION_FAILED_RETRIES.format(error=e))
                         return {
                             "messages": [],
                             "answer": f"Error: LLM failed after {max_retries} retries - {str(e)[:100]}",
@@ -157,7 +158,7 @@ class LangGraphAgent:
                         }
                 else:
                     # Not a 504 error - fail immediately without retry
-                    self.logger.error(f"LLM invocation failed: {e}")
+                    self.logger.error(S.LLM_INVOCATION_FAILED.format(error=e))
                     return {
                         "messages": [],
                         "answer": f"Error: LLM failed - {str(e)[:100]}",
@@ -167,7 +168,7 @@ class LangGraphAgent:
         # If no tool calls, set the final answer
         if not response.tool_calls:
             content = response.content
-            self.logger.info("Agent produced answer (no more tool calls)")
+            self.logger.info(S.LANGGRAPH_NO_MORE_TOOLS)
 
             # Handle case where content is a list (e.g. mixed content from Gemini)
             if isinstance(content, list):
@@ -201,7 +202,8 @@ class LangGraphAgent:
             }
 
         # Has tool calls, log them
-        self.logger.tool(f"Agent requesting {len(response.tool_calls)} tool(s): {', '.join(tc['name'] for tc in response.tool_calls)}")
+        tools_list = ', '.join(tc['name'] for tc in response.tool_calls)
+        self.logger.tool(S.LANGGRAPH_REQUESTING_TOOLS.format(count=len(response.tool_calls), tools=tools_list))
 
         return {
             "messages": [response],
@@ -216,7 +218,7 @@ class LangGraphAgent:
 
         # Stop if we've exceeded maximum steps
         if step_count >= 40:  # Increased from 25 to handle complex multi-step reasoning
-            self.logger.warning("Max steps (40) reached, forcing termination")
+            self.logger.warning(S.LANGGRAPH_MAX_STEPS)
             # Force a final answer if we don't have one
             if not state.get("answer"):
                 state["answer"] = "Error: Maximum iteration limit reached"
@@ -255,10 +257,11 @@ class LangGraphAgent:
             file_name: Optional file name if the question references a file
         """
 
-        self.logger.info("=" * 60)
-        self.logger.step(f"LangGraph Agent starting - Question: {question[:100]}{'...' if len(question) > 100 else ''}")
+        self.logger.info(S.LANGGRAPH_SEPARATOR)
+        truncated_q = f"{question[:100]}..." if len(question) > 100 else question
+        self.logger.step(S.LANGGRAPH_STARTING.format(question=truncated_q))
         if file_name:
-            self.logger.info(f"File: {file_name}")
+            self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))
 
         start_time = time.time()
 
@@ -269,11 +272,11 @@ class LangGraphAgent:
             )
 
             elapsed_time = time.time() - start_time
-            self.logger.success(f"LangGraph Agent completed in {elapsed_time:.2f}s")
+            self.logger.success(S.LANGGRAPH_COMPLETED.format(time=elapsed_time))
 
             answer = response.get("answer")
             if not answer or answer is None:
-                self.logger.warning("Agent completed but returned None as answer")
+                self.logger.warning(S.LANGGRAPH_NULL_ANSWER)
                 return "Error: No answer generated"
 
             # Use utility function to extract text from various content formats
@@ -282,10 +285,11 @@ class LangGraphAgent:
             # Clean up the answer using utility function (includes stripping)
             answer = cleanup_answer(answer)
 
-            self.logger.result(f"Final answer: {answer[:200]}{'...' if len(answer) > 200 else ''}")
+            truncated_ans = f"{answer[:200]}..." if len(answer) > 200 else answer
+            self.logger.result(S.FINAL_ANSWER.format(answer=truncated_ans))
             return answer
 
         except Exception as e:
             elapsed_time = time.time() - start_time
-            self.logger.error(f"LangGraph Agent failed after {elapsed_time:.2f}s: {e}")
+            self.logger.error(S.LANGGRAPH_FAILED.format(time=elapsed_time, error=e))
             return f"Error: {str(e)[:100]}"
