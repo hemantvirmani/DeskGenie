@@ -29,6 +29,8 @@ class ToolReturns:
 
     # Time
     TIME_RESULT = "The current local time in {timezone} is: {local_time}"
+    WIKI_RESULTS = "wiki_results"
+    ARVIX_RESULTS = "arvix_results"
 
 
 class DesktopToolReturns:

@@ -1,7 +1,7 @@
 ---
 title: DeskGenie - Desktop AI Agent
 emoji: 🧞‍♂️
-app_file: app.py
+app_file: app/main.py
 ---
 
 # DeskGenie 🧞‍♂️
@@ -90,7 +90,7 @@ export LANGFUSE_SECRET_KEY="sk-lf-..."
 
 ```bash
 # Terminal 1 - Backend
-python app.py
+python app/main.py
 
 # Terminal 2 - Frontend
 cd frontend
@@ -109,7 +109,7 @@ npm run build
 cd ..
 
 # Start server (serves both API and frontend)
-python app.py
+python app/main.py
 ```
 Open http://localhost:8000
 
@@ -264,11 +264,39 @@ organize_files_by_type.invoke({
 
 ```
 DeskGenie/
-├── app.py                  # Main application entry point
-├── genie_api.py            # FastAPI backend (REST API)
-├── config.py               # Configuration settings
-├── agents.py               # Agent wrapper/factory
-├── agent_runner.py         # Execution orchestrator
+├── app/
+│   ├── main.py             # Main application entry point (renamed from app.py)
+│   ├── config.py           # Configuration settings
+│   └── genie_api.py        # FastAPI backend (REST API)
+│
+├── agents/
+│   ├── agents.py           # Agent wrapper/factory
+│   ├── langgraphagent.py   # Custom LangGraph agent
+│   └── reactlanggraphagent.py # LangGraph ReAct agent
+│
+├── tools/
+│   ├── custom_tools.py     # Web search, analysis tools
+│   └── desktop_tools.py    # PDF, image, file, document, media tools
+│
+├── utils/
+│   ├── utils.py            # Helper functions
+│   ├── langfuse_tracking.py # Observability
+│   ├── log_streamer.py     # Logging functionality
+│   ├── result_formatter.py # Result formatting utilities
+│   └── validators.py       # Input validation utilities
+│
+├── runners/
+│   ├── agent_runner.py     # Execution orchestrator
+│   └── question_runner.py  # Benchmark runner
+│
+├── resources/
+│   ├── state_strings.py    # State-related strings
+│   ├── error_strings.py    # Error messages
+│   ├── ui_strings.py       # UI-related strings
+│   └── system_prompt.py    # Agent instructions
+│
+├── external/
+│   └── scorer.py           # Third-party GAIA scorer
 │
 ├── frontend/               # React + Tailwind CSS frontend
 │   ├── src/
@@ -278,20 +306,9 @@ DeskGenie/
 │   ├── package.json        # Node.js dependencies
 │   └── vite.config.js      # Vite bundler config
 │
-├── DESKTOP TOOLS:
-├── desktop_tools.py        # PDF, image, file, document, media tools
-│
-├── ORIGINAL GAIA TOOLS:
-├── custom_tools.py         # Web search, analysis tools
-├── system_prompt.py        # Agent instructions
-│
-├── AGENT IMPLEMENTATIONS:
-├── langgraphagent.py       # Custom LangGraph agent
-├── reactlanggraphagent.py  # LangGraph ReAct agent
-│
-├── UTILITIES:
-├── utils.py                # Helper functions
-├── langfuse_tracking.py    # Observability
+├── files/                  # Data files
+│   ├── metadata.jsonl      # Metadata
+│   └── questions.json      # Benchmark questions
 │
 ├── requirements.txt        # Python dependencies
 └── README.md               # This file
@@ -303,19 +320,19 @@ DeskGenie retains full GAIA benchmark capabilities. To run benchmark evaluations
 
 ```bash
 # Run all benchmark questions
-python app.py --test all
+python app/main.py --test all
 
 # Run default filter (quick test)
-python app.py --test
+python app/main.py --test
 
 # Run specific question indices
-python app.py --test 2,4,6
+python app/main.py --test 2,4,6
 
 # Run a single query (same as UI chat)
-python app.py --testq "What is the capital of France?"
+python app/main.py --testq "What is the capital of France?"
 
 # Use a specific agent
-python app.py --test all --agent reactlangg
+python app/main.py --test all --agent reactlangg
 ```
 
 See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAIA_Benchmark_Agent) for benchmark details.

@@ -248,7 +248,7 @@ def wiki_search(query: str) -> str:
                 for doc in search_docs
             ])
         _logger.info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
-        return {"wiki_results": formatted_search_docs}
+        return {TR.WIKI_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.WIKI_SEARCH.format(error=e)
 
@@ -270,7 +270,7 @@ def arvix_search(query: str) -> str:
             ])
 
         _logger.info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
-        return {"arvix_results": formatted_search_docs}
+        return {TR.ARVIX_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.ARXIV_SEARCH.format(error=e)
 
