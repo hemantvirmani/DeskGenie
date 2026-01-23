@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Play, Settings, MessageSquare, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 
@@ -11,6 +11,12 @@ function App() {
   const [showLogsPanel, setShowLogsPanel] = useState(false)
   const [logs, setLogs] = useState([])
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false)
+  const logsEndRef = useRef(null)
+
+  // Auto-scroll logs panel when new logs arrive
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [logs])
 
   useEffect(() => {
     // Fetch config on mount
@@ -294,6 +300,7 @@ function App() {
                         {log.message}
                       </div>
                     ))}
+                    <div ref={logsEndRef} />
                   </div>
                 )}
               </div>
