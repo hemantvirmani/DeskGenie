@@ -58,6 +58,7 @@ class AgentRunner:
 
                 self.logger.result(f"Task {task_id}: {answer[:100]}{'...' if len(str(answer)) > 100 else ''}")
                 self.logger.info(f"Question: {question_text}")
+                results.append((task_id, question_text, answer))
             except Exception as e:
                 self.logger.error(f"Exception running agent on task {task_id}: {e}")
                 error_msg = f"AGENT ERROR: {str(e)[:config.ERROR_MESSAGE_LENGTH]}"

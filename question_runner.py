@@ -64,12 +64,13 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
     logger = logger or ConsoleLogger()
     ground_truth = _load_ground_truth(logger=logger)
     logger.info("=== Verification Results ===")
+    logger.info(f"Verifying {len(results)} results against {len(ground_truth)} ground truth entries")
 
     correct_count = 0
     total_count = 0
 
-    for task_id, question_text, answer in results:
-        q_num = total_count + 1  # 1-based question number
+    for idx, (task_id, _question_text, answer) in enumerate(results):
+        q_num = idx + 1  # 1-based question number
         if task_id in ground_truth:
             truth_data = ground_truth[task_id]
             correct_answer = truth_data["answer"]
@@ -117,7 +118,7 @@ def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
     logger = logger or ConsoleLogger()
 
     start_time = time.time()
-    logger.info("=== Processing Example Questions One by One ===")
+    logger.info("=== Processing GAIA Questions ===")
 
     # Fetch questions (OFFLINE for testing)
     try:
@@ -161,7 +162,7 @@ def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
         logger.error("Error initializing agent.")
         return
 
-    logger.success("=== Completed Example Questions ===")
+    logger.success("=== Completed GAIA Questions ===")
 
     # Calculate runtime
     elapsed_time = time.time() - start_time
