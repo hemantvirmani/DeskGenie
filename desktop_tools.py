@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Optional
 from langchain_core.tools import tool
 from langfuse_tracking import track_tool_call
+from state_strings import DesktopToolReturns as DTR
+from error_strings import DesktopToolErrors as DTE
 
 # PDF handling
 import fitz  # PyMuPDF
@@ -64,7 +66,7 @@ def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         pages_to_extract = _parse_page_range(page_range, total_pages)
 
         if not pages_to_extract:
-            return f"Error: Invalid page range '{page_range}'. Total pages: {total_pages}"
+            return DTE.PDF_INVALID_PAGE_RANGE.format(page_range=page_range, total_pages=total_pages)
 
         for page_num in pages_to_extract:
             writer.add_page(reader.pages[page_num])
@@ -72,10 +74,10 @@ def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         with open(output_pdf, "wb") as f:
             writer.write(f)
 
-        return f"Successfully extracted pages {page_range} from '{input_pdf}' to '{output_pdf}' ({len(pages_to_extract)} pages)"
+        return DTR.PDF_EXTRACT_SUCCESS.format(page_range=page_range, input_pdf=input_pdf, output_pdf=output_pdf, pages_count=len(pages_to_extract))
 
     except Exception as e:
-        return f"Error extracting PDF pages: {e}"
+        return DTE.PDF_EXTRACT.format(error=e)
 
 
 @tool
@@ -103,7 +105,7 @@ def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         pages_to_delete = set(_parse_page_range(page_range, total_pages))
 
         if not pages_to_delete:
-            return f"Error: Invalid page range '{page_range}'. Total pages: {total_pages}"
+            return DTE.PDF_INVALID_PAGE_RANGE.format(page_range=page_range, total_pages=total_pages)
 
         pages_kept = 0
         for i in range(total_pages):
@@ -112,15 +114,15 @@ def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
                 pages_kept += 1
 
         if pages_kept == 0:
-            return "Error: Cannot delete all pages from PDF"
+            return DTE.PDF_DELETE_ALL
 
         with open(output_pdf, "wb") as f:
             writer.write(f)
 
-        return f"Successfully deleted pages {page_range} from '{input_pdf}'. Saved to '{output_pdf}' ({pages_kept} pages remaining)"
+        return DTR.PDF_DELETE_SUCCESS.format(page_range=page_range, input_pdf=input_pdf, output_pdf=output_pdf, pages_kept=pages_kept)
 
     except Exception as e:
-        return f"Error deleting PDF pages: {e}"
+        return DTE.PDF_DELETE.format(error=e)
 
 
 @tool
@@ -145,7 +147,7 @@ def pdf_merge(pdf_files: str, output_pdf: str) -> str:
 
         for pdf_path in file_list:
             if not os.path.exists(pdf_path):
-                return f"Error: File not found: {pdf_path}"
+                return DTE.PDF_FILE_NOT_FOUND.format(pdf_path=pdf_path)
 
             reader = PdfReader(pdf_path)
             for page in reader.pages:
@@ -155,10 +157,10 @@ def pdf_merge(pdf_files: str, output_pdf: str) -> str:
         with open(output_pdf, "wb") as f:
             writer.write(f)
 
-        return f"Successfully merged {len(file_list)} PDFs into '{output_pdf}' ({total_pages} total pages)"
+        return DTR.PDF_MERGE_SUCCESS.format(count=len(file_list), output_pdf=output_pdf, total_pages=total_pages)
 
     except Exception as e:
-        return f"Error merging PDFs: {e}"
+        return DTE.PDF_MERGE.format(error=e)
 
 
 @tool
@@ -197,10 +199,10 @@ def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
                 writer.write(f)
             created_files.append(output_path)
 
-        return f"Successfully split '{input_pdf}' into {len(created_files)} files in '{output_dir}'"
+        return DTR.PDF_SPLIT_SUCCESS.format(input_pdf=input_pdf, count=len(created_files), output_dir=output_dir)
 
     except Exception as e:
-        return f"Error splitting PDF: {e}"
+        return DTE.PDF_SPLIT.format(error=e)
 
 
 @tool
@@ -236,10 +238,10 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
             created_files.append(output_path)
 
         doc.close()
-        return f"Successfully converted {len(created_files)} pages to {image_format.upper()} images in '{output_dir}'"
+        return DTR.PDF_TO_IMAGES_SUCCESS.format(count=len(created_files), format=image_format.upper(), output_dir=output_dir)
 
     except Exception as e:
-        return f"Error converting PDF to images: {e}"
+        return DTE.PDF_TO_IMAGES.format(error=e)
 
 
 # ============================================================================
@@ -292,10 +294,10 @@ def image_convert(input_image: str, output_image: str, quality: int = 85) -> str
         input_size = os.path.getsize(input_image) / 1024  # KB
         output_size = os.path.getsize(output_image) / 1024  # KB
 
-        return f"Successfully converted '{input_image}' ({input_size:.1f}KB) to '{output_image}' ({output_size:.1f}KB)"
+        return DTR.IMAGE_CONVERT_SUCCESS.format(input_image=input_image, input_size=input_size, output_image=output_image, output_size=output_size)
 
     except Exception as e:
-        return f"Error converting image: {e}"
+        return DTE.IMAGE_CONVERT.format(error=e)
 
 
 @tool
@@ -326,7 +328,7 @@ def image_resize(input_image: str, output_image: str, width: Optional[int] = Non
         original_size = img.size
 
         if width is None and height is None:
-            return "Error: Must specify at least width or height"
+            return DTE.IMAGE_RESIZE_NO_DIMENSIONS
 
         if maintain_aspect:
             if width and height:
@@ -347,10 +349,10 @@ def image_resize(input_image: str, output_image: str, width: Optional[int] = Non
 
         img.save(output_image)
 
-        return f"Successfully resized '{input_image}' from {original_size} to {img.size}"
+        return DTR.IMAGE_RESIZE_SUCCESS.format(input_image=input_image, original_size=original_size, new_size=img.size)
 
     except Exception as e:
-        return f"Error resizing image: {e}"
+        return DTE.IMAGE_RESIZE.format(error=e)
 
 
 @tool
@@ -405,10 +407,10 @@ def image_compress(input_image: str, output_image: str, target_size_kb: int = 50
         img.save(output_image, format='JPEG', quality=best_quality, optimize=True)
         final_size = os.path.getsize(output_image) / 1024
 
-        return f"Compressed '{input_image}' ({original_size:.1f}KB) to '{output_image}' ({final_size:.1f}KB) at quality {best_quality}"
+        return DTR.IMAGE_COMPRESS_SUCCESS.format(input_image=input_image, original_size=original_size, output_image=output_image, final_size=final_size, quality=best_quality)
 
     except Exception as e:
-        return f"Error compressing image: {e}"
+        return DTE.IMAGE_COMPRESS.format(error=e)
 
 
 @tool
@@ -459,10 +461,10 @@ def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "
             except Exception:
                 failed += 1
 
-        return f"Batch conversion complete: {converted} images converted, {failed} failed"
+        return DTR.BATCH_CONVERT_SUCCESS.format(converted=converted, failed=failed)
 
     except Exception as e:
-        return f"Error in batch conversion: {e}"
+        return DTE.BATCH_CONVERT.format(error=e)
 
 
 # ============================================================================
@@ -517,7 +519,7 @@ def batch_rename_files(directory: str, pattern: str, replacement: str, preview_o
                 counter += 1
 
         if not renames:
-            return f"No files matched pattern '{pattern}'"
+            return DTE.BATCH_RENAME_NO_MATCH.format(pattern=pattern)
 
         action = "Would rename" if preview_only else "Renamed"
         result = f"{action} {len(renames)} files:\n" + "\n".join(renames[:20])
@@ -527,7 +529,7 @@ def batch_rename_files(directory: str, pattern: str, replacement: str, preview_o
         return result
 
     except Exception as e:
-        return f"Error in batch rename: {e}"
+        return DTE.BATCH_RENAME.format(error=e)
 
 
 @tool
@@ -591,7 +593,7 @@ def organize_files_by_type(source_dir: str, organize_by: str = "extension") -> s
         return summary
 
     except Exception as e:
-        return f"Error organizing files: {e}"
+        return DTE.FILE_ORGANIZE.format(error=e)
 
 
 @tool
@@ -649,7 +651,7 @@ def find_duplicate_files(directory: str, by_content: bool = False) -> str:
                 duplicates.append(files)
 
         if not duplicates:
-            return "No duplicate files found"
+            return DTR.FILE_NO_DUPLICATES
 
         result = f"Found {len(duplicates)} groups of potential duplicates:\n\n"
         for i, group in enumerate(duplicates[:10], 1):
@@ -665,7 +667,7 @@ def find_duplicate_files(directory: str, by_content: bool = False) -> str:
         return result
 
     except Exception as e:
-        return f"Error finding duplicates: {e}"
+        return DTE.FILE_DUPLICATES.format(error=e)
 
 
 # ============================================================================
@@ -690,10 +692,10 @@ def word_to_pdf(input_docx: str, output_pdf: str) -> str:
 
         docx_to_pdf_convert(input_docx, output_pdf)
 
-        return f"Successfully converted '{input_docx}' to '{output_pdf}'"
+        return DTR.DOCX_TO_PDF_SUCCESS.format(input_docx=input_docx, output_pdf=output_pdf)
 
     except Exception as e:
-        return f"Error converting Word to PDF: {e}"
+        return DTE.DOCX_TO_PDF.format(error=e)
 
 
 @tool
@@ -723,7 +725,7 @@ def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> s
         if output_txt:
             with open(output_txt, 'w', encoding='utf-8') as f:
                 f.write(text)
-            return f"Successfully extracted text to '{output_txt}' ({len(text)} characters)"
+            return DTR.PDF_TEXT_EXTRACT_SUCCESS.format(output_txt=output_txt, char_count=len(text))
 
         # Return first 5000 chars if no output file specified
         if len(text) > 5000:
@@ -731,7 +733,7 @@ def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> s
         return text
 
     except Exception as e:
-        return f"Error extracting text from PDF: {e}"
+        return DTE.PDF_TEXT_EXTRACT.format(error=e)
 
 
 @tool
@@ -751,7 +753,7 @@ def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str 
     """
     try:
         if not TESSERACT_AVAILABLE:
-            return "Error: Tesseract OCR is not installed. Install with: pip install pytesseract and install Tesseract-OCR"
+            return DTE.OCR_NOT_INSTALLED
 
         print(f"ocr_image called: {input_image}")
 
@@ -765,12 +767,12 @@ def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str 
         if output_txt:
             with open(output_txt, 'w', encoding='utf-8') as f:
                 f.write(text)
-            return f"Successfully extracted text to '{output_txt}' ({len(text)} characters)"
+            return DTR.OCR_SUCCESS.format(output_txt=output_txt, char_count=len(text))
 
         return text if text.strip() else "No text detected in image"
 
     except Exception as e:
-        return f"Error performing OCR: {e}"
+        return DTE.OCR_FAILED.format(error=e)
 
 
 # ============================================================================
@@ -799,17 +801,17 @@ def video_to_audio(input_video: str, output_audio: str, audio_format: str = "mp3
 
         if audio is None:
             video.close()
-            return f"Error: Video '{input_video}' has no audio track"
+            return DTE.VIDEO_NO_AUDIO.format(input_video=input_video)
 
         audio.write_audiofile(output_audio, verbose=False, logger=None)
 
         duration = video.duration
         video.close()
 
-        return f"Successfully extracted audio from '{input_video}' to '{output_audio}' (duration: {duration:.1f}s)"
+        return DTR.AUDIO_EXTRACT_SUCCESS.format(input_video=input_video, output_audio=output_audio, duration=duration)
 
     except Exception as e:
-        return f"Error extracting audio: {e}"
+        return DTE.AUDIO_EXTRACT.format(error=e)
 
 
 @tool
@@ -854,10 +856,10 @@ def compress_video(input_video: str, output_video: str, target_size_mb: int = 50
 
         final_size = os.path.getsize(output_video) / (1024 * 1024)
 
-        return f"Compressed '{input_video}' ({original_size:.1f}MB) to '{output_video}' ({final_size:.1f}MB)"
+        return DTR.VIDEO_COMPRESS_SUCCESS.format(input_video=input_video, original_size=original_size, output_video=output_video, final_size=final_size)
 
     except Exception as e:
-        return f"Error compressing video: {e}"
+        return DTE.VIDEO_COMPRESS.format(error=e)
 
 
 @tool
@@ -913,7 +915,7 @@ def get_media_info(file_path: str) -> str:
         return "\n".join(info)
 
     except Exception as e:
-        return f"Error getting media info: {e}"
+        return DTE.MEDIA_INFO.format(error=e)
 
 
 # ============================================================================

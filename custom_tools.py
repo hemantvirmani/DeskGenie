@@ -18,6 +18,8 @@ from langchain_core.tools import tool
 from langfuse_tracking import track_tool_call
 from log_streamer import ConsoleLogger
 from ui_strings import ToolStrings as S
+from state_strings import ToolReturns as TR
+from error_strings import ToolErrors as TE
 
 import pandas as pd
 import speech_recognition as sr
@@ -151,7 +153,7 @@ def divide(a: float, b: float) -> str:
         b: second int
     """
     if b == 0:
-        return "Cannot divide by zero"
+        return TE.DIVIDE_BY_ZERO
     return str(a / b)
 
 @tool
@@ -205,9 +207,9 @@ def get_current_time_in_timezone(timezone: str) -> str:
         tz = pytz.timezone(timezone)
         # Get current time in that timezone
         local_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-        return f"The current local time in {timezone} is: {local_time}"
+        return TR.TIME_RESULT.format(timezone=timezone, local_time=local_time)
     except Exception as e:
-        return f"Error fetching time for timezone '{timezone}': {str(e)}"
+        return TE.TIME_FETCH.format(timezone=timezone, error=str(e))
 
 @tool
 @track_tool_call("websearch")
@@ -225,9 +227,9 @@ def websearch(query: str) -> str:
             if results:
                 _logger.info(S.WEBSEARCH_RESULTS.format(count=len(results)))
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
-            return "No results found. Try search with a different query."
+            return TE.SEARCH_NO_RESULTS
     except Exception as e:
-        return f"Search error (try again): {str(e)}"
+        return TE.SEARCH_FAILED.format(error=str(e))
 
 @tool
 @track_tool_call("wiki_search")
@@ -248,7 +250,7 @@ def wiki_search(query: str) -> str:
         _logger.info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
         return {"wiki_results": formatted_search_docs}
     except Exception as e:
-        return f"Error performing wikipedia search: {e}. try again."
+        return TE.WIKI_SEARCH.format(error=e)
 
 @tool
 @track_tool_call("arvix_search")
@@ -270,7 +272,7 @@ def arvix_search(query: str) -> str:
         _logger.info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
         return {"arvix_results": formatted_search_docs}
     except Exception as e:
-        return f"Error performing arxiv search: {e}. try again."
+        return TE.ARXIV_SEARCH.format(error=e)
 
 @tool
 @track_tool_call("get_youtube_transcript")
@@ -333,7 +335,7 @@ def get_webpage_content(page_url: str) -> str:
         _logger.info(S.WEBPAGE_CONTENT_RESULT.format(count=len(text)))
         return text
     except Exception as e:
-        return f"get_webpage_content failed: {e}"
+        return TE.WEBPAGE_FETCH.format(error=e)
 
 @tool
 @track_tool_call("read_excel_file")
@@ -355,14 +357,14 @@ def read_excel_file(file_name: str) -> str:
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
         if not success:
-            return f"Error: Failed to read Excel file. {data}"
+            return TE.EXCEL_READ.format(data=data)
 
         # Read Excel from bytes
         df = pd.read_excel(BytesIO(data))
         return df.to_markdown(index=False)
 
     except Exception as e:
-        return f"Error: Failed to read the Excel file. Reason: {e}"
+        return TE.EXCEL_READ_REASON.format(error=e)
 
 @tool
 @track_tool_call("read_python_script")
@@ -385,12 +387,12 @@ def read_python_script(file_name: str) -> str:
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='text')
         if not success:
-            return f"Error: Failed to read Python script. {data}"
+            return TE.PYTHON_READ.format(data=data)
 
         return data
 
     except Exception as e:
-        return f"Error: Failed to read the Python script. Reason: {e}"
+        return TE.PYTHON_READ_REASON.format(error=e)
 
 @tool
 @track_tool_call("parse_audio_file")
@@ -412,7 +414,7 @@ def parse_audio_file(file_name: str) -> str:
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
         if not success:
-            return f"Error: Failed to read audio file. {data}"
+            return TE.AUDIO_READ.format(data=data)
 
         # Load audio from bytes
         audio = AudioSegment.from_file(io.BytesIO(data), format="mp3")
@@ -429,11 +431,11 @@ def parse_audio_file(file_name: str) -> str:
         return text
 
     except sr.RequestError as e:
-        return f"Error: Could not request results from Google Web Speech API; {e}"
+        return TE.AUDIO_API.format(error=e)
     except Exception as e:
         if "ffmpeg" in str(e).lower() or "avlib" in str(e).lower():
-            return f"Error: Failed to process audio. Reason: {e}. Ensure ffmpeg is installed and in your system's PATH."
-        return f"Error: Failed to parse the audio file. Reason: {e}"
+            return TE.AUDIO_FFMPEG.format(error=e)
+        return TE.AUDIO_PARSE.format(error=e)
 
 @tool
 @track_tool_call("analyze_youtube_video")
@@ -452,7 +454,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            return "Error: GOOGLE_API_KEY environment variable not set"
+            return TE.API_KEY_NOT_SET
 
         client = genai.Client(api_key=api_key)
 
@@ -497,12 +499,12 @@ def analyze_image(question: str, file_name: str) -> str:
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            return "Error: GOOGLE_API_KEY environment variable not set"
+            return TE.API_KEY_NOT_SET
 
         # Get file content using helper function
         success, image_data = _get_file_content(file_name, mode='binary')
         if not success:
-            return f"Error: Failed to read image file. {image_data}"
+            return TE.IMAGE_READ.format(image_data=image_data)
 
         client = genai.Client(api_key=api_key)
 

@@ -28,6 +28,8 @@ from desktop_tools import get_desktop_tools_list
 from langfuse_tracking import track_agent_execution, track_llm_call
 from log_streamer import ConsoleLogger, Logger
 from ui_strings import AgentStrings as S
+from state_strings import StateKeys as SK, AgentReturns as AR
+from error_strings import AgentErrors as AE
 
 # Suppress BeautifulSoup GuessedAtParserWarning
 try:
@@ -108,16 +110,16 @@ class LangGraphAgent:
         """Initialize the messages in the state with system prompt and user question."""
 
         # Build the question message, including file name if available
-        question_content = state["question"]
-        if state.get("file_name"):
-            question_content += f'\n\nNote: This question references a file: {state["file_name"]}'
+        question_content = state[SK.QUESTION]
+        if state.get(SK.FILE_NAME):
+            question_content += AR.FILE_REFERENCE_NOTE.format(file_name=state[SK.FILE_NAME])
 
         return {
-            "messages": [
+            SK.MESSAGES: [
                     SystemMessage(content=SYSTEM_PROMPT),
                     HumanMessage(content=question_content)
                     ],
-            "step_count": 0  # Initialize step counter
+            SK.STEP_COUNT: 0  # Initialize step counter
                 }
 
     @track_llm_call(config.ACTIVE_AGENT_LLM_MODEL)
@@ -125,8 +127,8 @@ class LangGraphAgent:
         """Assistant node which calls the LLM with tools"""
 
         # Track and log current step
-        current_step = state.get("step_count", 0) + 1
-        self.logger.step(S.STEP_CALLING_LLM.format(step=current_step, count=len(state['messages'])))
+        current_step = state.get(SK.STEP_COUNT, 0) + 1
+        self.logger.step(S.STEP_CALLING_LLM.format(step=current_step, count=len(state[SK.MESSAGES])))
 
         # Invoke LLM with tools enabled, with retry logic for 504 errors
         max_retries = config.MAX_RETRIES
@@ -134,7 +136,7 @@ class LangGraphAgent:
 
         for attempt in range(max_retries + 1):
             try:
-                response = self.llm_client_with_tools.invoke(state["messages"])
+                response = self.llm_client_with_tools.invoke(state[SK.MESSAGES])
                 # Success - break out of retry loop
                 break
             except Exception as e:
@@ -152,17 +154,17 @@ class LangGraphAgent:
                         self.logger.error(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))
                         self.logger.error(S.LLM_INVOCATION_FAILED_RETRIES.format(error=e))
                         return {
-                            "messages": [],
-                            "answer": f"Error: LLM failed after {max_retries} retries - {str(e)[:100]}",
-                            "step_count": current_step
+                            SK.MESSAGES: [],
+                            SK.ANSWER: AE.AGENT_FAILED_RETRIES.format(max_retries=max_retries, error=str(e)[:100]),
+                            SK.STEP_COUNT: current_step
                         }
                 else:
                     # Not a 504 error - fail immediately without retry
                     self.logger.error(S.LLM_INVOCATION_FAILED.format(error=e))
                     return {
-                        "messages": [],
-                        "answer": f"Error: LLM failed - {str(e)[:100]}",
-                        "step_count": current_step
+                        SK.MESSAGES: [],
+                        SK.ANSWER: AE.AGENT_FAILED.format(error=str(e)[:100]),
+                        SK.STEP_COUNT: current_step
                     }
 
         # If no tool calls, set the final answer
@@ -196,9 +198,9 @@ class LangGraphAgent:
             content = content.strip()
 
             return {
-                "messages": [response],
-                "answer": content,
-                "step_count": current_step
+                SK.MESSAGES: [response],
+                SK.ANSWER: content,
+                SK.STEP_COUNT: current_step
             }
 
         # Has tool calls, log them
@@ -206,22 +208,22 @@ class LangGraphAgent:
         self.logger.tool(S.LANGGRAPH_REQUESTING_TOOLS.format(count=len(response.tool_calls), tools=tools_list))
 
         return {
-            "messages": [response],
-            "step_count": current_step
+            SK.MESSAGES: [response],
+            SK.STEP_COUNT: current_step
         }
 
 
     def _should_continue(self, state: AgentState):
         """Check if we should continue or stop based on step count and other conditions."""
 
-        step_count = state.get("step_count", 0)
+        step_count = state.get(SK.STEP_COUNT, 0)
 
         # Stop if we've exceeded maximum steps
         if step_count >= 40:  # Increased from 25 to handle complex multi-step reasoning
             self.logger.warning(S.LANGGRAPH_MAX_STEPS)
             # Force a final answer if we don't have one
-            if not state.get("answer"):
-                state["answer"] = "Error: Maximum iteration limit reached"
+            if not state.get(SK.ANSWER):
+                state[SK.ANSWER] = AE.MAX_ITERATIONS
             return END
 
         # Otherwise use the default tools_condition
@@ -267,17 +269,17 @@ class LangGraphAgent:
 
         try:
             response = self.graph.invoke(
-                {"question": question, "messages": [], "answer": None, "step_count": 0, "file_name": file_name or ""},
+                {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: None, SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
                 config={"recursion_limit": 80}  # Must be >= 2x step limit (40 * 2 = 80)
             )
 
             elapsed_time = time.time() - start_time
             self.logger.success(S.LANGGRAPH_COMPLETED.format(time=elapsed_time))
 
-            answer = response.get("answer")
+            answer = response.get(SK.ANSWER)
             if not answer or answer is None:
                 self.logger.warning(S.LANGGRAPH_NULL_ANSWER)
-                return "Error: No answer generated"
+                return AE.NO_ANSWER
 
             # Use utility function to extract text from various content formats
             answer = extract_text_from_content(answer)
@@ -292,4 +294,4 @@ class LangGraphAgent:
         except Exception as e:
             elapsed_time = time.time() - start_time
             self.logger.error(S.LANGGRAPH_FAILED.format(time=elapsed_time, error=e))
-            return f"Error: {str(e)[:100]}"
+            return AE.GENERIC.format(error=str(e)[:100])

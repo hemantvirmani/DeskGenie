@@ -20,6 +20,8 @@ import config
 from langfuse_tracking import track_agent_execution
 from log_streamer import ConsoleLogger, Logger
 from ui_strings import AgentStrings as S
+from state_strings import AgentReturns as AR
+from error_strings import AgentErrors as AE
 
 from desktop_tools import get_desktop_tools_list
 
@@ -116,7 +118,7 @@ class ReActLangGraphAgent:
             # Build the question with file name if provided
             question_content = question
             if file_name:
-                question_content += f'\n\nNote: This question references a file: {file_name}'
+                question_content += AR.FILE_REFERENCE_NOTE.format(file_name=file_name)
 
             # Invoke the agent graph with retry logic for 504 errors
             max_retries = config.MAX_RETRIES
@@ -145,11 +147,11 @@ class ReActLangGraphAgent:
                         else:
                             self.logger.error(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))
                             self.logger.error(S.AGENT_INVOCATION_FAILED_RETRIES.format(error=e))
-                            return f"Error: Agent failed after {max_retries} retries - {str(e)[:100]}"
+                            return AE.AGENT_FAILED_RETRIES.format(max_retries=max_retries, error=str(e)[:100])
                     else:
                         # Not a 504 error - fail immediately without retry
                         self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
-                        return f"Error: Agent failed - {str(e)[:100]}"
+                        return AE.AGENT_FAILED.format(error=str(e)[:100])
 
             elapsed_time = time.time() - start_time
             self.logger.success(S.REACT_COMPLETED.format(time=elapsed_time))
@@ -160,7 +162,7 @@ class ReActLangGraphAgent:
 
             if not messages:
                 self.logger.warning(S.REACT_NO_MESSAGES)
-                return "Error: No answer generated"
+                return AE.NO_ANSWER
 
             # Get the last message (the agent's final response)
             last_message = messages[-1]
@@ -176,7 +178,7 @@ class ReActLangGraphAgent:
 
             if not answer or answer is None:
                 self.logger.warning(S.REACT_NULL_ANSWER)
-                return "Error: No answer generated"
+                return AE.NO_ANSWER
 
             # Clean up the answer using utility function
             answer = cleanup_answer(answer)
@@ -188,4 +190,4 @@ class ReActLangGraphAgent:
         except Exception as e:
             elapsed_time = time.time() - start_time
             self.logger.error(S.REACT_FAILED.format(time=elapsed_time, error=e))
-            return f"Error: {str(e)[:100]}"
+            return AE.GENERIC.format(error=str(e)[:100])
