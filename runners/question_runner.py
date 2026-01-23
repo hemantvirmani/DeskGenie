@@ -7,13 +7,13 @@ verifying answers against ground truth, and formatting results.
 import json
 import time
 
-import config
-from scorer import question_scorer
-from agent_runner import AgentRunner
-from validators import InputValidator, ValidationError
-from langfuse_tracking import track_session
-from log_streamer import ConsoleLogger, Logger
-from ui_strings import QuestionRunnerStrings as S
+from app import config
+from external.scorer import question_scorer
+from runners.agent_runner import AgentRunner
+from utils.validators import InputValidator, ValidationError
+from utils.langfuse_tracking import track_session
+from utils.log_streamer import ConsoleLogger, Logger
+from resources.ui_strings import QuestionRunnerStrings as S
 
 
 def load_questions(file_path: str = config.QUESTIONS_FILE, logger: Logger = None) -> list:

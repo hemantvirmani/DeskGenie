@@ -1,7 +1,7 @@
 """Agent wrapper module for DeskGenie."""
 
-import config
-from log_streamer import ConsoleLogger, Logger
+from app import config
+from utils.log_streamer import ConsoleLogger, Logger
 
 # All agents are imported lazily to avoid loading unnecessary dependencies
 # and suppress warnings from unused agent implementations
@@ -29,15 +29,15 @@ class MyGAIAAgents:
         self.logger = logger or ConsoleLogger()
 
         if active_agent == config.AGENT_LANGGRAPH:
-            from langgraphagent import LangGraphAgent
+            from agents.langgraphagent import LangGraphAgent
             self.agent = LangGraphAgent(logger=self.logger)
         elif active_agent == config.AGENT_REACT_LANGGRAPH:
-            from reactlanggraphagent import ReActLangGraphAgent
+            from agents.reactlanggraphagent import ReActLangGraphAgent
             self.agent = ReActLangGraphAgent(logger=self.logger)
         else:
             # Default to ReActLangGraph if unknown agent type
             print(f"[WARNING] Unknown agent type '{active_agent}', defaulting to {config.AGENT_REACT_LANGGRAPH}")
-            from reactlanggraphagent import ReActLangGraphAgent
+            from agents.reactlanggraphagent import ReActLangGraphAgent
             self.agent = ReActLangGraphAgent(logger=self.logger)
 
     def __call__(self, question: str, file_name: str = None) -> str:

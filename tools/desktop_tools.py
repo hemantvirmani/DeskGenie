@@ -6,9 +6,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from langchain_core.tools import tool
-from langfuse_tracking import track_tool_call
-from state_strings import DesktopToolReturns as DTR
-from error_strings import DesktopToolErrors as DTE
+from utils.langfuse_tracking import track_tool_call
+from resources.state_strings import DesktopToolReturns as DTR
+from resources.error_strings import DesktopToolErrors as DTE
 
 # PDF handling
 import fitz  # PyMuPDF

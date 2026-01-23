@@ -13,12 +13,12 @@ from typing import Optional
 import uuid
 import os
 
-import config
-from agents import MyGAIAAgents
-from question_runner import run_gaia_questions
-from langfuse_tracking import track_session
-from log_streamer import LogStreamer, create_logger
-from ui_strings import APIStrings as S
+from app import config
+from agents.agents import MyGAIAAgents
+from runners.question_runner import run_gaia_questions
+from utils.langfuse_tracking import track_session
+from utils.log_streamer import LogStreamer, create_logger
+from resources.ui_strings import APIStrings as S
 
 # Track background tasks for cleanup
 _background_tasks = set()

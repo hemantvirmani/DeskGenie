@@ -4,7 +4,7 @@ import time
 import requests
 from typing import Callable, Any
 from functools import wraps
-import config
+from app import config
 
 
 def retry_with_backoff(

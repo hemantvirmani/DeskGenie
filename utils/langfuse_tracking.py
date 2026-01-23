@@ -13,7 +13,7 @@ import time
 from typing import Any, Optional, Dict
 from contextlib import contextmanager
 
-import config
+from app import config
 
 # Langfuse will be imported conditionally
 langfuse = None

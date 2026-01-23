@@ -1,11 +1,11 @@
 """Agent execution functionality for running questions through the GAIA agent."""
 
 from typing import Optional, Tuple, List, Dict
-from agents import MyGAIAAgents
-import config
-from langfuse_tracking import track_question_processing
-from log_streamer import ConsoleLogger, Logger
-from ui_strings import AgentStrings as S
+from agents.agents import MyGAIAAgents
+from app.config import *
+from utils.langfuse_tracking import track_question_processing
+from utils.log_streamer import ConsoleLogger, Logger
+from resources.ui_strings import AgentStrings as S
 
 
 class AgentRunner:

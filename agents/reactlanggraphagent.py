@@ -13,17 +13,17 @@ from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-from custom_tools import get_custom_tools_list
-from system_prompt import SYSTEM_PROMPT
-from utils import cleanup_answer, extract_text_from_content
-import config
-from langfuse_tracking import track_agent_execution
-from log_streamer import ConsoleLogger, Logger
-from ui_strings import AgentStrings as S
-from state_strings import AgentReturns as AR
-from error_strings import AgentErrors as AE
+from tools.custom_tools import get_custom_tools_list
+from resources.system_prompt import SYSTEM_PROMPT
+from utils.utils import cleanup_answer, extract_text_from_content
+from app import config
+from utils.langfuse_tracking import track_agent_execution
+from utils.log_streamer import ConsoleLogger, Logger
+from resources.ui_strings import AgentStrings as S
+from resources.state_strings import AgentReturns as AR
+from resources.error_strings import AgentErrors as AE
 
-from desktop_tools import get_desktop_tools_list
+from tools.desktop_tools import get_desktop_tools_list
 
 # Suppress BeautifulSoup GuessedAtParserWarning
 try:

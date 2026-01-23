@@ -14,10 +14,10 @@ warnings.filterwarnings('ignore', message='.*Invalid file descriptor.*')
 logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 # Import configuration
-import config
+from app import config
 
 # Import benchmark runner
-from question_runner import run_gaia_questions
+from runners.question_runner import run_gaia_questions
 
 # --- Run Modes ---
 class RunMode(Enum):
@@ -45,8 +45,8 @@ def run_single_query(query: str, active_agent: str = None) -> str:
     Returns:
         str: The agent's response
     """
-    from agents import MyGAIAAgents
-    from langfuse_tracking import track_session
+    from agents.agents import MyGAIAAgents
+    from utils.langfuse_tracking import track_session
 
     print(f"\n{'=' * 60}")
     print(f"Query: {query}")
@@ -162,7 +162,7 @@ def main() -> None:
     # Execute based on run mode
     if options.run_mode == RunMode.UI:
         import uvicorn
-        from genie_api import app
+        from app.genie_api import app
 
         print("Launching DeskGenie Web UI...")
         print("  Backend API: http://localhost:8000")

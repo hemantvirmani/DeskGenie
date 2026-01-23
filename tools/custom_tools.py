@@ -8,18 +8,18 @@ import io
 import os
 from google import genai
 from google.genai import types
-import config
+from app import config
 
 from langchain_community.document_loaders import WikipediaLoader
 from langchain_community.document_loaders import ArxivLoader
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import extract
 from langchain_core.tools import tool
-from langfuse_tracking import track_tool_call
-from log_streamer import ConsoleLogger
-from ui_strings import ToolStrings as S
-from state_strings import ToolReturns as TR
-from error_strings import ToolErrors as TE
+from utils.langfuse_tracking import track_tool_call
+from utils.log_streamer import ConsoleLogger
+from resources.ui_strings import ToolStrings as S
+from resources.state_strings import ToolReturns as TR
+from resources.error_strings import ToolErrors as TE
 
 import pandas as pd
 import speech_recognition as sr

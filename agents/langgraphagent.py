@@ -19,17 +19,17 @@ from langgraph.prebuilt import ToolNode
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
-from custom_tools import get_custom_tools_list
-from system_prompt import SYSTEM_PROMPT
-from utils import cleanup_answer, extract_text_from_content
-import config
+from tools.custom_tools import get_custom_tools_list
+from resources.system_prompt import SYSTEM_PROMPT
+from utils.utils import cleanup_answer, extract_text_from_content
+from app import config
 
-from desktop_tools import get_desktop_tools_list
-from langfuse_tracking import track_agent_execution, track_llm_call
-from log_streamer import ConsoleLogger, Logger
-from ui_strings import AgentStrings as S
-from state_strings import StateKeys as SK, AgentReturns as AR
-from error_strings import AgentErrors as AE
+from tools.desktop_tools import get_desktop_tools_list
+from utils.langfuse_tracking import track_agent_execution, track_llm_call
+from utils.log_streamer import ConsoleLogger, Logger
+from resources.ui_strings import AgentStrings as S
+from resources.state_strings import StateKeys as SK, AgentReturns as AR
+from resources.error_strings import AgentErrors as AE
 
 # Suppress BeautifulSoup GuessedAtParserWarning
 try:
