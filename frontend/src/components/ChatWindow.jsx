@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 
-function ChatWindow({ selectedAgent, addLog, setShowLogsPanel }) {
+function ChatWindow({ selectedAgent, addLog, setShowLogsPanel, isRunningBenchmark }) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -161,7 +161,7 @@ function ChatWindow({ selectedAgent, addLog, setShowLogsPanel }) {
       </div>
 
       {/* Input */}
-      <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+      <ChatInput onSendMessage={handleSendMessage} disabled={isLoading || isRunningBenchmark} />
     </div>
   )
 }

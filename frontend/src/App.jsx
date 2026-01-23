@@ -254,6 +254,7 @@ function App() {
               selectedAgent={selectedAgent}
               addLog={addLog}
               setShowLogsPanel={setShowLogsPanel}
+              isRunningBenchmark={isRunningBenchmark}
             />
           </div>
 
