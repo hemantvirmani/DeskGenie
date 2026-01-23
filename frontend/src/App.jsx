@@ -244,14 +244,18 @@ function App() {
         <main className="flex-1 overflow-hidden flex">
           {/* Chat Window */}
           <div className={`flex-1 ${showLogsPanel ? 'border-r border-slate-700' : ''}`}>
-            <ChatWindow selectedAgent={selectedAgent} />
+            <ChatWindow
+              selectedAgent={selectedAgent}
+              addLog={addLog}
+              setShowLogsPanel={setShowLogsPanel}
+            />
           </div>
 
           {/* Logs Panel */}
           {showLogsPanel && (
             <div className="w-96 bg-slate-800 flex flex-col">
               <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-                <h3 className="font-medium text-slate-300">Benchmark Logs</h3>
+                <h3 className="font-medium text-slate-300">Logs</h3>
                 <button
                   onClick={() => setLogs([])}
                   className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
@@ -263,7 +267,7 @@ function App() {
               <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
                 {logs.length === 0 ? (
                   <p className="text-slate-500 text-center mt-8">
-                    Logs will appear here when you run benchmarks
+                    Logs will appear here when you chat or run benchmarks
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -316,18 +320,18 @@ function App() {
 
             <div className="p-4">
               <label className="block text-sm font-medium text-slate-400 mb-2">
-                Enter comma-separated question indices (0-19)
+                Enter comma-separated question numbers (1-20)
               </label>
               <input
                 type="text"
                 value={customIndices}
                 onChange={(e) => setCustomIndices(e.target.value)}
-                placeholder="e.g., 0, 5, 10, 15"
+                placeholder="e.g., 1, 5, 10, 15"
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                 autoFocus
               />
               <p className="text-xs text-slate-500 mt-2">
-                Example: "0, 2, 5" will run questions at indices 0, 2, and 5
+                Example: "1, 3, 6" will run questions
               </p>
             </div>
 

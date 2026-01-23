@@ -69,6 +69,7 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
     total_count = 0
 
     for task_id, question_text, answer in results:
+        q_num = total_count + 1  # 1-based question number
         if task_id in ground_truth:
             truth_data = ground_truth[task_id]
             correct_answer = truth_data["answer"]
@@ -81,13 +82,13 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
                 correct_count += 1
             total_count += 1
 
-            # Stream to logger
+            # Stream to logger (q_num is 1-based index)
             if is_correct:
-                logger.success(f"Task {task_id}: ✓ Correct")
+                logger.success(f"Q{q_num}: ✓ Correct")
             else:
-                logger.error(f"Task {task_id}: ✗ Incorrect (expected: {correct_answer}, got: {answer})")
+                logger.error(f"Q{q_num}: ✗ Incorrect (expected: {correct_answer}, got: {answer})")
         else:
-            logger.warning(f"Task {task_id}: No ground truth found")
+            logger.warning(f"Q{q_num}: No ground truth found")
 
     # Add summary statistics
     if total_count > 0:

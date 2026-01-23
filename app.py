@@ -78,7 +78,7 @@ def _parse_cli_args() -> AppOptions:
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument(
         "--test", type=str, nargs='?', const='default',
-        help="Run GAIA benchmark. Use '--test all' for all questions, '--test' for default filter, or '--test 2,4,6' for specific indices."
+        help="Run GAIA benchmark. Use '--test all' for all questions, '--test' for default filter, or '--test 2,4,6' for specific questions."
     )
     parser.add_argument(
         "--testq", type=str,
@@ -123,11 +123,12 @@ def _parse_cli_args() -> AppOptions:
             test_filter = None  # None means all questions
         else: #we will parse specific indices
             try:
-                test_filter = tuple(int(idx.strip()) for idx in args.test.split(','))
+                # User provides 1-based indices, convert to 0-based
+                test_filter = tuple(int(idx.strip()) - 1 for idx in args.test.split(','))
             except ValueError:
                 return AppOptions(
                     run_mode=RunMode.CLI,
-                    error=f"Invalid test indices '{args.test}'. Use 'all', or comma-separated integers (e.g., 2,4,6)"
+                    error=f"Invalid test indices '{args.test}'. Use 'all', or comma-separated question numbers (e.g., 1,2,3)"
                 )
 
         return AppOptions(

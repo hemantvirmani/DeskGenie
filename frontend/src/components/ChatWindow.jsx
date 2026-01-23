@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 
-function ChatWindow({ selectedAgent }) {
+function ChatWindow({ selectedAgent, addLog, setShowLogsPanel }) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -21,6 +21,10 @@ function ChatWindow({ selectedAgent }) {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
+    // Show logs panel and add initial log
+    if (setShowLogsPanel) setShowLogsPanel(true)
+    if (addLog) addLog(`Chat: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`, 'info')
+
     // Add placeholder for assistant response
     const assistantPlaceholder = { role: 'assistant', content: '', status: 'loading' }
     setMessages(prev => [...prev, assistantPlaceholder])
@@ -38,8 +42,44 @@ function ChatWindow({ selectedAgent }) {
       if (!response.ok) throw new Error('Failed to send message')
 
       const { task_id } = await response.json()
+      if (addLog) addLog(`Task started (ID: ${task_id.slice(0, 8)}...)`, 'info')
 
-      // Poll for response
+      // Connect to SSE stream for real-time logs
+      const eventSource = new EventSource(`/api/task/${task_id}/logs/stream`)
+
+      eventSource.onmessage = (event) => {
+        try {
+          const logEntry = JSON.parse(event.data)
+
+          if (logEntry.error) {
+            if (addLog) addLog(logEntry.error, 'error')
+            return
+          }
+
+          // Map log levels to display types
+          const levelMap = {
+            'info': 'info',
+            'error': 'error',
+            'warning': 'warning',
+            'success': 'success',
+            'tool': 'tool',
+            'step': 'step',
+            'result': 'result',
+            'debug': 'info'
+          }
+
+          const displayType = levelMap[logEntry.level] || 'info'
+          if (addLog) addLog(logEntry.message, displayType)
+        } catch (e) {
+          // Ignore parse errors (might be keepalive)
+        }
+      }
+
+      eventSource.onerror = () => {
+        eventSource.close()
+      }
+
+      // Poll for response (SSE is for logs, polling is for final result)
       const pollInterval = setInterval(async () => {
         try {
           const statusRes = await fetch(`/api/task/${task_id}`)
@@ -47,7 +87,9 @@ function ChatWindow({ selectedAgent }) {
 
           if (statusData.status === 'completed') {
             clearInterval(pollInterval)
+            eventSource.close()
             setIsLoading(false)
+            if (addLog) addLog('Chat completed', 'success')
             setMessages(prev => {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
@@ -58,7 +100,9 @@ function ChatWindow({ selectedAgent }) {
             })
           } else if (statusData.status === 'error') {
             clearInterval(pollInterval)
+            eventSource.close()
             setIsLoading(false)
+            if (addLog) addLog(`Error: ${statusData.error}`, 'error')
             setMessages(prev => {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
@@ -70,7 +114,9 @@ function ChatWindow({ selectedAgent }) {
           }
         } catch (err) {
           clearInterval(pollInterval)
+          eventSource.close()
           setIsLoading(false)
+          if (addLog) addLog(`Error: ${err.message}`, 'error')
           setMessages(prev => {
             const newMessages = [...prev]
             newMessages[newMessages.length - 1] = {
@@ -83,6 +129,7 @@ function ChatWindow({ selectedAgent }) {
       }, 1000)
     } catch (error) {
       setIsLoading(false)
+      if (addLog) addLog(`Error: ${error.message}`, 'error')
       setMessages(prev => {
         const newMessages = [...prev]
         newMessages[newMessages.length - 1] = {
