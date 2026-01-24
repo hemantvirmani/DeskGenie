@@ -311,17 +311,21 @@ class ConsoleLogger:
 Logger = LogStreamer | ConsoleLogger
 
 
-def create_logger(task_id: str, streaming: bool = True) -> Logger:
+def create_logger(task_id: str, streaming: bool = True, console_output: bool = None) -> Logger:
     """Factory function to create the appropriate logger.
 
     Args:
         task_id: Unique identifier for the task
         streaming: If True, create a LogStreamer; if False, create a ConsoleLogger
+        console_output: Whether to also print to console. Defaults to False for streaming, True for CLI.
 
     Returns:
         A logger instance
     """
     if streaming:
-        return LogStreamer.create_or_get(task_id)
+        # Default: no console output for streaming (UI mode)
+        if console_output is None:
+            console_output = False
+        return LogStreamer.create_or_get(task_id, console_output=console_output)
     else:
         return ConsoleLogger(task_id)

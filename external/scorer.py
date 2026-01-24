@@ -17,7 +17,6 @@ def normalize_number_str(number_str: str) -> float:
     try:
         return float(number_str)
     except ValueError:
-        print(f"String {number_str} cannot be normalized to number str.")
         return float("inf")
 
 
@@ -45,13 +44,11 @@ def question_scorer(
 
     # if gt is a number
     if is_float(ground_truth):
-        print(f"Evaluating {model_answer} as a number.")
         normalized_answer = normalize_number_str(model_answer)
         return normalized_answer == float(ground_truth)
 
     # if gt is a list
     elif any(char in ground_truth for char in [",", ";"]):
-        print(f"Evaluating {model_answer} as a comma separated list.")
         # question with the fish: normalization removes punct
 
         gt_elems = split_string(ground_truth)
@@ -80,7 +77,6 @@ def question_scorer(
 
     # if gt is a str
     else:
-        print(f"Evaluating {model_answer} as a string.")
         return normalize_str(model_answer) == normalize_str(ground_truth)
 
 

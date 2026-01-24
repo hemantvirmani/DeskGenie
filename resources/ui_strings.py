@@ -120,6 +120,38 @@ class QuestionRunnerStrings:
     RUNTIME = "Runtime: {minutes}m {seconds}s"
 
 
+class DesktopToolStrings:
+    """Strings for desktop tool operations."""
+
+    # PDF Tools
+    PDF_EXTRACT_PAGES = "pdf_extract_pages: {input_pdf} -> {output_pdf}, pages: {page_range}"
+    PDF_DELETE_PAGES = "pdf_delete_pages: {input_pdf} -> {output_pdf}, delete pages: {page_range}"
+    PDF_MERGE = "pdf_merge: {pdf_files} -> {output_pdf}"
+    PDF_SPLIT = "pdf_split: {input_pdf} -> {output_dir}, {pages_per_split} pages each"
+    PDF_TO_IMAGES = "pdf_to_images: {input_pdf} -> {output_dir}"
+    EXTRACT_TEXT_PDF = "extract_text_from_pdf: {input_pdf}"
+
+    # Image Tools
+    IMAGE_CONVERT = "image_convert: {input_image} -> {output_image}"
+    IMAGE_RESIZE = "image_resize: {input_image} -> {output_image}"
+    IMAGE_COMPRESS = "image_compress: {input_image} -> {output_image}, target: {target_size_kb}KB"
+    BATCH_CONVERT = "batch_convert_images: {input_dir} -> {output_dir}"
+
+    # File Management Tools
+    BATCH_RENAME = "batch_rename_files: {directory}, pattern: {pattern} -> {replacement}"
+    ORGANIZE_FILES = "organize_files_by_type: {source_dir}, by: {organize_by}"
+    FIND_DUPLICATES = "find_duplicate_files: {directory}, by_content: {by_content}"
+
+    # Document Tools
+    WORD_TO_PDF = "word_to_pdf: {input_docx} -> {output_pdf}"
+    OCR_IMAGE = "ocr_image: {input_image}"
+
+    # Media Tools
+    VIDEO_TO_AUDIO = "video_to_audio: {input_video} -> {output_audio}"
+    COMPRESS_VIDEO = "compress_video: {input_video} -> {output_video}, target: {target_size_mb}MB"
+    GET_MEDIA_INFO = "get_media_info: {file_path}"
+
+
 class APIStrings:
     """Strings for API operations."""
 

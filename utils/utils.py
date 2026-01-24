@@ -120,7 +120,6 @@ def extract_text_from_content(content: Any) -> str:
 
     # Fallback for other types
     else:
-        print(f"[WARNING] Content was {type(content)}, converting to string")
         return str(content)
 
 
@@ -146,18 +145,8 @@ def cleanup_answer(answer: Any) -> str:
     # Remove comma separators from numbers (e.g., "1,000" -> "1000")
     if ',' in answer and answer.replace(',', '').replace('.', '').isdigit():
         answer = answer.replace(',', '')
-        print(f"[VALIDATION] Removed comma separators from answer")
 
     # Ensure no trailing/leading whitespace or punctuation
     answer = answer.strip().rstrip('.')
-
-    # Log if answer looks verbose (agent not following instructions)
-    if len(answer) > 100:
-        print(f"[WARNING] Answer appears verbose ({len(answer)} chars). Agent may not be following SYSTEM_PROMPT instructions.")
-        print(f"[WARNING] First 150 chars: {answer[:150]}...")
-
-    # Log if answer looks suspicious (for debugging)
-    if any(char in answer for char in ['{', '}', '[', ']', '`', '*', '#']):
-        print(f"[WARNING] Answer contains suspicious formatting characters: {answer[:100]}")
 
     return answer
