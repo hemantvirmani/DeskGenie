@@ -12,6 +12,41 @@ from enum import Enum
 from collections import deque
 import threading
 
+# Global logger instance - shared across all modules
+# Set once at startup via set_global_logger()
+_global_logger: Optional["Logger"] = None
+_global_logger_lock = threading.Lock()
+
+
+def set_global_logger(logger: "Logger") -> None:
+    """Set the global logger instance.
+
+    This should be called once at application startup:
+    - UI mode: set to LogStreamer for SSE streaming
+    - CLI mode: set to ConsoleLogger for terminal output
+
+    Args:
+        logger: The logger instance to use globally
+    """
+    global _global_logger
+    with _global_logger_lock:
+        _global_logger = logger
+
+
+def get_global_logger() -> "Logger":
+    """Get the global logger instance.
+
+    If no logger has been set, creates a default ConsoleLogger.
+
+    Returns:
+        The global logger instance
+    """
+    global _global_logger
+    with _global_logger_lock:
+        if _global_logger is None:
+            _global_logger = ConsoleLogger(task_id="default")
+        return _global_logger
+
 
 class LogLevel(Enum):
     """Log levels for categorizing messages."""

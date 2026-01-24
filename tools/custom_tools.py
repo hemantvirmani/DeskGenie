@@ -16,7 +16,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import extract
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import ConsoleLogger
+from utils.log_streamer import get_global_logger
 from resources.ui_strings import ToolStrings as S
 from resources.state_strings import ToolReturns as TR
 from resources.error_strings import ToolErrors as TE
@@ -27,9 +27,6 @@ from pydub import AudioSegment
 from pypdf import PdfReader
 from io import BytesIO
 from markdownify import markdownify as md
-
-# Module-level logger for tool functions
-_logger = ConsoleLogger(task_id="tools")
 
 # ============================================================================
 # Helper Functions (must be defined before tools that use them)
@@ -221,11 +218,11 @@ def websearch(query: str) -> str:
     """
 
     try:
-        _logger.tool(S.WEBSEARCH_CALLED.format(query=query))
+        get_global_logger().tool(S.WEBSEARCH_CALLED.format(query=query))
         with DDGS() as ddgs:
             results = ddgs.text(query, max_results=5, timelimit='y')  # Limit to past year for faster results
             if results:
-                _logger.info(S.WEBSEARCH_RESULTS.format(count=len(results)))
+                get_global_logger().info(S.WEBSEARCH_RESULTS.format(count=len(results)))
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
             return TE.SEARCH_NO_RESULTS
     except Exception as e:
@@ -239,7 +236,7 @@ def wiki_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        _logger.tool(S.WIKI_SEARCH_CALLED.format(query=query))
+        get_global_logger().tool(S.WIKI_SEARCH_CALLED.format(query=query))
 
         search_docs = WikipediaLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
@@ -247,7 +244,7 @@ def wiki_search(query: str) -> str:
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content}\n</Document>'
                 for doc in search_docs
             ])
-        _logger.info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
+        get_global_logger().info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
         return {TR.WIKI_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.WIKI_SEARCH.format(error=e)
@@ -260,7 +257,7 @@ def arvix_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        _logger.tool(S.ARXIV_SEARCH_CALLED.format(query=query))
+        get_global_logger().tool(S.ARXIV_SEARCH_CALLED.format(query=query))
 
         search_docs = ArxivLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
@@ -269,7 +266,7 @@ def arvix_search(query: str) -> str:
                 for doc in search_docs
             ])
 
-        _logger.info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
+        get_global_logger().info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
         return {TR.ARVIX_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.ARXIV_SEARCH.format(error=e)
@@ -282,7 +279,7 @@ def get_youtube_transcript(page_url: str) -> str:
     Args:
         page_url (str): YouTube URL of the video
     """
-    _logger.tool(S.YOUTUBE_TRANSCRIPT_CALLED.format(url=page_url))
+    get_global_logger().tool(S.YOUTUBE_TRANSCRIPT_CALLED.format(url=page_url))
 
     try:
         # get video ID from URL
@@ -294,11 +291,11 @@ def get_youtube_transcript(page_url: str) -> str:
 
         # keep only text
         txt = '\n'.join([s.text for s in transcript.snippets])
-        _logger.info(S.YOUTUBE_TRANSCRIPT_RESULT.format(count=len(txt)))
+        get_global_logger().info(S.YOUTUBE_TRANSCRIPT_RESULT.format(count=len(txt)))
         return txt
     except Exception as e:
         msg = S.YOUTUBE_TRANSCRIPT_ERROR.format(url=page_url, error=e)
-        _logger.error(msg)
+        get_global_logger().error(msg)
         return msg
 
 @tool
@@ -314,7 +311,7 @@ def get_webpage_content(page_url: str) -> str:
    """
 
     try:
-        _logger.tool(S.WEBPAGE_CONTENT_CALLED.format(url=page_url))
+        get_global_logger().tool(S.WEBPAGE_CONTENT_CALLED.format(url=page_url))
         r = requests.get(page_url, timeout=30)  # Add 30s timeout
         r.raise_for_status()
         text = ""
@@ -332,7 +329,7 @@ def get_webpage_content(page_url: str) -> str:
             else:
                 # return the raw content
                 text = r.text
-        _logger.info(S.WEBPAGE_CONTENT_RESULT.format(count=len(text)))
+        get_global_logger().info(S.WEBPAGE_CONTENT_RESULT.format(count=len(text)))
         return text
     except Exception as e:
         return TE.WEBPAGE_FETCH.format(error=e)
@@ -352,7 +349,7 @@ def read_excel_file(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(S.READ_EXCEL_CALLED.format(file_name=file_name))
+        get_global_logger().tool(S.READ_EXCEL_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
@@ -382,7 +379,7 @@ def read_python_script(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(S.READ_PYTHON_CALLED.format(file_name=file_name))
+        get_global_logger().tool(S.READ_PYTHON_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='text')
@@ -409,7 +406,7 @@ def parse_audio_file(file_name: str) -> str:
     """
 
     try:
-        _logger.tool(S.PARSE_AUDIO_CALLED.format(file_name=file_name))
+        get_global_logger().tool(S.PARSE_AUDIO_CALLED.format(file_name=file_name))
 
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
@@ -450,7 +447,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
     """
 
     try:
-        _logger.tool(S.ANALYZE_YOUTUBE_CALLED.format(url=youtube_url, question=question))
+        get_global_logger().tool(S.ANALYZE_YOUTUBE_CALLED.format(url=youtube_url, question=question))
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -476,7 +473,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
         return response.text
     except Exception as e:
         error_msg = S.ANALYZE_YOUTUBE_ERROR.format(url=youtube_url, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
-        _logger.error(error_msg)
+        get_global_logger().error(error_msg)
         return error_msg
 
 @tool
@@ -495,7 +492,7 @@ def analyze_image(question: str, file_name: str) -> str:
     """
 
     try:
-        _logger.tool(S.ANALYZE_IMAGE_CALLED.format(file_name=file_name, question=question))
+        get_global_logger().tool(S.ANALYZE_IMAGE_CALLED.format(file_name=file_name, question=question))
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -529,7 +526,7 @@ def analyze_image(question: str, file_name: str) -> str:
 
     except Exception as e:
         error_msg = S.ANALYZE_IMAGE_ERROR.format(file_name=file_name, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
-        _logger.error(error_msg)
+        get_global_logger().error(error_msg)
         return error_msg
 
 # ============================================================================

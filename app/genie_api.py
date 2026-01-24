@@ -25,7 +25,7 @@ from app import config
 from agents.agents import MyGAIAAgents
 from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
-from utils.log_streamer import LogStreamer, create_logger
+from utils.log_streamer import LogStreamer, create_logger, set_global_logger
 from resources.ui_strings import APIStrings as S
 
 # Track background tasks for cleanup
@@ -36,6 +36,8 @@ _background_tasks = set()
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     print("[API] Server starting...")
+    # Set global logger to LogStreamer for UI mode (no console output)
+    set_global_logger(LogStreamer(task_id="global", console_output=False))
     yield
     # Cleanup on shutdown
     print("[API] Server shutting down, cancelling background tasks...")

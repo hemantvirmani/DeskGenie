@@ -7,13 +7,10 @@ from pathlib import Path
 from typing import Optional
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import ConsoleLogger
+from utils.log_streamer import get_global_logger
 from resources.state_strings import DesktopToolReturns as DTR
 from resources.error_strings import DesktopToolErrors as DTE
 from resources.ui_strings import DesktopToolStrings as DTS
-
-# Module-level logger for desktop tool functions
-_logger = ConsoleLogger(task_id="desktop_tools")
 
 # PDF handling
 import fitz  # PyMuPDF
@@ -61,7 +58,7 @@ def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.PDF_EXTRACT_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
+        get_global_logger().tool(DTS.PDF_EXTRACT_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
 
         reader = PdfReader(input_pdf)
         writer = PdfWriter()
@@ -100,7 +97,7 @@ def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.PDF_DELETE_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
+        get_global_logger().tool(DTS.PDF_DELETE_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
 
         reader = PdfReader(input_pdf)
         writer = PdfWriter()
@@ -144,7 +141,7 @@ def pdf_merge(pdf_files: str, output_pdf: str) -> str:
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.PDF_MERGE.format(pdf_files=pdf_files, output_pdf=output_pdf))
+        get_global_logger().tool(DTS.PDF_MERGE.format(pdf_files=pdf_files, output_pdf=output_pdf))
         file_list = [f.strip() for f in pdf_files.split(",")]
         writer = PdfWriter()
         total_pages = 0
@@ -182,7 +179,7 @@ def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
         str: Success message with list of created files
     """
     try:
-        _logger.tool(DTS.PDF_SPLIT.format(input_pdf=input_pdf, output_dir=output_dir, pages_per_split=pages_per_split))
+        get_global_logger().tool(DTS.PDF_SPLIT.format(input_pdf=input_pdf, output_dir=output_dir, pages_per_split=pages_per_split))
 
         os.makedirs(output_dir, exist_ok=True)
         reader = PdfReader(input_pdf)
@@ -225,7 +222,7 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
         str: Success message with number of images created
     """
     try:
-        _logger.tool(DTS.PDF_TO_IMAGES.format(input_pdf=input_pdf, output_dir=output_dir))
+        get_global_logger().tool(DTS.PDF_TO_IMAGES.format(input_pdf=input_pdf, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
         doc = fitz.open(input_pdf)
@@ -267,7 +264,7 @@ def image_convert(input_image: str, output_image: str, quality: int = 85) -> str
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.IMAGE_CONVERT.format(input_image=input_image, output_image=output_image))
+        get_global_logger().tool(DTS.IMAGE_CONVERT.format(input_image=input_image, output_image=output_image))
 
         input_ext = Path(input_image).suffix.lower()
         output_ext = Path(output_image).suffix.lower()
@@ -322,7 +319,7 @@ def image_resize(input_image: str, output_image: str, width: Optional[int] = Non
         str: Success message with old and new dimensions
     """
     try:
-        _logger.tool(DTS.IMAGE_RESIZE.format(input_image=input_image, output_image=output_image))
+        get_global_logger().tool(DTS.IMAGE_RESIZE.format(input_image=input_image, output_image=output_image))
 
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
@@ -374,7 +371,7 @@ def image_compress(input_image: str, output_image: str, target_size_kb: int = 50
         str: Success message with compression results
     """
     try:
-        _logger.tool(DTS.IMAGE_COMPRESS.format(input_image=input_image, output_image=output_image, target_size_kb=target_size_kb))
+        get_global_logger().tool(DTS.IMAGE_COMPRESS.format(input_image=input_image, output_image=output_image, target_size_kb=target_size_kb))
 
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
@@ -433,7 +430,7 @@ def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "
         str: Summary of conversion results
     """
     try:
-        _logger.tool(DTS.BATCH_CONVERT.format(input_dir=input_dir, output_dir=output_dir))
+        get_global_logger().tool(DTS.BATCH_CONVERT.format(input_dir=input_dir, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
         pillow_heif.register_heif_opener()
@@ -491,7 +488,7 @@ def batch_rename_files(directory: str, pattern: str, replacement: str, preview_o
         str: List of renames (preview or completed)
     """
     try:
-        _logger.tool(DTS.BATCH_RENAME.format(directory=directory, pattern=pattern, replacement=replacement))
+        get_global_logger().tool(DTS.BATCH_RENAME.format(directory=directory, pattern=pattern, replacement=replacement))
 
         import fnmatch
         import re
@@ -550,7 +547,7 @@ def organize_files_by_type(source_dir: str, organize_by: str = "extension") -> s
         str: Summary of organization results
     """
     try:
-        _logger.tool(DTS.ORGANIZE_FILES.format(source_dir=source_dir, organize_by=organize_by))
+        get_global_logger().tool(DTS.ORGANIZE_FILES.format(source_dir=source_dir, organize_by=organize_by))
 
         type_mapping = {
             'Images': {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic', '.heif', '.tiff', '.svg'},
@@ -614,7 +611,7 @@ def find_duplicate_files(directory: str, by_content: bool = False) -> str:
         str: List of potential duplicates grouped together
     """
     try:
-        _logger.tool(DTS.FIND_DUPLICATES.format(directory=directory, by_content=by_content))
+        get_global_logger().tool(DTS.FIND_DUPLICATES.format(directory=directory, by_content=by_content))
 
         import hashlib
         from collections import defaultdict
@@ -692,7 +689,7 @@ def word_to_pdf(input_docx: str, output_pdf: str) -> str:
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.WORD_TO_PDF.format(input_docx=input_docx, output_pdf=output_pdf))
+        get_global_logger().tool(DTS.WORD_TO_PDF.format(input_docx=input_docx, output_pdf=output_pdf))
 
         docx_to_pdf_convert(input_docx, output_pdf)
 
@@ -716,7 +713,7 @@ def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> s
         str: Extracted text or success message if saved to file
     """
     try:
-        _logger.tool(DTS.EXTRACT_TEXT_PDF.format(input_pdf=input_pdf))
+        get_global_logger().tool(DTS.EXTRACT_TEXT_PDF.format(input_pdf=input_pdf))
 
         doc = fitz.open(input_pdf)
         text = ""
@@ -759,7 +756,7 @@ def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str 
         if not TESSERACT_AVAILABLE:
             return DTE.OCR_NOT_INSTALLED
 
-        _logger.tool(DTS.OCR_IMAGE.format(input_image=input_image))
+        get_global_logger().tool(DTS.OCR_IMAGE.format(input_image=input_image))
 
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
@@ -798,7 +795,7 @@ def video_to_audio(input_video: str, output_audio: str, audio_format: str = "mp3
         str: Success message or error description
     """
     try:
-        _logger.tool(DTS.VIDEO_TO_AUDIO.format(input_video=input_video, output_audio=output_audio))
+        get_global_logger().tool(DTS.VIDEO_TO_AUDIO.format(input_video=input_video, output_audio=output_audio))
 
         video = VideoFileClip(input_video)
         audio = video.audio
@@ -833,7 +830,7 @@ def compress_video(input_video: str, output_video: str, target_size_mb: int = 50
         str: Success message with compression results
     """
     try:
-        _logger.tool(DTS.COMPRESS_VIDEO.format(input_video=input_video, output_video=output_video, target_size_mb=target_size_mb))
+        get_global_logger().tool(DTS.COMPRESS_VIDEO.format(input_video=input_video, output_video=output_video, target_size_mb=target_size_mb))
 
         video = VideoFileClip(input_video)
         original_size = os.path.getsize(input_video) / (1024 * 1024)  # MB
@@ -879,7 +876,7 @@ def get_media_info(file_path: str) -> str:
         str: Formatted media information
     """
     try:
-        _logger.tool(DTS.GET_MEDIA_INFO.format(file_path=file_path))
+        get_global_logger().tool(DTS.GET_MEDIA_INFO.format(file_path=file_path))
 
         ext = Path(file_path).suffix.lower()
         info = [f"File: {file_path}"]

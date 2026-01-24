@@ -27,6 +27,9 @@ from app import config
 # Import benchmark runner
 from runners.question_runner import run_gaia_questions
 
+# Import logger utilities
+from utils.log_streamer import set_global_logger, ConsoleLogger
+
 # --- Run Modes ---
 class RunMode(Enum):
     UI = "ui"   # Web UI mode (FastAPI + React)
@@ -167,6 +170,10 @@ def main() -> None:
 
     print(f"{'-' * (60 + len(' App Starting '))}\n")
 
+    # Set global logger for CLI mode (UI mode sets it in genie_api.py)
+    if options.run_mode == RunMode.CLI:
+        set_global_logger(ConsoleLogger(task_id="cli"))
+
     # Execute based on run mode
     if options.run_mode == RunMode.UI:
         import uvicorn
@@ -183,8 +190,7 @@ def main() -> None:
         # Single query mode (--testq)
         run_single_query(options.test_query, active_agent=options.active_agent)
 
-    else:
-        # GAIA benchmark mode (--test or --testall)
+    else: # GAIA benchmark mode (--test or --testall)
         filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
         print(f"Running GAIA benchmark on {filter_desc} questions...")
 
