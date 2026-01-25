@@ -1,6 +1,7 @@
 """Configuration settings for DeskGenie - Desktop AI Agent."""
 
 import os
+from resources.state_strings import ModelProviders
 
 # =============================================================================
 # DeskGenie Desktop Agent Configuration
@@ -21,7 +22,7 @@ TOOL_CATEGORIES = {
 }
 
 # =============================================================================
-# GAIA Benchmark Configuration (Original)
+# Configuration (Original)
 # =============================================================================
 
 AGENT_TIMEOUT_SECONDS = 180  # 3 minutes max per question
@@ -46,6 +47,8 @@ SEPARATOR_WIDTH = 60  # Width of separator lines
 
 # Environment Variables
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
 # Agent Type Constants
 AGENT_LANGGRAPH = "LangGraph"
@@ -58,7 +61,11 @@ GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_TEMPERATURE = 0
 GEMINI_MAX_TOKENS = 1024
 
+OLLAMA_QWEN_MODEL = "qwen2.5:14b-instruct"
+HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+
 ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL
+DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3

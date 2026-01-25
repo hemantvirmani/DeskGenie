@@ -12,6 +12,8 @@ warnings.filterwarnings('ignore', module='tf_keras')
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_ollama import ChatOllama
 
 from tools.custom_tools import get_custom_tools_list
 from resources.system_prompt import SYSTEM_PROMPT
@@ -20,7 +22,7 @@ from app import config
 from utils.langfuse_tracking import track_agent_execution
 from utils.log_streamer import ConsoleLogger, Logger
 from resources.ui_strings import AgentStrings as S
-from resources.state_strings import AgentReturns as AR
+from resources.state_strings import AgentReturns as AR, ModelProviders as MP
 from resources.error_strings import AgentErrors as AE
 
 from tools.desktop_tools import get_desktop_tools_list
@@ -70,16 +72,41 @@ class ReActLangGraphAgent:
         self.logger.info(S.TOTAL_TOOLS_AVAILABLE.format(count=len(tools)))
         return tools
 
-    def _create_llm_client(self):
-        """Create and return the LLM client."""
-        apikey = os.getenv("GOOGLE_API_KEY")
+    def _create_llm_client(self, model_provider: str = config.DEFAULT_MODEL_PROVIDER):
+        """Create and return the LLM client with tools bound based on the model provider."""
 
-        return ChatGoogleGenerativeAI(
-            model=config.ACTIVE_AGENT_LLM_MODEL,
-            temperature=config.GEMINI_TEMPERATURE,
-            api_key=apikey,
-            timeout=60
-        )
+        if model_provider == MP.GOOGLE:
+
+            return ChatGoogleGenerativeAI(
+                model=config.ACTIVE_AGENT_LLM_MODEL,
+                temperature=0,
+                api_key=config.GOOGLE_API_KEY,
+                timeout=60  # Add timeout to prevent hanging
+                ).bind_tools(self.tools)
+
+        elif model_provider == MP.HUGGINGFACE:
+
+            llmObject = HuggingFaceEndpoint(
+                repo_id=config.HUGGINGFACE_LLAMA_MODEL,
+                task="text-generation",
+                max_new_tokens=512,
+                temperature=0.7,
+                do_sample=False,
+                repetition_penalty=1.03,
+                huggingfacehub_api_token=config.HUGGINGFACE_API_KEY
+            )
+            return ChatHuggingFace(llm=llmObject).bind_tools(self.tools)
+
+        elif model_provider == MP.OLLAMA:
+            # Ollama runs locally - ensure Ollama server is running with the model pulled
+            # e.g., `ollama serve` then `ollama pull qwen2.5:14b-instruct`
+            return ChatOllama(
+                model=config.OLLAMA_QWEN_MODEL,
+                base_url=config.OLLAMA_BASE_URL,
+                temperature=0,
+                num_ctx=4096,  # Context window size
+            ).bind_tools(self.tools)
+
 
     def _build_agent(self):
         """Build and return the ReAct agent graph using LangGraph's create_react_agent."""

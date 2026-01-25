@@ -17,6 +17,13 @@ class StateKeys:
     FILE_NAME = "file_name"
 
 
+class ModelProviders:
+    """Model provider identifiers for LLM client creation."""
+    GOOGLE = "google"
+    HUGGINGFACE = "huggingface"
+    OLLAMA = "ollama"
+
+
 class AgentReturns:
     """Non-error return strings for agent operations."""
 
