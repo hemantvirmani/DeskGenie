@@ -76,7 +76,7 @@ RETRY_BACKOFF_FACTOR = 2.0
 # Feature Flags
 # =============================================================================
 
-ENABLE_OCR = "true"  # Requires Tesseract
+#None as of now
 
 # =============================================================================
 # Langfuse Observability

@@ -258,7 +258,6 @@ organize_files_by_type.invoke({
 |----------|---------|-------------|
 | `GOOGLE_API_KEY` | - | Google API key for Gemini model |
 | `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
-| `ENABLE_OCR` | `true` | Enable OCR features |
 
 ## Project Structure
 
