@@ -22,7 +22,6 @@ class AgentStrings:
     # LangGraph Agent
     LANGGRAPH_STARTING = "LangGraph Agent starting - Question: {question}"
     LANGGRAPH_FILE = "File: {file_name}"
-    LANGGRAPH_NO_MORE_TOOLS = "Agent produced answer (no more tool calls)"
     LANGGRAPH_REQUESTING_TOOLS = "Agent requesting {count} tool(s): {tools}"
     LANGGRAPH_MAX_STEPS = "Max steps (40) reached, forcing termination"
     LANGGRAPH_NULL_ANSWER = "Agent completed but returned None as answer"

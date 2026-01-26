@@ -176,7 +176,6 @@ class LangGraphAgent:
         # If no tool calls, set the final answer
         if not response.tool_calls:
             content = response.content
-            self.logger.info(S.LANGGRAPH_NO_MORE_TOOLS)
 
             # Handle case where content is a list (e.g. mixed content from Gemini)
             if isinstance(content, list):

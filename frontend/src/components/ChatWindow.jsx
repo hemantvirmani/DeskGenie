@@ -23,6 +23,7 @@ function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark }) {
 
     // Show logs panel and add initial log
     if (setShowLogsPanel) setShowLogsPanel(true)
+    if (addLog) addLog('='.repeat(30), 'info')
     if (addLog) addLog(`Chat: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`, 'info')
 
     // Add placeholder for assistant response

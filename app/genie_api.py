@@ -26,7 +26,7 @@ from app import config
 from agents.agents import MyGAIAAgents
 from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
-from utils.log_streamer import LogStreamer, create_logger, set_global_logger
+from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
 from resources.ui_strings import APIStrings as S
 
 # Track background tasks for cleanup
@@ -163,10 +163,12 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
     """Run agent task in background."""
     logger = create_logger(task_id, streaming=True)
 
+    # Set this task's logger as global so tools can access it
+    previous_logger = get_global_logger()
+    set_global_logger(logger)
+
     try:
         tasks_store[task_id]["status"] = "running"
-        logger.info("=" * 60)
-
         start_time = time.time()
 
         # Run agent in thread pool to avoid blocking with Langfuse tracking
@@ -199,6 +201,8 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
         tasks_store[task_id]["error"] = str(e)
         logger.error(S.CHAT_FAILED.format(error=str(e)))
     finally:
+        # Restore previous global logger
+        set_global_logger(previous_logger)
         logger.close()
 
 @app.get("/api/task/{task_id}", response_model=TaskStatus)
@@ -251,7 +255,7 @@ async def run_benchmark(request: BenchmarkRequest):
     }
 
     # Run benchmark in background (track for cleanup)
-    task = asyncio.create_task(run_benchmark_task(
+    task = asyncio.create_task(run_predefined_task(
         task_id=task_id,
         filter_indices=request.filter_indices,
         agent_type=request.agent_type
@@ -261,10 +265,14 @@ async def run_benchmark(request: BenchmarkRequest):
 
     return BenchmarkResponse(task_id=task_id, status="pending")
 
-async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_type: str = None):
+async def run_predefined_task(task_id: str, filter_indices: list = None, agent_type: str = None):
     """Run benchmark task in background."""
     # Create logger for this task
     logger = create_logger(task_id, streaming=True)
+
+    # Set this task's logger as global so tools can access it
+    previous_logger = get_global_logger()
+    set_global_logger(logger)
 
     try:
         tasks_store[task_id]["status"] = "running"
@@ -298,6 +306,8 @@ async def run_benchmark_task(task_id: str, filter_indices: list = None, agent_ty
         tasks_store[task_id]["error"] = str(e)
         logger.error(S.BENCHMARK_FAILED.format(error=str(e)))
     finally:
+        # Restore previous global logger
+        set_global_logger(previous_logger)
         logger.close()
 
 
