@@ -1,4 +1,5 @@
 import sys
+import time
 from pathlib import Path
 
 # Add project root to path for direct script execution
@@ -63,6 +64,8 @@ def run_single_query(query: str, active_agent: str = None) -> str:
     print(f"Query: {query}")
     print(f"{'=' * 60}\n")
 
+    start_time = time.time()
+
     with track_session("CLI_Query", {
         "agent_type": active_agent or config.ACTIVE_AGENT,
         "query_length": len(query),
@@ -71,11 +74,14 @@ def run_single_query(query: str, active_agent: str = None) -> str:
         agent = MyGAIAAgents(active_agent=active_agent)
         result = agent(query, None)
 
-    print(f"\n{'=' * 60}")
-    print("Response:")
-    print(f"{'=' * 60}")
-    print(result)
+    # Calculate runtime
+    elapsed_time = time.time() - start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+
     print(f"{'=' * 60}\n")
+    print(f"Completed in {minutes}m {seconds}s")
+    print(f"Response: {result}\n{'=' * 60}\n{'=' * 60}\n")
 
     return result
 

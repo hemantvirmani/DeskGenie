@@ -11,8 +11,6 @@ class AgentStrings:
     # Initialization
     ERROR_INSTANTIATING_AGENT = "Error instantiating agent: {error}"
     GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_API_KEY not found - analyze_youtube_video will fail"
-    LOADED_DESKTOP_TOOLS = "Loaded {count} desktop tools"
-    TOTAL_TOOLS_AVAILABLE = "Total tools available: {count}"
 
     # Execution
     RUNNING_AGENT_ON_QUESTIONS = "Running agent on {total} questions..."
@@ -22,11 +20,8 @@ class AgentStrings:
     EXCEPTION_RUNNING_AGENT = "Exception running agent on task {task_id}: {error}"
 
     # LangGraph Agent
-    LANGGRAPH_SEPARATOR = "=" * 60
     LANGGRAPH_STARTING = "LangGraph Agent starting - Question: {question}"
     LANGGRAPH_FILE = "File: {file_name}"
-    LANGGRAPH_COMPLETED = "LangGraph Agent completed in {time:.2f}s"
-    LANGGRAPH_FAILED = "LangGraph Agent failed after {time:.2f}s: {error}"
     LANGGRAPH_NO_MORE_TOOLS = "Agent produced answer (no more tool calls)"
     LANGGRAPH_REQUESTING_TOOLS = "Agent requesting {count} tool(s): {tools}"
     LANGGRAPH_MAX_STEPS = "Max steps (40) reached, forcing termination"
@@ -34,8 +29,6 @@ class AgentStrings:
 
     # ReAct Agent
     REACT_STARTING = "ReAct Agent starting - Question: {question}"
-    REACT_COMPLETED = "ReAct Agent completed in {time:.2f}s"
-    REACT_FAILED = "ReAct Agent failed after {time:.2f}s: {error}"
     REACT_NO_MESSAGES = "Agent completed but returned no messages"
     REACT_NULL_ANSWER = "Agent completed but returned None as answer"
 
@@ -156,8 +149,7 @@ class APIStrings:
     """Strings for API operations."""
 
     # Chat
-    STARTING_CHAT_TASK = "Starting chat task with agent: {agent}"
-    CHAT_COMPLETED = "Chat task completed"
+    CHAT_COMPLETED_WITH_TIME = "Chat completed in {minutes}m {seconds}s"
     CHAT_FAILED = "Chat task failed: {error}"
 
     # Benchmark

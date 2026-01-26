@@ -89,7 +89,6 @@ function ChatWindow({ selectedAgent, addLog, setShowLogsPanel, isRunningBenchmar
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
-            if (addLog) addLog('Chat completed', 'success')
             setMessages(prev => {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {

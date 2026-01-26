@@ -67,9 +67,7 @@ class ReActLangGraphAgent:
         # Add desktop tools
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
-        self.logger.info(S.LOADED_DESKTOP_TOOLS.format(count=len(desktop_tools)))
 
-        self.logger.info(S.TOTAL_TOOLS_AVAILABLE.format(count=len(tools)))
         return tools
 
     def _create_llm_client(self, model_provider: str = config.DEFAULT_MODEL_PROVIDER):
@@ -133,13 +131,10 @@ class ReActLangGraphAgent:
         Returns:
             The agent's answer as a string
         """
-        self.logger.info(S.LANGGRAPH_SEPARATOR)
         truncated_q = f"{question[:100]}..." if len(question) > 100 else question
         self.logger.step(S.REACT_STARTING.format(question=truncated_q))
         if file_name:
             self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))
-
-        start_time = time.time()
 
         try:
             # Build the question with file name if provided
@@ -180,9 +175,6 @@ class ReActLangGraphAgent:
                         self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
                         return AE.AGENT_FAILED.format(error=str(e)[:100])
 
-            elapsed_time = time.time() - start_time
-            self.logger.success(S.REACT_COMPLETED.format(time=elapsed_time))
-
             # Extract the answer from the response
             # LangGraph's create_react_agent returns the last message in the messages list
             messages = response.get("messages", [])
@@ -215,6 +207,5 @@ class ReActLangGraphAgent:
             return answer
 
         except Exception as e:
-            elapsed_time = time.time() - start_time
-            self.logger.error(S.REACT_FAILED.format(time=elapsed_time, error=e))
+            self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
             return AE.GENERIC.format(error=str(e)[:100])

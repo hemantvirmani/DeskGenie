@@ -11,6 +11,7 @@ if str(_project_root) not in sys.path:
 import asyncio
 import json
 import signal
+import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -164,7 +165,9 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
 
     try:
         tasks_store[task_id]["status"] = "running"
-        logger.info(S.STARTING_CHAT_TASK.format(agent=agent_type or config.ACTIVE_AGENT))
+        logger.info("=" * 60)
+
+        start_time = time.time()
 
         # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -182,9 +185,14 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
 
         result = await loop.run_in_executor(None, execute_with_tracking)
 
+        # Calculate runtime
+        elapsed_time = time.time() - start_time
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+
         tasks_store[task_id]["status"] = "completed"
         tasks_store[task_id]["result"] = result
-        logger.success(S.CHAT_COMPLETED)
+        logger.success(S.CHAT_COMPLETED_WITH_TIME.format(minutes=minutes, seconds=seconds))
 
     except Exception as e:
         tasks_store[task_id]["status"] = "error"

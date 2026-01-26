@@ -110,8 +110,6 @@ def extract_text_from_content(content: Any) -> str:
                 text_parts.append(str(item))
 
         result = ' '.join(text_parts)
-        if len(content) > 1 or (len(content) == 1 and isinstance(content[0], dict)):
-            print(f"[INFO] Extracted text from list with {len(content)} item(s)")
         return result
 
     # Handle string format (already plain text)

@@ -73,9 +73,7 @@ class LangGraphAgent:
         # Add desktop tools
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
-        self.logger.info(S.LOADED_DESKTOP_TOOLS.format(count=len(desktop_tools)))
 
-        self.logger.info(S.TOTAL_TOOLS_AVAILABLE.format(count=len(tools)))
         return tools
 
     def _create_llm_client(self, model_provider: str = config.DEFAULT_MODEL_PROVIDER):
@@ -267,22 +265,16 @@ class LangGraphAgent:
             file_name: Optional file name if the question references a file
         """
 
-        self.logger.info(S.LANGGRAPH_SEPARATOR)
         truncated_q = f"{question[:100]}..." if len(question) > 100 else question
         self.logger.step(S.LANGGRAPH_STARTING.format(question=truncated_q))
         if file_name:
             self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))
-
-        start_time = time.time()
 
         try:
             response = self.graph.invoke(
                 {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: None, SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
                 config={"recursion_limit": 80}  # Must be >= 2x step limit (40 * 2 = 80)
             )
-
-            elapsed_time = time.time() - start_time
-            self.logger.success(S.LANGGRAPH_COMPLETED.format(time=elapsed_time))
 
             answer = response.get(SK.ANSWER)
             if not answer or answer is None:
@@ -300,6 +292,5 @@ class LangGraphAgent:
             return answer
 
         except Exception as e:
-            elapsed_time = time.time() - start_time
-            self.logger.error(S.LANGGRAPH_FAILED.format(time=elapsed_time, error=e))
+            self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
             return AE.GENERIC.format(error=str(e)[:100])
