@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
+import { UIStrings } from '../uiStrings'
 
-function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark }) {
+function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark, onRunPresets, onRunCustom }) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -147,8 +148,8 @@ function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark }) {
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-slate-500">
-              <p className="text-lg mb-2">Welcome to DeskGenie!</p>
-              <p className="text-sm">Ask a question or give a command to get started.</p>
+              <p className="text-lg mb-2">{UIStrings.WELCOME_TITLE}</p>
+              <p className="text-sm">{UIStrings.WELCOME_SUBTITLE}</p>
             </div>
           </div>
         ) : (
@@ -160,7 +161,12 @@ function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark }) {
       </div>
 
       {/* Input */}
-      <ChatInput onSendMessage={handleSendMessage} disabled={isLoading || isRunningBenchmark} />
+      <ChatInput
+        onSendMessage={handleSendMessage}
+        disabled={isLoading || isRunningBenchmark}
+        onRunPresets={onRunPresets}
+        onRunCustom={onRunCustom}
+      />
     </div>
   )
 }

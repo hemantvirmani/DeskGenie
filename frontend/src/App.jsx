@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Play, Settings, MessageSquare, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
+import { X, MessageSquare, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
+import { UIStrings } from './uiStrings'
 
 function App() {
   const [config, setConfig] = useState(null)
@@ -130,7 +131,7 @@ function App() {
       .filter(n => !isNaN(n))
 
     if (indices.length === 0) {
-      addLog('Please enter valid comma-separated indices', 'error')
+      addLog(UIStrings.ERROR_INVALID_INDICES, 'error')
       return
     }
 
@@ -146,19 +147,19 @@ function App() {
         <div className="p-4 border-b border-slate-700 flex items-center justify-between">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <MessageSquare className="w-5 h-5" />
-            Chat History
+            {UIStrings.CHAT_HISTORY_TITLE}
           </h2>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
           <p className="text-slate-500 text-sm text-center mt-8">
-            Chat history will appear here
+            {UIStrings.CHAT_HISTORY_PLACEHOLDER}
           </p>
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-700 text-xs text-slate-500">
-          <p>DeskGenie v1.0.0</p>
+          <p>{UIStrings.VERSION_INFO}</p>
         </div>
       </aside>
 
@@ -183,32 +184,6 @@ function App() {
 
             <div className="flex items-center gap-3">
               <button
-                onClick={handleRunPresets}
-                disabled={isRunningBenchmark}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isRunningBenchmark
-                    ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                <Play className="w-4 h-4" />
-                Run 20 Presets
-              </button>
-
-              <button
-                onClick={handleRunCustom}
-                disabled={isRunningBenchmark}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isRunningBenchmark
-                    ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
-                }`}
-              >
-                <Settings className="w-4 h-4" />
-                Custom Questions
-              </button>
-
-              <button
                 onClick={() => setShowLogsPanel(!showLogsPanel)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                   showLogsPanel
@@ -231,6 +206,8 @@ function App() {
               addLog={addLog}
               setShowLogsPanel={setShowLogsPanel}
               isRunningBenchmark={isRunningBenchmark}
+              onRunPresets={handleRunPresets}
+              onRunCustom={handleRunCustom}
             />
           </div>
 
@@ -238,19 +215,19 @@ function App() {
           {showLogsPanel && (
             <div className="w-96 bg-slate-800 flex flex-col">
               <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-                <h3 className="font-medium text-slate-300">Logs</h3>
-                <button
-                  onClick={() => setLogs([])}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  Clear
-                </button>
+                <h3 className="font-medium text-slate-300">{UIStrings.LOGS_TITLE}</h3>
+                  <button
+                    onClick={() => setLogs([])}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {UIStrings.CLEAR_LOGS}
+                  </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
                 {logs.length === 0 ? (
                   <p className="text-slate-500 text-center mt-8">
-                    Logs will appear here when you chat or run benchmarks
+                    {UIStrings.LOGS_PLACEHOLDER}
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -292,7 +269,7 @@ function App() {
           <div className="bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="p-4 border-b border-slate-700 flex items-center justify-between">
               <h3 className="text-lg font-medium text-white">
-                Custom Question Indices
+                {UIStrings.CUSTOM_QUESTIONS_TITLE}
               </h3>
               <button
                 onClick={() => setShowCustomModal(false)}
@@ -304,18 +281,18 @@ function App() {
 
             <div className="p-4">
               <label className="block text-sm font-medium text-slate-400 mb-2">
-                Enter comma-separated question numbers (1-20)
+                {UIStrings.CUSTOM_QUESTIONS_LABEL}
               </label>
               <input
                 type="text"
                 value={customIndices}
                 onChange={(e) => setCustomIndices(e.target.value)}
-                placeholder="e.g., 1, 5, 10, 15"
+                placeholder={UIStrings.CUSTOM_QUESTIONS_PLACEHOLDER}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                 autoFocus
               />
               <p className="text-xs text-slate-500 mt-2">
-                Example: "1, 3, 6" will run questions
+                {UIStrings.CUSTOM_QUESTIONS_EXAMPLE}
               </p>
             </div>
 
@@ -324,13 +301,13 @@ function App() {
                 onClick={() => setShowCustomModal(false)}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
               >
-                Cancel
+                {UIStrings.CANCEL_BUTTON}
               </button>
               <button
                 onClick={handleCustomSubmit}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
               >
-                Run
+                {UIStrings.RUN_BUTTON}
               </button>
             </div>
           </div>
