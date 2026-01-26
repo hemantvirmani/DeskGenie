@@ -7,7 +7,7 @@ function App() {
   const [config, setConfig] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showCustomModal, setShowCustomModal] = useState(false)
-  const [customIndices, setCustomIndices] = useState('')
+  const [customQuestions, setCustomQuestions] = useState('')
   const [showLogsPanel, setShowLogsPanel] = useState(false)
   const [logs, setLogs] = useState([])
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false)
@@ -31,18 +31,21 @@ function App() {
     setLogs(prev => [...prev, { timestamp, message, type }])
   }
 
-  const runBenchmark = async (filterIndices = null) => {
+  const runBenchmark = async (filterQuestions = null) => {
     setIsRunningBenchmark(true)
     setShowLogsPanel(true)
     setLogs([]) // Clear previous logs
-    addLog(`Starting GAIA benchmark${filterIndices ? ` with question numbers: ${filterIndices.join(', ')}` : ' (all questions)'}...`, 'info')
+    addLog(`Starting GAIA benchmark${filterQuestions ? ` with question numbers: ${filterQuestions.join(', ')}` : ' (all questions)'}...`, 'info')
+
+    // Convert 1-based question numbers to 0-based indices for API
+    const apiIndices = filterQuestions ? filterQuestions.map(n => n - 1) : null
 
     try {
       const response = await fetch('/api/benchmark', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filter_indices: filterIndices
+          filter_indices: apiIndices
         })
       })
 
@@ -125,19 +128,19 @@ function App() {
   }
 
   const handleCustomSubmit = () => {
-    const indices = customIndices
+    const questions = customQuestions
       .split(',')
       .map(s => parseInt(s.trim(), 10))
       .filter(n => !isNaN(n))
 
-    if (indices.length === 0) {
+    if (questions.length === 0) {
       addLog(UIStrings.ERROR_INVALID_INDICES, 'error')
       return
     }
 
     setShowCustomModal(false)
-    setCustomIndices('')
-    runBenchmark(indices)
+    setCustomQuestions('')
+    runBenchmark(questions)
   }
 
   return (
@@ -285,8 +288,8 @@ function App() {
               </label>
               <input
                 type="text"
-                value={customIndices}
-                onChange={(e) => setCustomIndices(e.target.value)}
+                value={customQuestions}
+                onChange={(e) => setCustomQuestions(e.target.value)}
                 placeholder={UIStrings.CUSTOM_QUESTIONS_PLACEHOLDER}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                 autoFocus
