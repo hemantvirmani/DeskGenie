@@ -18,12 +18,6 @@
         "file_name": ""
     },
     {
-        "task_id": "cca530fc-4052-43b2-b130-b30968d8aa44",
-        "question": "Review the chess position provided in the image. It is black's turn. Provide the correct next move for black which guarantees a win. Please provide your response in algebraic notation.",
-        "Level": "1",
-        "file_name": "cca530fc-4052-43b2-b130-b30968d8aa44.png"
-    },
-    {
         "task_id": "4fc2f1ae-8625-45b5-ab34-ad4433bc21f8",
         "question": "Who nominated the only Featured Article on English Wikipedia about a dinosaur that was promoted in November 2016?",
         "Level": "1",
@@ -54,34 +48,10 @@
         "file_name": ""
     },
     {
-        "task_id": "99c9cc74-fdc8-46c6-8f8d-3ce2d3bfeea3",
-        "question": "Hi, I'm making a pie but I could use some help with my shopping list. I have everything I need for the crust, but I'm not sure about the filling. I got the recipe from my friend Aditi, but she left it as a voice memo and the speaker on my phone is buzzing so I can't quite make out what she's saying. Could you please listen to the recipe and list all of the ingredients that my friend described? I only want the ingredients for the filling, as I have everything I need to make my favorite pie crust. I've attached the recipe as Strawberry pie.mp3.\n\nIn your response, please only list the ingredients, not any measurements. So if the recipe calls for \"a pinch of salt\" or \"two cups of ripe strawberries\" the ingredients on the list would be \"salt\" and \"ripe strawberries\".\n\nPlease format your response as a comma separated list of ingredients. Also, please alphabetize the ingredients.",
-        "Level": "1",
-        "file_name": "99c9cc74-fdc8-46c6-8f8d-3ce2d3bfeea3.mp3"
-    },
-    {
         "task_id": "305ac316-eef6-4446-960a-92d80d542f82",
         "question": "Who did the actor who played Ray in the Polish-language version of Everybody Loves Raymond play in Magda M.? Give only the first name.",
         "Level": "1",
         "file_name": ""
-    },
-    {
-        "task_id": "f918266a-b3e0-4914-865d-4faa564f1aef",
-        "question": "What is the final numeric output from the attached Python code?",
-        "Level": "1",
-        "file_name": "f918266a-b3e0-4914-865d-4faa564f1aef.py"
-    },
-    {
-        "task_id": "3f57289b-8c60-48be-bd80-01f8099ca449",
-        "question": "How many at bats did the Yankee with the most walks in the 1977 regular season have that same season?",
-        "Level": "1",
-        "file_name": ""
-    },
-    {
-        "task_id": "1f975693-876d-457b-a649-393859e79bf3",
-        "question": "Hi, I was out sick from my classes on Friday, so I'm trying to figure out what I need to study for my Calculus mid-term next week. My friend from class sent me an audio recording of Professor Willowbrook giving out the recommended reading for the test, but my headphones are broken :(\n\nCould you please listen to the recording for me and tell me the page numbers I'm supposed to go over? I've attached a file called Homework.mp3 that has the recording. Please provide just the page numbers as a comma-delimited list. And please provide the list in ascending order.",
-        "Level": "1",
-        "file_name": "1f975693-876d-457b-a649-393859e79bf3.mp3"
     },
     {
         "task_id": "840bfca7-4f7b-481a-8794-c560c340185d",
@@ -106,12 +76,6 @@
         "question": "Who are the pitchers with the number before and after Taishō Tamai's number as of July 2023? Give them to me in the form Pitcher Before, Pitcher After, use their last names only, in Roman characters.",
         "Level": "1",
         "file_name": ""
-    },
-    {
-        "task_id": "7bd855d8-463d-4ed5-93ca-5fe35145f733",
-        "question": "The attached Excel file contains the sales of menu items for a local fast-food chain. What were the total sales that the chain made from food (not including drinks)? Express your answer in USD with two decimal places.",
-        "Level": "1",
-        "file_name": "7bd855d8-463d-4ed5-93ca-5fe35145f733.xlsx"
     },
     {
         "task_id": "5a0c1adf-205e-4841-a666-7c3ef95def9d",
