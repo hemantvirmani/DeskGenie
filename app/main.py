@@ -41,18 +41,16 @@ class RunMode(Enum):
 class AppOptions:
     """Options parsed from command-line arguments."""
     run_mode: RunMode
-    active_agent: Optional[str] = None
     test_query: Optional[str] = None  # For --testq
     test_filter: Optional[Tuple[int, ...]] = None  # For --test/--testall
     error: Optional[str] = None  # Parsing error message
 
 
-def run_single_query(query: str, active_agent: str = None) -> str:
+def run_single_query(query: str) -> str:
     """Run a single query through the agent (same path as UI chat).
 
     Args:
         query: The question or command to execute
-        active_agent: Optional agent type to use
 
     Returns:
         str: The agent's response
@@ -67,11 +65,11 @@ def run_single_query(query: str, active_agent: str = None) -> str:
     start_time = time.time()
 
     with track_session("CLI_Query", {
-        "agent_type": active_agent or config.ACTIVE_AGENT,
+        "agent_type": config.ACTIVE_AGENT,
         "query_length": len(query),
         "mode": "cli_query"
     }):
-        agent = MyGAIAAgents(active_agent=active_agent)
+        agent = MyGAIAAgents()
         result = agent(query, None)
 
     # Calculate runtime
@@ -90,7 +88,7 @@ def _parse_cli_args() -> AppOptions:
     """Parse command-line arguments and return configuration.
 
     Returns:
-        AppOptions: Parsed configuration with run mode, agent, and test parameters
+        AppOptions: Parsed configuration with run mode and test parameters
     """
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument(
@@ -101,33 +99,12 @@ def _parse_cli_args() -> AppOptions:
         "--testq", type=str,
         help="Run a single query through the agent (same as UI chat). Example: --testq \"What is the capital of France?\""
     )
-    parser.add_argument(
-        "--agent", type=str, choices=['langgraph', 'reactlangg'],
-        help="Agent to use. Options: langgraph, reactlangg. Default: uses config.ACTIVE_AGENT"
-    )
     args = parser.parse_args()
-
-    # Map agent name to config constant
-    agent_mapping = {
-        'langgraph': config.AGENT_LANGGRAPH,
-        'reactlangg': config.AGENT_REACT_LANGGRAPH,
-    }
-
-    # Parse agent
-    active_agent = config.AGENT_REACT_LANGGRAPH  # Default agent
-    if args.agent:
-        active_agent = agent_mapping.get(args.agent.lower())
-        if not active_agent:
-            return AppOptions(
-                run_mode=RunMode.CLI,
-                error=f"Unknown agent '{args.agent}'. Valid options: langgraph, reactlangg"
-            )
 
     # Handle --testq (single query mode)
     if args.testq:
         return AppOptions(
             run_mode=RunMode.CLI,
-            active_agent=active_agent,
             test_query=args.testq
         )
 
@@ -138,7 +115,7 @@ def _parse_cli_args() -> AppOptions:
             test_filter = config.DEFAULT_TEST_FILTER
         elif args.test.lower() == 'all':
             test_filter = None  # None means all questions
-        else: #we will parse specific indices
+        else:
             try:
                 # User provides 1-based indices, convert to 0-based
                 test_filter = tuple(int(idx.strip()) - 1 for idx in args.test.split(','))
@@ -150,15 +127,11 @@ def _parse_cli_args() -> AppOptions:
 
         return AppOptions(
             run_mode=RunMode.CLI,
-            active_agent=active_agent,
             test_filter=test_filter
         )
 
     # Default: UI mode
-    return AppOptions(
-        run_mode=RunMode.UI,
-        active_agent=active_agent
-    )
+    return AppOptions(run_mode=RunMode.UI)
 
 
 def main() -> None:
@@ -170,11 +143,7 @@ def main() -> None:
         print(f"Error: {options.error}")
         return
 
-    # Print agent info if specified
-    if options.active_agent:
-        print(f"[CLI] Using agent: {options.active_agent}")
-
-    print(f"{'-' * (60 + len(' App Starting '))}\n")
+    print(f"{'-' * 74}\n")
 
     # Set global logger for CLI mode (UI mode sets it in genie_api.py)
     if options.run_mode == RunMode.CLI:
@@ -194,14 +163,14 @@ def main() -> None:
 
     elif options.test_query:
         # Single query mode (--testq)
-        run_single_query(options.test_query, active_agent=options.active_agent)
+        run_single_query(options.test_query)
 
     else: # GAIA benchmark mode (--test or --testall)
         filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
         print(f"Running GAIA benchmark on {filter_desc} questions...")
 
         # Results are streamed via logger, function returns None
-        run_gaia_questions(filter=options.test_filter, active_agent=options.active_agent)
+        run_gaia_questions(filter=options.test_filter)
 
 
 if __name__ == "__main__":

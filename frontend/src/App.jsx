@@ -4,7 +4,6 @@ import ChatWindow from './components/ChatWindow'
 
 function App() {
   const [config, setConfig] = useState(null)
-  const [selectedAgent, setSelectedAgent] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [customIndices, setCustomIndices] = useState('')
@@ -22,10 +21,7 @@ function App() {
     // Fetch config on mount
     fetch('/api/config')
       .then(res => res.json())
-      .then(data => {
-        setConfig(data)
-        setSelectedAgent(data.active_agent)
-      })
+      .then(data => setConfig(data))
       .catch(err => console.error('Failed to fetch config:', err))
   }, [])
 
@@ -45,8 +41,7 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filter_indices: filterIndices,
-          agent_type: selectedAgent
+          filter_indices: filterIndices
         })
       })
 
@@ -161,24 +156,6 @@ function App() {
           </p>
         </div>
 
-        {/* Agent Selector */}
-        <div className="p-4 border-t border-slate-700">
-          <label className="block text-sm font-medium text-slate-400 mb-2">
-            Agent
-          </label>
-          <select
-            value={selectedAgent || ''}
-            onChange={(e) => setSelectedAgent(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {config?.available_agents?.map((agent) => (
-              <option key={agent} value={agent}>
-                {agent}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Footer */}
         <div className="p-4 border-t border-slate-700 text-xs text-slate-500">
           <p>DeskGenie v1.0.0</p>
@@ -251,7 +228,6 @@ function App() {
           {/* Chat Window */}
           <div className={`flex-1 ${showLogsPanel ? 'border-r border-slate-700' : ''}`}>
             <ChatWindow
-              selectedAgent={selectedAgent}
               addLog={addLog}
               setShowLogsPanel={setShowLogsPanel}
               isRunningBenchmark={isRunningBenchmark}

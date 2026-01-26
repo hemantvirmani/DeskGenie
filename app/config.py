@@ -54,7 +54,7 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 AGENT_LANGGRAPH = "LangGraph"
 AGENT_REACT_LANGGRAPH = "ReActLangGraph"
 
-ACTIVE_AGENT = AGENT_REACT_LANGGRAPH  # Active agent to use by default
+ACTIVE_AGENT = AGENT_LANGGRAPH  # Active agent to use by default
 
 # Model Configuration
 GEMINI_MODEL = "gemini-2.5-flash"

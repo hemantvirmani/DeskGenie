@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 
-function ChatWindow({ selectedAgent, addLog, setShowLogsPanel, isRunningBenchmark }) {
+function ChatWindow({ addLog, setShowLogsPanel, isRunningBenchmark }) {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -34,8 +34,7 @@ function ChatWindow({ selectedAgent, addLog, setShowLogsPanel, isRunningBenchmar
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: content,
-          agent_type: selectedAgent
+          message: content
         })
       })
 
