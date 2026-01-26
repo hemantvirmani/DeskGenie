@@ -59,7 +59,7 @@ class AgentRunner:
 
                 truncated_answer = f"{answer[:100]}..." if len(str(answer)) > 100 else answer
                 self.logger.result(S.TASK_RESULT.format(task_id=task_id, answer=truncated_answer))
-                self.logger.info(S.QUESTION_TEXT.format(question=question_text))
+                self.logger.info(S.QUESTION_TEXT.format(num=idx, question=question_text))
                 results.append((task_id, question_text, answer))
             except Exception as e:
                 self.logger.error(S.EXCEPTION_RUNNING_AGENT.format(task_id=task_id, error=e))

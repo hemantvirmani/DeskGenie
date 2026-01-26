@@ -16,7 +16,7 @@ class AgentStrings:
     RUNNING_AGENT_ON_QUESTIONS = "Running agent on {total} questions..."
     SKIPPING_MISSING_DATA = "Skipping item with missing task_id or question: {item}"
     TASK_RESULT = "Task {task_id}: {answer}"
-    QUESTION_TEXT = "Question: {question}"
+    QUESTION_TEXT = "Q{num}: {question}"
     EXCEPTION_RUNNING_AGENT = "Exception running agent on task {task_id}: {error}"
 
     # LangGraph Agent
@@ -104,6 +104,7 @@ class QuestionRunnerStrings:
     VERIFICATION_HEADER = "=== Verification Results ==="
     VERIFYING_RESULTS = "Verifying {results} results against {truth} ground truth entries"
     QUESTION_CORRECT = "Q{num}: ✓ Correct"
+    QUESTION_CORRECT_GENEROUS = "Q{num}: ✓ Correct ({match_type})"
     QUESTION_INCORRECT = "Q{num}: ✗ Incorrect (expected: {expected}, got: {actual})"
     QUESTION_NO_TRUTH = "Q{num}: No ground truth found"
 
