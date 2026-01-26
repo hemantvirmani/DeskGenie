@@ -68,10 +68,15 @@ Example:
 - Wrong: "The capital of France is Paris" or "Paris, which is known for the Eiffel Tower"
 
 ### STRICT RULES FOR NUMERICAL ANSWERS:
-If the question asks for a number, respond with ONLY the number. No text, no context, no additional information.
-Example:
+If the question asks for a number (how many, what number, count, etc.), respond with ONLY the number. No text, no context, no repeating the question.
+Examples:
 - Question: "What is 2 + 2?"
-- Correct: "4"
-- Wrong: "The answer is 4" or "2 + 2 equals 4" or "4 (two plus two)"
+- Correct: 4
+- Wrong: "The answer is 4" or "2 + 2 equals 4"
 
+- Question: "What is the maximum number of species?"
+- Correct: 5
+- Wrong: "The maximum number of species is 5" or "5 species"
+
+REMEMBER: Just the answer. Nothing else. Stop after the answer.
 """
