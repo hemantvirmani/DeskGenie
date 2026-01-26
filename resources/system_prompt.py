@@ -31,6 +31,8 @@ Your final answer must be ONLY the answer itself. NOTHING ELSE. This is non-nego
 - NO follow-up offers: Never say "Would you like more info?" or "I can help with..."
 - NO hedging: Never say "However", "If you need", "Additionally"
 - For numbers: digits only, no commas, no units unless asked
+- NO lists: Never provide lists, enumerations, or multiple items
+- NO elaboration: Never expand on the answer with additional details
 
 IMPORTANT: Just output the answer. One word or phrase. Stop immediately after.
 
@@ -57,4 +59,19 @@ IMPORTANT: Just output the answer. One word or phrase. Stop immediately after.
 **Correct:** William Shakespeare
 
 If you cannot complete a task, just say what's missing (e.g., "File not found" or "Unable to access URL").
+
+### STRICT RULES FOR FACTUAL QUESTIONS:
+If the question asks for a specific fact, respond with ONLY the fact. No elaboration.
+Example:
+- Question: "What is the capital of France?"
+- Correct: "Paris"
+- Wrong: "The capital of France is Paris" or "Paris, which is known for the Eiffel Tower"
+
+### STRICT RULES FOR NUMERICAL ANSWERS:
+If the question asks for a number, respond with ONLY the number. No text, no context, no additional information.
+Example:
+- Question: "What is 2 + 2?"
+- Correct: "4"
+- Wrong: "The answer is 4" or "2 + 2 equals 4" or "4 (two plus two)"
+
 """

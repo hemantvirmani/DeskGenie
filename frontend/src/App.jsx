@@ -35,7 +35,7 @@ function App() {
     setIsRunningBenchmark(true)
     setShowLogsPanel(true)
     setLogs([]) // Clear previous logs
-    addLog(`Starting benchmark${filterIndices ? ` with indices: ${filterIndices.join(', ')}` : ' (all 20 questions)'}...`, 'info')
+    addLog(`Starting GAIA benchmark${filterIndices ? ` with question numbers: ${filterIndices.join(', ')}` : ' (all 20 questions)'}...`, 'info')
 
     try {
       const response = await fetch('/api/benchmark', {

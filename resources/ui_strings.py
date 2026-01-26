@@ -152,6 +152,6 @@ class APIStrings:
     CHAT_FAILED = "Chat task failed: {error}"
 
     # Benchmark
-    STARTING_BENCHMARK = "Starting Benchmark with {description}"
-    BENCHMARK_COMPLETED = "Benchmark completed"
-    BENCHMARK_FAILED = "Benchmark failed: {error}"
+    STARTING_BENCHMARK = "Starting GAIA Benchmark with {description}"
+    BENCHMARK_COMPLETED = "GAIA Benchmark completed"
+    BENCHMARK_FAILED = "GAIA Benchmark failed: {error}"

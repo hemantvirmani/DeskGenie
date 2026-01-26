@@ -15,10 +15,10 @@ export const UIStrings = {
   LOGS_PLACEHOLDER: "Logs will appear here when you chat or run benchmarks",
 
   // Custom Questions Modal
-  CUSTOM_QUESTIONS_TITLE: "Custom Question Indices",
+  CUSTOM_QUESTIONS_TITLE: "Custom Question Numbers",
   CUSTOM_QUESTIONS_LABEL: "Enter comma-separated question numbers (1-20)",
   CUSTOM_QUESTIONS_PLACEHOLDER: "e.g., 1, 5, 10, 15",
-  CUSTOM_QUESTIONS_EXAMPLE: "Example: \"1, 3, 6\" will run questions",
+  CUSTOM_QUESTIONS_EXAMPLE: "Example: \"1, 3, 6\" will run questions at indices 0, 2, and 5.",
   CANCEL_BUTTON: "Cancel",
   RUN_BUTTON: "Run",
 
@@ -35,5 +35,5 @@ export const UIStrings = {
   PROCESSING_TEXT: "Processing...",
 
   // Error messages
-  ERROR_INVALID_INDICES: "Please enter valid comma-separated indices"
+  ERROR_INVALID_INDICES: "Please enter valid comma-separated question numbers between 1 and 20.",
 };
