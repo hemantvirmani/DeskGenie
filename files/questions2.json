@@ -82,5 +82,11 @@
         "question": "What is the first name of the only Malko Competition recipient from the 20th Century (after 1977) whose nationality on record is a country that no longer exists?",
         "Level": "1",
         "file_name": ""
+    },
+    {
+        "task_id": "3f57289b-8c60-48be-bd80-01f8099ca449",
+        "question": "How many at bats did the Yankee with the most walks in the 1977 regular season have that same season?",
+        "Level": "1",
+        "file_name": ""
     }
 ]
