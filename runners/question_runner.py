@@ -87,10 +87,7 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
 
             # Stream to logger (q_num is 1-based index)
             if is_correct:
-                if match_type == "exact":
-                    logger.success(S.QUESTION_CORRECT.format(num=q_num))
-                else:
-                    logger.success(S.QUESTION_CORRECT_GENEROUS.format(num=q_num, match_type=match_type))
+                logger.success(S.QUESTION_CORRECT.format(num=q_num, match_type=match_type, expected=correct_answer, actual=answer))
             else:
                 logger.error(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
         else:

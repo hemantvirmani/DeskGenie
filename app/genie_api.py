@@ -276,7 +276,6 @@ async def run_predefined_task(task_id: str, filter_indices: list = None):
         # Convert list to tuple if provided
         filter_tuple = tuple(filter_indices) if filter_indices else None
         question_desc = f"indices {filter_indices}" if filter_indices else "all questions"
-        logger.info(S.STARTING_BENCHMARK.format(description=question_desc))
 
         # Run benchmark in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()

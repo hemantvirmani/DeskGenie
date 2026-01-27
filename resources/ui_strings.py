@@ -8,6 +8,9 @@ This makes it easy to update messaging and enables future localization.
 class AgentStrings:
     """Strings for agent operations."""
 
+    # Separators
+    LINE_SEPARATOR = "=" * 60
+
     # Initialization
     ERROR_INSTANTIATING_AGENT = "Error instantiating agent: {error}"
     GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_API_KEY not found - analyze_youtube_video will fail"
@@ -103,8 +106,7 @@ class QuestionRunnerStrings:
     # Verification
     VERIFICATION_HEADER = "=== Verification Results ==="
     VERIFYING_RESULTS = "Verifying {results} results against {truth} ground truth entries"
-    QUESTION_CORRECT = "Q{num}: ✓ Correct"
-    QUESTION_CORRECT_GENEROUS = "Q{num}: ✓ Correct ({match_type})"
+    QUESTION_CORRECT = "Q{num}: ✓ Correct ({match_type}) (expected: {expected}, got: {actual})"
     QUESTION_INCORRECT = "Q{num}: ✗ Incorrect (expected: {expected}, got: {actual})"
     QUESTION_NO_TRUTH = "Q{num}: No ground truth found"
 
@@ -153,6 +155,5 @@ class APIStrings:
     CHAT_FAILED = "Chat task failed: {error}"
 
     # Benchmark
-    STARTING_BENCHMARK = "Starting GAIA Benchmark with {description}"
     BENCHMARK_COMPLETED = "GAIA Benchmark completed"
     BENCHMARK_FAILED = "GAIA Benchmark failed: {error}"

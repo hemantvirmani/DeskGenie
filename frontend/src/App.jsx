@@ -52,7 +52,7 @@ function App() {
       if (!response.ok) throw new Error('Failed to start benchmark')
 
       const { task_id } = await response.json()
-      addLog(`Benchmark started (Task ID: ${task_id.slice(0, 8)}...)`, 'info')
+      addLog(`Task ID: ${task_id.slice(0, 8)}`, 'info')
 
       // Connect to SSE stream for real-time logs
       const eventSource = new EventSource(`/api/task/${task_id}/logs/stream`)

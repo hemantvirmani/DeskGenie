@@ -49,6 +49,8 @@ class AgentRunner:
                 continue
 
             try:
+                self.logger.info(S.LINE_SEPARATOR)
+                self.logger.info(S.QUESTION_TEXT.format(num=idx, question=question_text))
                 # Track individual question processing with Langfuse
                 with track_question_processing(task_id, question_text) as span:
                     answer = self.agent(question_text, file_name=file_name)
@@ -57,7 +59,6 @@ class AgentRunner:
 
                 truncated_answer = f"{answer[:100]}..." if len(str(answer)) > 100 else answer
                 self.logger.result(S.TASK_RESULT.format(task_id=task_id, answer=truncated_answer))
-                self.logger.info(S.QUESTION_TEXT.format(num=idx, question=question_text))
                 results.append((task_id, question_text, answer))
             except Exception as e:
                 self.logger.error(S.EXCEPTION_RUNNING_AGENT.format(task_id=task_id, error=e))
