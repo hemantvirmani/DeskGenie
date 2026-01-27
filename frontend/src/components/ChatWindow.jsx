@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 import { UIStrings } from '../uiStrings'
+import { LogStrings, formatLog } from '../logStrings'
 
 function ChatWindow({ addLog, setShowLogsPanel }) {
   const [messages, setMessages] = useState([])
@@ -31,11 +32,11 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
 
     // Show logs panel and add initial log
     if (setShowLogsPanel) setShowLogsPanel(true)
-    if (addLog) addLog('='.repeat(30), 'info')
-    if (addLog) addLog('Starting GAIA benchmark...', 'info')
+    if (addLog) addLog(LogStrings.LOG_SEPARATOR, 'info')
+    if (addLog) addLog(LogStrings.STARTING_BENCHMARK, 'info')
 
     // Add placeholder for benchmark result
-    const benchmarkPlaceholder = { role: 'assistant', content: 'Running benchmark...', status: 'loading' }
+    const benchmarkPlaceholder = { role: 'assistant', content: LogStrings.RUNNING_BENCHMARK, status: 'loading' }
     setMessages(prev => [...prev, benchmarkPlaceholder])
 
     try {
@@ -50,7 +51,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       if (!response.ok) throw new Error('Failed to start benchmark')
 
       const { task_id } = await response.json()
-      if (addLog) addLog(`Task started (ID: ${task_id.slice(0, 8)}...)`, 'info')
+      if (addLog) addLog(formatLog(LogStrings.TASK_STARTED, { taskId: task_id.slice(0, 8) }), 'info')
 
       // Connect to SSE stream for real-time logs
       const eventSource = new EventSource(`/api/task/${task_id}/logs/stream`)
@@ -101,7 +102,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
                 role: 'assistant',
-                content: statusData.result || 'Benchmark completed successfully'
+                content: statusData.result || LogStrings.BENCHMARK_COMPLETED
               }
               return newMessages
             })
@@ -109,12 +110,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
-            if (addLog) addLog(`Error: ${statusData.error}`, 'error')
+            if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error }), 'error')
             setMessages(prev => {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
                 role: 'assistant',
-                content: `Benchmark failed: ${statusData.error}`
+                content: formatLog(LogStrings.BENCHMARK_FAILED, { error: statusData.error })
               }
               return newMessages
             })
@@ -123,12 +124,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
           clearInterval(pollInterval)
           eventSource.close()
           setIsLoading(false)
-          if (addLog) addLog(`Error: ${err.message}`, 'error')
+          if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: err.message }), 'error')
           setMessages(prev => {
             const newMessages = [...prev]
             newMessages[newMessages.length - 1] = {
               role: 'assistant',
-              content: `Benchmark error: ${err.message}`
+              content: formatLog(LogStrings.BENCHMARK_ERROR, { error: err.message })
             }
             return newMessages
           })
@@ -136,12 +137,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       }, 1000)
     } catch (error) {
       setIsLoading(false)
-      if (addLog) addLog(`Error: ${error.message}`, 'error')
+      if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: error.message }), 'error')
       setMessages(prev => {
         const newMessages = [...prev]
         newMessages[newMessages.length - 1] = {
           role: 'assistant',
-          content: `Benchmark error: ${error.message}`
+          content: formatLog(LogStrings.BENCHMARK_ERROR, { error: error.message })
         }
         return newMessages
       })
@@ -156,8 +157,9 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
 
     // Show logs panel and add initial log
     if (setShowLogsPanel) setShowLogsPanel(true)
-    if (addLog) addLog('='.repeat(30), 'info')
-    if (addLog) addLog(`Chat: "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}"`, 'info')
+    if (addLog) addLog(LogStrings.LOG_SEPARATOR, 'info')
+    const preview = content.slice(0, 50) + (content.length > 50 ? '...' : '')
+    if (addLog) addLog(formatLog(LogStrings.CHAT_PREFIX, { preview }), 'info')
 
     // Add placeholder for assistant response
     const assistantPlaceholder = { role: 'assistant', content: '', status: 'loading' }
@@ -175,7 +177,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       if (!response.ok) throw new Error('Failed to send message')
 
       const { task_id } = await response.json()
-      if (addLog) addLog(`Task started (ID: ${task_id.slice(0, 8)}...)`, 'info')
+      if (addLog) addLog(formatLog(LogStrings.TASK_STARTED, { taskId: task_id.slice(0, 8) }), 'info')
 
       // Connect to SSE stream for real-time logs
       const eventSource = new EventSource(`/api/task/${task_id}/logs/stream`)
@@ -226,7 +228,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
                 role: 'assistant',
-                content: statusData.result || 'No response'
+                content: statusData.result || LogStrings.NO_RESPONSE
               }
               return newMessages
             })
@@ -234,12 +236,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
-            if (addLog) addLog(`Error: ${statusData.error}`, 'error')
+            if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error }), 'error')
             setMessages(prev => {
               const newMessages = [...prev]
               newMessages[newMessages.length - 1] = {
                 role: 'assistant',
-                content: `Error: ${statusData.error}`
+                content: formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error })
               }
               return newMessages
             })
@@ -248,12 +250,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
           clearInterval(pollInterval)
           eventSource.close()
           setIsLoading(false)
-          if (addLog) addLog(`Error: ${err.message}`, 'error')
+          if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: err.message }), 'error')
           setMessages(prev => {
             const newMessages = [...prev]
             newMessages[newMessages.length - 1] = {
               role: 'assistant',
-              content: `Error: ${err.message}`
+              content: formatLog(LogStrings.ERROR_PREFIX, { error: err.message })
             }
             return newMessages
           })
@@ -261,12 +263,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       }, 1000)
     } catch (error) {
       setIsLoading(false)
-      if (addLog) addLog(`Error: ${error.message}`, 'error')
+      if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: error.message }), 'error')
       setMessages(prev => {
         const newMessages = [...prev]
         newMessages[newMessages.length - 1] = {
           role: 'assistant',
-          content: `Error: ${error.message}`
+          content: formatLog(LogStrings.ERROR_PREFIX, { error: error.message })
         }
         return newMessages
       })
@@ -280,7 +282,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       .filter(n => !isNaN(n))
 
     if (questions.length === 0) {
-      if (addLog) addLog(UIStrings.ERROR_INVALID_INDICES, 'error')
+      if (addLog) addLog(LogStrings.ERROR_INVALID_INDICES, 'error')
       return
     }
 

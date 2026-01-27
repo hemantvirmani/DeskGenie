@@ -34,6 +34,4 @@ export const UIStrings = {
   // MessageBubble.jsx strings
   PROCESSING_TEXT: "Processing...",
 
-  // Error messages
-  ERROR_INVALID_INDICES: "Please enter valid comma-separated question numbers between 1 and 20.",
 };
