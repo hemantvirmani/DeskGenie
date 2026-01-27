@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, MessageSquare, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
+import { MessageSquare, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import { UIStrings } from './uiStrings'
 
 function App() {
   const [config, setConfig] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [showCustomModal, setShowCustomModal] = useState(false)
-  const [customQuestions, setCustomQuestions] = useState('')
   const [showLogsPanel, setShowLogsPanel] = useState(false)
   const [logs, setLogs] = useState([])
-  const [isRunningBenchmark, setIsRunningBenchmark] = useState(false)
   const logsEndRef = useRef(null)
 
   // Auto-scroll logs panel when new logs arrive
@@ -29,118 +26,6 @@ function App() {
   const addLog = (message, type = 'info') => {
     const timestamp = new Date().toLocaleTimeString()
     setLogs(prev => [...prev, { timestamp, message, type }])
-  }
-
-  const runBenchmark = async (filterQuestions = null) => {
-    setIsRunningBenchmark(true)
-    setShowLogsPanel(true)
-    setLogs([]) // Clear previous logs
-    addLog(`Starting GAIA benchmark${filterQuestions ? ` with question numbers: ${filterQuestions.join(', ')}` : ' (all questions)'}...`, 'info')
-
-    // Convert 1-based question numbers to 0-based indices for API
-    const apiIndices = filterQuestions ? filterQuestions.map(n => n - 1) : null
-
-    try {
-      const response = await fetch('/api/benchmark', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filter_indices: apiIndices
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to start benchmark')
-
-      const { task_id } = await response.json()
-      addLog(`Task ID: ${task_id.slice(0, 8)}`, 'info')
-
-      // Connect to SSE stream for real-time logs
-      const eventSource = new EventSource(`/api/task/${task_id}/logs/stream`)
-
-      eventSource.onmessage = (event) => {
-        try {
-          const logEntry = JSON.parse(event.data)
-
-          if (logEntry.error) {
-            addLog(logEntry.error, 'error')
-            eventSource.close()
-            setIsRunningBenchmark(false)
-            return
-          }
-
-          // Map log levels to display types
-          const levelMap = {
-            'info': 'info',
-            'error': 'error',
-            'warning': 'warning',
-            'success': 'success',
-            'tool': 'tool',
-            'step': 'step',
-            'result': 'result',
-            'debug': 'info'
-          }
-
-          const displayType = levelMap[logEntry.level] || 'info'
-          addLog(logEntry.message, displayType)
-        } catch (e) {
-          // Ignore parse errors (might be keepalive)
-        }
-      }
-
-      eventSource.onerror = () => {
-        eventSource.close()
-        // Check final task status
-        checkTaskStatus(task_id)
-      }
-
-      // Also poll for task completion (SSE might close early)
-      const checkTaskStatus = async (taskId) => {
-        try {
-          const statusRes = await fetch(`/api/task/${taskId}`)
-          const statusData = await statusRes.json()
-
-          if (statusData.status === 'completed') {
-            setIsRunningBenchmark(false)
-          } else if (statusData.status === 'error') {
-            setIsRunningBenchmark(false)
-            addLog(`Error: ${statusData.error}`, 'error')
-          } else if (statusData.status === 'running') {
-            // Still running, check again later
-            setTimeout(() => checkTaskStatus(taskId), 2000)
-          }
-        } catch (err) {
-          setIsRunningBenchmark(false)
-        }
-      }
-
-    } catch (error) {
-      setIsRunningBenchmark(false)
-      addLog(`Error: ${error.message}`, 'error')
-    }
-  }
-
-  const handleRunPresets = () => {
-    runBenchmark(null)
-  }
-
-  const handleRunCustom = () => {
-    setShowCustomModal(true)
-  }
-
-  const handleCustomSubmit = () => {
-    const questions = customQuestions
-      .split(',')
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => !isNaN(n))
-
-    if (questions.length === 0) {
-      addLog(UIStrings.ERROR_INVALID_INDICES, 'error')
-      return
-    }
-
-    setShowCustomModal(false)
-    setCustomQuestions('')
-    runBenchmark(questions)
   }
 
   return (
@@ -208,9 +93,6 @@ function App() {
             <ChatWindow
               addLog={addLog}
               setShowLogsPanel={setShowLogsPanel}
-              isRunningBenchmark={isRunningBenchmark}
-              onRunPresets={handleRunPresets}
-              onRunCustom={handleRunCustom}
             />
           </div>
 
@@ -265,57 +147,6 @@ function App() {
           )}
         </main>
       </div>
-
-      {/* Custom Questions Modal */}
-      {showCustomModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-white">
-                {UIStrings.CUSTOM_QUESTIONS_TITLE}
-              </h3>
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="p-1 hover:bg-slate-700 rounded"
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-            </div>
-
-            <div className="p-4">
-              <label className="block text-sm font-medium text-slate-400 mb-2">
-                {UIStrings.CUSTOM_QUESTIONS_LABEL}
-              </label>
-              <input
-                type="text"
-                value={customQuestions}
-                onChange={(e) => setCustomQuestions(e.target.value)}
-                placeholder={UIStrings.CUSTOM_QUESTIONS_PLACEHOLDER}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                autoFocus
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                {UIStrings.CUSTOM_QUESTIONS_EXAMPLE}
-              </p>
-            </div>
-
-            <div className="p-4 border-t border-slate-700 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
-              >
-                {UIStrings.CANCEL_BUTTON}
-              </button>
-              <button
-                onClick={handleCustomSubmit}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
-              >
-                {UIStrings.RUN_BUTTON}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
