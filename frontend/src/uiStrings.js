@@ -24,8 +24,8 @@ export const UIStrings = {
 
   // ChatInput.jsx strings
   INPUT_PLACEHOLDER: "Ask a question or give a command...",
-  GAIA_PRESETS_BUTTON: "All GAIA Presets",
-  CUSTOM_GAIA_BUTTON: "Custom GAIA Ques",
+  GAIA_PRESETS_BUTTON: "GAIA: All Ques",
+  CUSTOM_GAIA_BUTTON: "GAIA: Custom Ques",
 
   // ChatWindow.jsx strings
   WELCOME_TITLE: "Welcome to DeskGenie!",

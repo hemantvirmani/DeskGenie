@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Send, Play, Settings } from 'lucide-react'
+import { Send, CirclePlay, CirclePlus } from 'lucide-react'
 import { UIStrings } from '../uiStrings'
 
 function ChatInput({ onSendMessage, disabled, onRunPresets, onRunCustom }) {
@@ -44,7 +44,7 @@ function ChatInput({ onSendMessage, disabled, onRunPresets, onRunCustom }) {
               : 'bg-slate-700 hover:bg-slate-600 text-white'
           }`}
         >
-          <Play className="w-4 h-4" />
+          <CirclePlay className="w-4 h-4" />
           {UIStrings.GAIA_PRESETS_BUTTON}
         </button>
 
@@ -58,7 +58,7 @@ function ChatInput({ onSendMessage, disabled, onRunPresets, onRunCustom }) {
               : 'bg-slate-700 hover:bg-slate-600 text-white'
           }`}
         >
-          <Settings className="w-4 h-4" />
+          <CirclePlus className="w-4 h-4" />
           {UIStrings.CUSTOM_GAIA_BUTTON}
         </button>
       </div>
