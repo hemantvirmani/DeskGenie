@@ -11,32 +11,26 @@ class MyGAIAAgents:
     """Wrapper class to manage multiple agent implementations.
 
     This class provides a unified interface for different agent types.
-    The active agent is determined by the ACTIVE_AGENT configuration or constructor parameter.
+    The active agent is determined by config.ACTIVE_AGENT.
     """
 
-    def __init__(self, active_agent: str = None, logger: Logger = None):
+    def __init__(self, logger: Logger = None):
         """Initialize the wrapper with the active agent.
 
         Args:
-            active_agent: The agent type to use. If None, uses config.ACTIVE_AGENT.
-                         Valid values: config.AGENT_LANGGRAPH, config.AGENT_REACT_LANGGRAPH
             logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
         """
-        if active_agent is None:
-            active_agent = config.ACTIVE_AGENT
-
         # Use ConsoleLogger if no logger provided (CLI mode)
         self.logger = logger or ConsoleLogger()
 
-        if active_agent == config.AGENT_LANGGRAPH:
+        if config.ACTIVE_AGENT == config.AGENT_LANGGRAPH:
             from agents.langgraphagent import LangGraphAgent
             self.agent = LangGraphAgent(logger=self.logger)
-        elif active_agent == config.AGENT_REACT_LANGGRAPH:
+        elif config.ACTIVE_AGENT == config.AGENT_REACT_LANGGRAPH:
             from agents.reactlanggraphagent import ReActLangGraphAgent
             self.agent = ReActLangGraphAgent(logger=self.logger)
         else:
             # Default to ReActLangGraph if unknown agent type
-            print(f"[WARNING] Unknown agent type '{active_agent}', defaulting to {config.AGENT_REACT_LANGGRAPH}")
             from agents.reactlanggraphagent import ReActLangGraphAgent
             self.agent = ReActLangGraphAgent(logger=self.logger)
 

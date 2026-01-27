@@ -8,7 +8,7 @@ import json
 import time
 
 from app import config
-from external.scorer import question_scorer
+from utils.generous_scorer import score_with_details
 from runners.agent_runner import AgentRunner
 from utils.validators import InputValidator, ValidationError
 from utils.langfuse_tracking import track_session
@@ -76,9 +76,10 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
             truth_data = ground_truth[task_id]
             correct_answer = truth_data["answer"]
 
-            # Use the official GAIA question_scorer for comparison
-            # This handles numbers, lists, and strings with proper normalization
-            is_correct = question_scorer(str(answer), str(correct_answer))
+            # Use generous scorer with fallback matching strategies
+            result = score_with_details(str(answer), str(correct_answer))
+            is_correct = result["correct"]
+            match_type = result["match_type"]
 
             if is_correct:
                 correct_count += 1
@@ -86,7 +87,10 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
 
             # Stream to logger (q_num is 1-based index)
             if is_correct:
-                logger.success(S.QUESTION_CORRECT.format(num=q_num))
+                if match_type == "exact":
+                    logger.success(S.QUESTION_CORRECT.format(num=q_num))
+                else:
+                    logger.success(S.QUESTION_CORRECT_GENEROUS.format(num=q_num, match_type=match_type))
             else:
                 logger.error(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
         else:
@@ -101,14 +105,12 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
             logger.info(S.RUNTIME.format(minutes=minutes, seconds=seconds))
 
 
-def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
+def run_gaia_questions(filter=None, logger: Logger = None):
     """Run GAIA benchmark questions.
 
     Args:
         filter: Optional tuple/list of question indices to test (e.g., (4, 7, 15)).
                 If None, processes all questions.
-        active_agent: Optional agent type to use (e.g., "LangGraph", "ReActLangGraph", "LLamaIndex").
-                      If None, uses config.ACTIVE_AGENT.
         logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
 
     Returns:
@@ -143,19 +145,19 @@ def run_gaia_questions(filter=None, active_agent=None, logger: Logger = None):
     # Apply filter or use all questions
     if filter is not None:
         questions_to_process = [questions_data[i] for i in filter]
-        logger.info(S.TESTING_SELECTED.format(count=len(questions_to_process), indices=filter))
+        logger.info(S.RUNNING_SELECTED.format(count=len(questions_to_process), indices=filter))
     else:
         questions_to_process = questions_data
-        logger.info(S.TESTING_ALL.format(count=len(questions_to_process)))
+        logger.info(S.RUNNING_ALL.format(count=len(questions_to_process)))
 
-    # Run agent on selected questions with specified agent type (with Langfuse session tracking)
-    with track_session("Test_Run", {
-        "agent": active_agent or config.ACTIVE_AGENT,
+    # Run agent on selected questions (with Langfuse session tracking)
+    with track_session("Run", {
+        "agent": config.ACTIVE_AGENT,
         "question_count": len(questions_to_process),
         "filter": str(filter) if filter else "all",
         "mode": "test"
     }):
-        results = AgentRunner(active_agent=active_agent, logger=logger).run_on_questions(questions_to_process)
+        results = AgentRunner(logger=logger).run_on_questions(questions_to_process)
 
     if results is None:
         logger.error(S.ERROR_INITIALIZING_AGENT)

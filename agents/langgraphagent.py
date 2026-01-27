@@ -264,7 +264,7 @@ class LangGraphAgent:
             file_name: Optional file name if the question references a file
         """
 
-        truncated_q = f"{question[:100]}..." if len(question) > 100 else question
+        truncated_q = f"{question[:30]}..." if len(question) > 30 else question
         self.logger.step(S.LANGGRAPH_STARTING.format(question=truncated_q))
         if file_name:
             self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))

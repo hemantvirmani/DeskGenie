@@ -12,21 +12,19 @@ class AgentRunner:
     """Handles agent execution and question processing.
     """
 
-    def __init__(self, active_agent: str = None, logger: Logger = None):
+    def __init__(self, logger: Logger = None):
         """Initialize the AgentRunner.
 
         Args:
-            active_agent: The agent type to use. If None, uses config.ACTIVE_AGENT.
             logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
         """
         self.agent = None
-        self.active_agent = active_agent
         self.logger = logger or ConsoleLogger()
 
     def _initialize_agent(self) -> bool:
         """Initialize the agent. Returns True if successful."""
         try:
-            self.agent = MyGAIAAgents(active_agent=self.active_agent, logger=self.logger)
+            self.agent = MyGAIAAgents(logger=self.logger)
             return True
         except Exception as e:
             self.logger.error(S.ERROR_INSTANTIATING_AGENT.format(error=e))

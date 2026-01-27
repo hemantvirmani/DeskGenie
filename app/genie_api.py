@@ -75,7 +75,6 @@ tasks_store = {}
 class ChatRequest(BaseModel):
     message: str
     file_name: Optional[str] = None
-    agent_type: Optional[str] = None
 
 class ChatResponse(BaseModel):
     task_id: str
@@ -98,7 +97,6 @@ class ConfigInfo(BaseModel):
 
 class BenchmarkRequest(BaseModel):
     filter_indices: Optional[list[int]] = None  # e.g., [0, 2, 5] or None for all
-    agent_type: Optional[str] = None
 
 class BenchmarkResponse(BaseModel):
     task_id: str
@@ -151,15 +149,14 @@ async def chat(request: ChatRequest):
     task = asyncio.create_task(run_agent_task(
         task_id=task_id,
         message=request.message,
-        file_name=request.file_name,
-        agent_type=request.agent_type
+        file_name=request.file_name
     ))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
     return ChatResponse(task_id=task_id, status="pending")
 
-async def run_agent_task(task_id: str, message: str, file_name: str = None, agent_type: str = None):
+async def run_agent_task(task_id: str, message: str, file_name: str = None):
     """Run agent task in background."""
     logger = create_logger(task_id, streaming=True)
 
@@ -177,12 +174,12 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, agen
         def execute_with_tracking():
             with track_session("Chat_Request", {
                 "task_id": task_id,
-                "agent_type": agent_type or config.ACTIVE_AGENT,
+                "agent_type": config.ACTIVE_AGENT,
                 "has_file": file_name is not None,
                 "message_length": len(message),
                 "mode": "chat"
             }):
-                agent = MyGAIAAgents(active_agent=agent_type, logger=logger)
+                agent = MyGAIAAgents(logger=logger)
                 return agent(message, file_name)
 
         result = await loop.run_in_executor(None, execute_with_tracking)
@@ -227,12 +224,12 @@ async def chat_sync(request: ChatRequest):
 
         def execute_with_tracking():
             with track_session("Chat_Sync", {
-                "agent_type": request.agent_type or config.ACTIVE_AGENT,
+                "agent_type": config.ACTIVE_AGENT,
                 "has_file": request.file_name is not None,
                 "message_length": len(request.message),
                 "mode": "chat_sync"
             }):
-                agent = MyGAIAAgents(active_agent=request.agent_type)
+                agent = MyGAIAAgents()
                 return agent(request.message, request.file_name)
 
         result = await loop.run_in_executor(None, execute_with_tracking)
@@ -257,15 +254,14 @@ async def run_benchmark(request: BenchmarkRequest):
     # Run benchmark in background (track for cleanup)
     task = asyncio.create_task(run_predefined_task(
         task_id=task_id,
-        filter_indices=request.filter_indices,
-        agent_type=request.agent_type
+        filter_indices=request.filter_indices
     ))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
     return BenchmarkResponse(task_id=task_id, status="pending")
 
-async def run_predefined_task(task_id: str, filter_indices: list = None, agent_type: str = None):
+async def run_predefined_task(task_id: str, filter_indices: list = None):
     """Run benchmark task in background."""
     # Create logger for this task
     logger = create_logger(task_id, streaming=True)
@@ -288,12 +284,12 @@ async def run_predefined_task(task_id: str, filter_indices: list = None, agent_t
         def execute_with_tracking():
             with track_session("Benchmark_Run", {
                 "task_id": task_id,
-                "agent_type": agent_type or config.ACTIVE_AGENT,
+                "agent_type": config.ACTIVE_AGENT,
                 "filter_indices": str(filter_indices) if filter_indices else "all",
                 "question_count": len(filter_indices) if filter_indices else "all",
                 "mode": "benchmark"
             }):
-                run_gaia_questions(filter=filter_tuple, active_agent=agent_type, logger=logger)
+                run_gaia_questions(filter=filter_tuple, logger=logger)
 
         await loop.run_in_executor(None, execute_with_tracking)
 
