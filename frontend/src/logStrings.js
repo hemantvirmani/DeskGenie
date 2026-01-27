@@ -9,7 +9,8 @@ export const LogStrings = {
   LOG_SEPARATOR: '='.repeat(30),
 
   // Benchmark logs
-  STARTING_BENCHMARK: 'Starting GAIA benchmark...',
+  STARTING_BENCHMARK_ALL: 'Starting GAIA benchmark (all questions)...',
+  STARTING_BENCHMARK_CUSTOM: 'Starting GAIA benchmark (questions: {questions})...',
   BENCHMARK_COMPLETED: 'Benchmark completed successfully',
   BENCHMARK_FAILED: 'Benchmark failed: {error}',
   BENCHMARK_ERROR: 'Benchmark error: {error}',

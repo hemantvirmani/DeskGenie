@@ -147,7 +147,7 @@ def run_gaia_questions(filter=None, logger: Logger = None) -> dict:
     # Apply filter or use all questions
     if filter is not None:
         questions_to_process = [questions_data[i] for i in filter]
-        logger.info(S.RUNNING_SELECTED.format(count=len(questions_to_process), indices=filter))
+        logger.info(S.RUNNING_SELECTED.format(count=len(questions_to_process)))
     else:
         questions_to_process = questions_data
         logger.info(S.RUNNING_ALL.format(count=len(questions_to_process)))

@@ -33,7 +33,12 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
     // Show logs panel and add initial log
     if (setShowLogsPanel) setShowLogsPanel(true)
     if (addLog) addLog(LogStrings.LOG_SEPARATOR, 'info')
-    if (addLog) addLog(LogStrings.STARTING_BENCHMARK, 'info')
+    if (addLog) {
+      const benchmarkLog = filterQuestions
+        ? formatLog(LogStrings.STARTING_BENCHMARK_CUSTOM, { questions: filterQuestions.join(', ') })
+        : LogStrings.STARTING_BENCHMARK_ALL
+      addLog(benchmarkLog, 'info')
+    }
 
     // Add placeholder for benchmark result
     const benchmarkPlaceholder = { role: 'assistant', content: LogStrings.RUNNING_BENCHMARK, status: 'loading' }

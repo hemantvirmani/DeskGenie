@@ -98,7 +98,7 @@ class QuestionRunnerStrings:
 
     # Processing
     PROCESSING_HEADER = "=== Processing GAIA Questions ==="
-    RUNNING_SELECTED = "Running {count} selected questions (indices: {indices})"
+    RUNNING_SELECTED = "Running {count} selected questions"
     RUNNING_ALL = "Running all {count} questions"
     COMPLETED_HEADER = "=== Completed GAIA Questions ==="
     ERROR_INITIALIZING_AGENT = "Error initializing agent."
