@@ -288,12 +288,15 @@ async def run_predefined_task(task_id: str, filter_indices: list = None):
                 "question_count": len(filter_indices) if filter_indices else "all",
                 "mode": "benchmark"
             }):
-                run_gaia_questions(filter=filter_tuple, logger=logger)
+                return run_gaia_questions(filter=filter_tuple, logger=logger)
 
-        await loop.run_in_executor(None, execute_with_tracking)
+        stats = await loop.run_in_executor(None, execute_with_tracking)
 
         tasks_store[task_id]["status"] = "completed"
-        tasks_store[task_id]["result"] = "Benchmark completed - see logs for details"
+        if stats:
+            tasks_store[task_id]["result"] = S.BENCHMARK_RESULT_SUMMARY.format(**stats)
+        else:
+            tasks_store[task_id]["result"] = S.BENCHMARK_RESULT_FALLBACK
         logger.success(S.BENCHMARK_COMPLETED)
 
     except Exception as e:

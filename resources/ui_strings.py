@@ -157,3 +157,5 @@ class APIStrings:
     # Benchmark
     BENCHMARK_COMPLETED = "GAIA Benchmark completed"
     BENCHMARK_FAILED = "GAIA Benchmark failed: {error}"
+    BENCHMARK_RESULT_SUMMARY = "{correct}/{total} correct ({accuracy:.1f}%)"
+    BENCHMARK_RESULT_FALLBACK = "Benchmark completed - see logs for details"

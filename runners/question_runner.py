@@ -54,13 +54,16 @@ def _load_ground_truth(file_path: str = config.METADATA_FILE, logger: Logger = N
     return truth_mapping
 
 
-def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None) -> None:
+def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None) -> dict:
     """Verify answers against ground truth using the official GAIA scorer.
 
     Args:
         results: List of tuples (task_id, question_text, answer)
         logger: Optional logger for streaming
         runtime: Optional tuple of (minutes, seconds) for total runtime
+
+    Returns:
+        dict: Summary stats with keys 'correct', 'total', 'accuracy'
     """
     logger = logger or ConsoleLogger()
     ground_truth = _load_ground_truth(logger=logger)
@@ -94,15 +97,17 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
             logger.warning(S.QUESTION_NO_TRUTH.format(num=q_num))
 
     # Add summary statistics
+    accuracy = (correct_count / total_count) * 100 if total_count > 0 else 0
     if total_count > 0:
-        accuracy = (correct_count / total_count) * 100
         logger.result(S.SUMMARY.format(correct=correct_count, total=total_count, accuracy=accuracy))
         if runtime:
             minutes, seconds = runtime
             logger.info(S.RUNTIME.format(minutes=minutes, seconds=seconds))
 
+    return {"correct": correct_count, "total": total_count, "accuracy": accuracy}
 
-def run_gaia_questions(filter=None, logger: Logger = None):
+
+def run_gaia_questions(filter=None, logger: Logger = None) -> dict:
     """Run GAIA benchmark questions.
 
     Args:
@@ -111,7 +116,7 @@ def run_gaia_questions(filter=None, logger: Logger = None):
         logger: Optional logger for streaming logs to UI. If None, uses ConsoleLogger.
 
     Returns:
-        None (results are streamed via logger)
+        dict: Summary stats with keys 'correct', 'total', 'accuracy', or None on error
     """
     logger = logger or ConsoleLogger()
 
@@ -123,21 +128,21 @@ def run_gaia_questions(filter=None, logger: Logger = None):
         questions_data = load_questions(logger=logger)
     except Exception as e:
         logger.error(S.ERROR_LOADING_QUESTIONS.format(error=e))
-        return
+        return None
 
     # Validate questions data
     try:
         questions_data = InputValidator.validate_questions_data(questions_data)
     except ValidationError as e:
         logger.error(S.INVALID_QUESTIONS_DATA.format(error=e))
-        return
+        return None
 
     # Validate and apply filter
     try:
         filter = InputValidator.validate_filter_indices(filter, len(questions_data))
     except ValidationError as e:
         logger.error(S.INVALID_FILTER.format(error=e))
-        return
+        return None
 
     # Apply filter or use all questions
     if filter is not None:
@@ -158,7 +163,7 @@ def run_gaia_questions(filter=None, logger: Logger = None):
 
     if results is None:
         logger.error(S.ERROR_INITIALIZING_AGENT)
-        return
+        return None
 
     logger.success(S.COMPLETED_HEADER)
 
@@ -167,4 +172,4 @@ def run_gaia_questions(filter=None, logger: Logger = None):
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
 
-    _verify_answers(results, logger=logger, runtime=(minutes, seconds))
+    return _verify_answers(results, logger=logger, runtime=(minutes, seconds))

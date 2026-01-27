@@ -5,8 +5,8 @@ import { UIStrings } from './uiStrings'
 
 function App() {
   const [config, setConfig] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [showLogsPanel, setShowLogsPanel] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showLogsPanel, setShowLogsPanel] = useState(true)
   const [logs, setLogs] = useState([])
   const logsEndRef = useRef(null)
 
