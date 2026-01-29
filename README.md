@@ -1,14 +1,16 @@
----
-title: DeskGenie - Desktop AI Agent
-emoji: 🧞‍♂️
-app_file: app/main.py
----
-
 # DeskGenie 🧞‍♂️
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 
 **Your Intelligent Desktop Assistant** - An AI-powered desktop agent that performs file operations, document manipulation, media processing, and more using natural language commands.
 
-Originally built on top of my own learning code [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent), DeskGenie extends the intelligent agent capabilities to everyday desktop tasks.
+> **Note**: This is a hobbyist open-source project for educational purposes. It demonstrates how to build AI agents that can interact with desktop environments using natural language.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Features
 
@@ -362,27 +364,39 @@ See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAI
 
 ## Contributing
 
-Contributions are welcome! Areas for improvement:
-
-- Add more file format support
-- Improve natural language understanding
-- Add cloud storage integration (Google Drive, Dropbox)
-- Create a native desktop UI
-- Add scheduled/automated tasks
-- Improve error handling and recovery
-
-## License
-
-This project is open-source and available under the MIT License.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## Acknowledgments
 
-- Built on [GAIA Benchmark Agent](https://github.com/hemantvirmani/GAIA_Benchmark_Agent)
-- Uses Google's Gemini model via LangGraph
-- LangGraph framework by LangChain
-- React + Tailwind CSS for web interface
-- FastAPI + Uvicorn for backend API
-- Claude Code for help with the code
+This project builds upon several excellent open-source libraries and frameworks:
+
+- **LangGraph** by LangChain - Agent framework
+- **Google Gemini** - LLM provider for natural language processing
+- **FastAPI** - Modern web framework for APIs
+- **React** - UI library
+- **Tailwind CSS** - Utility-first CSS framework
+- **LangChain** - Framework for LLM applications
+- **FFmpeg** - Multimedia processing framework
+- **Tesseract OCR** - Optical character recognition engine
+- **Pillow** - Python imaging library
+- **Uvicorn** - ASGI server
+
+Special thanks to the open-source community for making these tools available.
+
+## Disclaimer
+
+This project is provided as-is for educational and hobbyist purposes. The authors are not responsible for any damages or data loss that may occur while using this software. Always backup your important files before using file manipulation tools.
+
+## Roadmap
+
+- [ ] Add more file format conversions
+- [ ] Improve batch processing performance
+- [ ] Add more web search and research tools
+- [ ] Implement user preferences and settings
+- [ ] Add support for more LLM providers
+- [ ] Create plugin system for custom tools
+- [ ] Add comprehensive test suite
+- [ ] Improve documentation and tutorials
 
 ## Contact
 

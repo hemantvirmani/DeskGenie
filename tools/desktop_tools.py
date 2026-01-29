@@ -1,4 +1,20 @@
-"""Desktop utility tools for DeskGenie - file manipulation, conversion, and automation."""
+"""
+DeskGenie - Desktop AI Agent
+Desktop Tools Module
+
+Copyright (c) 2026 Hemant Virmani. All rights reserved.
+
+Licensed under the MIT License. See LICENSE file in the project root.
+
+⚠️  IMPORTANT SAFETY WARNING ⚠️
+This module performs file system operations that can MODIFY or DELETE files.
+- ALWAYS BACKUP IMPORTANT FILES BEFORE USING THESE TOOLS
+- Review tool parameters carefully before execution
+- Test on non-critical files first
+- The authors are NOT responsible for any data loss or damages
+
+This is a hobbyist open-source project for educational purposes.
+"""
 
 import os
 import shutil

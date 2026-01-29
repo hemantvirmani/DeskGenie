@@ -29,3 +29,22 @@ Thumbs.db
 # Logs
 *.log
 nul
+
+# API Keys and Secrets
+*.key
+*_key.json
+credentials.json
+service_account.json
+secrets.yaml
+secrets.yml
+
+# Output files
+DeskGenie_Output/
+output/
+temp/
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/

@@ -1,3 +1,17 @@
+"""
+DeskGenie - Desktop AI Agent
+
+Copyright (c) 2026 Hemant Virmani. All rights reserved.
+
+Licensed under the MIT License. See LICENSE file in the project root.
+
+This is a hobbyist open-source project for educational purposes.
+The software performs file system operations that may modify or delete files.
+ALWAYS BACKUP IMPORTANT FILES BEFORE USING THIS SOFTWARE.
+
+The authors are not responsible for any data loss or damages that may occur.
+"""
+
 import sys
 import time
 from pathlib import Path
