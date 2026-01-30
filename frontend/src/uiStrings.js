@@ -7,12 +7,16 @@
 export const UIStrings = {
   // App.jsx strings
   APP_TITLE: "DeskGenie",
-  CHAT_HISTORY_TITLE: "Chat History",
-  CHAT_HISTORY_PLACEHOLDER: "Chat history will appear here",
+  CHAT_HISTORY_TITLE: "Chats",
   VERSION_INFO: "DeskGenie v1.0.0",
   LOGS_TITLE: "Logs",
   CLEAR_LOGS: "Clear",
   LOGS_PLACEHOLDER: "Logs will appear here when you chat or run benchmarks",
+
+  // ChatGroupList.jsx strings
+  NEW_CHAT_BUTTON: "New Chat",
+  RENAME_CHAT: "Rename",
+  DELETE_CHAT: "Delete",
 
   // Custom Questions Modal
   CUSTOM_QUESTIONS_TITLE: "Custom Question Numbers",

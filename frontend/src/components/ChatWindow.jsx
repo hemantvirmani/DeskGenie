@@ -5,8 +5,7 @@ import ChatInput from './ChatInput'
 import { UIStrings } from '../uiStrings'
 import { LogStrings, formatLog } from '../logStrings'
 
-function ChatWindow({ addLog, setShowLogsPanel }) {
-  const [messages, setMessages] = useState([])
+function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLogsPanel, onNewChat }) {
   const [isLoading, setIsLoading] = useState(false)
   const [showCustomModal, setShowCustomModal] = useState(false)
   const [customQuestions, setCustomQuestions] = useState('')
@@ -27,7 +26,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
       ? { role: 'user', content: `Running GAIA benchmark with custom questions: ${filterQuestions.join(', ')}` }
       : { role: 'user', content: 'Running GAIA benchmark with all questions' }
 
-    setMessages(prev => [...prev, benchmarkMessage])
+    addMessage(benchmarkMessage)
     setIsLoading(true)
 
     // Show logs panel and add initial log
@@ -42,7 +41,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
 
     // Add placeholder for benchmark result
     const benchmarkPlaceholder = { role: 'assistant', content: LogStrings.RUNNING_BENCHMARK, status: 'loading' }
-    setMessages(prev => [...prev, benchmarkPlaceholder])
+    addMessage(benchmarkPlaceholder)
 
     try {
       const response = await fetch('/api/benchmark', {
@@ -103,26 +102,18 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
-            setMessages(prev => {
-              const newMessages = [...prev]
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: statusData.result || LogStrings.BENCHMARK_COMPLETED
-              }
-              return newMessages
+            updateLastMessage({
+              role: 'assistant',
+              content: statusData.result || LogStrings.BENCHMARK_COMPLETED
             })
           } else if (statusData.status === 'error') {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
             if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error }), 'error')
-            setMessages(prev => {
-              const newMessages = [...prev]
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: formatLog(LogStrings.BENCHMARK_FAILED, { error: statusData.error })
-              }
-              return newMessages
+            updateLastMessage({
+              role: 'assistant',
+              content: formatLog(LogStrings.BENCHMARK_FAILED, { error: statusData.error })
             })
           }
         } catch (err) {
@@ -130,34 +121,32 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
           eventSource.close()
           setIsLoading(false)
           if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: err.message }), 'error')
-          setMessages(prev => {
-            const newMessages = [...prev]
-            newMessages[newMessages.length - 1] = {
-              role: 'assistant',
-              content: formatLog(LogStrings.BENCHMARK_ERROR, { error: err.message })
-            }
-            return newMessages
+          updateLastMessage({
+            role: 'assistant',
+            content: formatLog(LogStrings.BENCHMARK_ERROR, { error: err.message })
           })
         }
       }, 1000)
     } catch (error) {
       setIsLoading(false)
       if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: error.message }), 'error')
-      setMessages(prev => {
-        const newMessages = [...prev]
-        newMessages[newMessages.length - 1] = {
-          role: 'assistant',
-          content: formatLog(LogStrings.BENCHMARK_ERROR, { error: error.message })
-        }
-        return newMessages
+      updateLastMessage({
+        role: 'assistant',
+        content: formatLog(LogStrings.BENCHMARK_ERROR, { error: error.message })
       })
     }
   }
 
   const handleSendMessage = async (content) => {
+    // Check for /new command first (exact match, case-insensitive)
+    if (content.trim().toLowerCase() === '/new') {
+      if (onNewChat) onNewChat()
+      return
+    }
+
     // Add user message
     const userMessage = { role: 'user', content }
-    setMessages(prev => [...prev, userMessage])
+    addMessage(userMessage)
     setIsLoading(true)
 
     // Show logs panel and add initial log
@@ -168,7 +157,7 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
 
     // Add placeholder for assistant response
     const assistantPlaceholder = { role: 'assistant', content: '', status: 'loading' }
-    setMessages(prev => [...prev, assistantPlaceholder])
+    addMessage(assistantPlaceholder)
 
     try {
       const response = await fetch('/api/chat', {
@@ -229,26 +218,18 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
-            setMessages(prev => {
-              const newMessages = [...prev]
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: statusData.result || LogStrings.NO_RESPONSE
-              }
-              return newMessages
+            updateLastMessage({
+              role: 'assistant',
+              content: statusData.result || LogStrings.NO_RESPONSE
             })
           } else if (statusData.status === 'error') {
             clearInterval(pollInterval)
             eventSource.close()
             setIsLoading(false)
             if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error }), 'error')
-            setMessages(prev => {
-              const newMessages = [...prev]
-              newMessages[newMessages.length - 1] = {
-                role: 'assistant',
-                content: formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error })
-              }
-              return newMessages
+            updateLastMessage({
+              role: 'assistant',
+              content: formatLog(LogStrings.ERROR_PREFIX, { error: statusData.error })
             })
           }
         } catch (err) {
@@ -256,26 +237,18 @@ function ChatWindow({ addLog, setShowLogsPanel }) {
           eventSource.close()
           setIsLoading(false)
           if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: err.message }), 'error')
-          setMessages(prev => {
-            const newMessages = [...prev]
-            newMessages[newMessages.length - 1] = {
-              role: 'assistant',
-              content: formatLog(LogStrings.ERROR_PREFIX, { error: err.message })
-            }
-            return newMessages
+          updateLastMessage({
+            role: 'assistant',
+            content: formatLog(LogStrings.ERROR_PREFIX, { error: err.message })
           })
         }
       }, 1000)
     } catch (error) {
       setIsLoading(false)
       if (addLog) addLog(formatLog(LogStrings.ERROR_PREFIX, { error: error.message }), 'error')
-      setMessages(prev => {
-        const newMessages = [...prev]
-        newMessages[newMessages.length - 1] = {
-          role: 'assistant',
-          content: formatLog(LogStrings.ERROR_PREFIX, { error: error.message })
-        }
-        return newMessages
+      updateLastMessage({
+        role: 'assistant',
+        content: formatLog(LogStrings.ERROR_PREFIX, { error: error.message })
       })
     }
   }
