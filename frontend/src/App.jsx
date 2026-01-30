@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import ChatGroupList from './components/ChatGroupList'
@@ -26,7 +26,9 @@ function App() {
   const [showLogsPanel, setShowLogsPanel] = useState(true)
   const [chatGroups, setChatGroups] = useState([])
   const [activeGroupId, setActiveGroupId] = useState(null)
+  const [isLoaded, setIsLoaded] = useState(false)
   const logsEndRef = useRef(null)
+  const saveTimeoutRef = useRef(null)
 
   // Get active group's data
   const activeGroup = chatGroups.find(g => g.id === activeGroupId)
@@ -38,29 +40,101 @@ function App() {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
 
-  // Initialize with default group on mount
+  // Load chats from API on mount
   useEffect(() => {
-    if (chatGroups.length === 0) {
-      const newGroup = {
-        id: generateGroupId(),
-        name: generateGroupName(),
-        messages: [],
-        logs: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+    const loadChats = async () => {
+      try {
+        const response = await fetch('/api/chats')
+        const data = await response.json()
+
+        if (data.chats && data.chats.length > 0) {
+          setChatGroups(data.chats)
+          setActiveGroupId(data.chats[0].id)
+        } else {
+          // No saved chats, create a default one
+          const newGroup = {
+            id: generateGroupId(),
+            name: generateGroupName(),
+            messages: [],
+            logs: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          }
+          setChatGroups([newGroup])
+          setActiveGroupId(newGroup.id)
+          // Save the new default group
+          saveChat(newGroup)
+        }
+      } catch (err) {
+        console.error('Failed to load chats:', err)
+        // Create default group on error
+        const newGroup = {
+          id: generateGroupId(),
+          name: generateGroupName(),
+          messages: [],
+          logs: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+        setChatGroups([newGroup])
+        setActiveGroupId(newGroup.id)
       }
-      setChatGroups([newGroup])
-      setActiveGroupId(newGroup.id)
+      setIsLoaded(true)
     }
+
+    loadChats()
   }, [])
 
+  // Fetch config on mount
   useEffect(() => {
-    // Fetch config on mount
     fetch('/api/config')
       .then(res => res.json())
       .then(data => setConfig(data))
       .catch(err => console.error('Failed to fetch config:', err))
   }, [])
+
+  // Save chat to API
+  const saveChat = useCallback(async (chat) => {
+    try {
+      await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chat)
+      })
+    } catch (err) {
+      console.error('Failed to save chat:', err)
+    }
+  }, [])
+
+  // Delete chat from API
+  const deleteChatFromAPI = useCallback(async (chatId) => {
+    try {
+      await fetch(`/api/chats/${chatId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to delete chat:', err)
+    }
+  }, [])
+
+  // Auto-save active chat when it changes (debounced)
+  useEffect(() => {
+    if (!isLoaded || !activeGroup) return
+
+    // Clear previous timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Debounce save by 1 second
+    saveTimeoutRef.current = setTimeout(() => {
+      saveChat(activeGroup)
+    }, 1000)
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [activeGroup, isLoaded, saveChat])
 
   // Chat group management functions
   const createChatGroup = () => {
@@ -74,18 +148,25 @@ function App() {
     }
     setChatGroups(prev => [newGroup, ...prev])
     setActiveGroupId(newGroup.id)
+    saveChat(newGroup)
     return newGroup.id
   }
 
   const renameChatGroup = (groupId, newName) => {
-    setChatGroups(prev => prev.map(group =>
-      group.id === groupId
-        ? { ...group, name: newName.trim() || group.name }
-        : group
-    ))
+    setChatGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        const updated = { ...group, name: newName.trim() || group.name, updatedAt: Date.now() }
+        saveChat(updated)
+        return updated
+      }
+      return group
+    }))
   }
 
   const deleteChatGroup = (groupId) => {
+    // Delete from API
+    deleteChatFromAPI(groupId)
+
     setChatGroups(prev => {
       const filtered = prev.filter(g => g.id !== groupId)
 
@@ -104,6 +185,7 @@ function App() {
             updatedAt: Date.now()
           }
           setActiveGroupId(newGroup.id)
+          saveChat(newGroup)
           return [newGroup]
         }
       }
@@ -159,7 +241,7 @@ function App() {
   const clearLogs = () => {
     setChatGroups(prev => prev.map(group =>
       group.id === activeGroupId
-        ? { ...group, logs: [] }
+        ? { ...group, logs: [], updatedAt: Date.now() }
         : group
     ))
   }

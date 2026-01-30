@@ -27,6 +27,7 @@ from agents.agents import MyGAIAAgents
 from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
+from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
 from resources.ui_strings import APIStrings as S
 
 # Track background tasks for cleanup
@@ -101,6 +102,24 @@ class BenchmarkRequest(BaseModel):
 class BenchmarkResponse(BaseModel):
     task_id: str
     status: str
+
+class ChatGroupMessage(BaseModel):
+    role: str
+    content: str
+    status: Optional[str] = None
+
+class ChatGroupLog(BaseModel):
+    timestamp: str
+    message: str
+    type: str
+
+class ChatGroup(BaseModel):
+    id: str
+    name: str
+    messages: list[ChatGroupMessage]
+    logs: list[ChatGroupLog]
+    createdAt: int
+    updatedAt: int
 
 # --- API Endpoints ---
 
@@ -368,6 +387,39 @@ async def stream_task_logs(task_id: str):
             "X-Accel-Buffering": "no"
         }
     )
+
+# --- Chat Persistence Endpoints ---
+
+@app.get("/api/chats")
+async def get_all_chats():
+    """Get all saved chat groups."""
+    chats = list_chats()
+    return {"chats": chats}
+
+@app.get("/api/chats/{chat_id}")
+async def get_chat_by_id(chat_id: str):
+    """Get a specific chat group by ID."""
+    chat = get_chat(chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return chat
+
+@app.post("/api/chats")
+async def save_chat_group(chat: ChatGroup):
+    """Save or update a chat group."""
+    success = save_chat(chat.model_dump())
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save chat")
+    return {"status": "saved", "id": chat.id}
+
+@app.delete("/api/chats/{chat_id}")
+async def delete_chat_group(chat_id: str):
+    """Delete a chat group."""
+    success = delete_chat(chat_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return {"status": "deleted", "id": chat_id}
+
 
 # --- Static Files (Production) ---
 
