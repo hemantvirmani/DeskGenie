@@ -114,6 +114,31 @@ def generous_question_scorer(
         if truth_items and truth_items == answer_items:
             return True, "unordered_list"
 
+    # Strategy 7: Common abbreviation expansion
+    abbreviations = {
+        'st.': 'saint',
+        'st ': 'saint ',
+        'mt.': 'mount',
+        'mt ': 'mount ',
+        'dr.': 'doctor',
+        'dr ': 'doctor ',
+        'mr.': 'mister',
+        'mrs.': 'missus',
+        'ft.': 'fort',
+        'ft ': 'fort ',
+    }
+
+    def expand_abbreviations(text: str) -> str:
+        result = text.lower()
+        for abbrev, full in abbreviations.items():
+            result = result.replace(abbrev, full)
+        return result
+
+    expanded_answer = expand_abbreviations(model_answer)
+    expanded_truth = expand_abbreviations(ground_truth)
+    if normalize_str(expanded_answer) == normalize_str(expanded_truth):
+        return True, "abbreviation_match"
+
     return False, "no_match"
 
 
