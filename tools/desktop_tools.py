@@ -24,6 +24,12 @@ from typing import Optional
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
 from utils.log_streamer import get_global_logger
+from utils.data_dir import (
+    get_home_dir, get_documents_dir, get_downloads_dir, get_desktop_dir,
+    get_pictures_dir, get_videos_dir, get_music_dir, get_local_appdata_dir,
+    get_roaming_appdata_dir, get_temp_dir, get_all_user_dirs, get_all_system_dirs,
+    resolve_path_alias
+)
 from resources.state_strings import DesktopToolReturns as DTR
 from resources.error_strings import DesktopToolErrors as DTE
 from resources.ui_strings import DesktopToolStrings as DTS
@@ -428,6 +434,52 @@ def image_compress(input_image: str, output_image: str, target_size_kb: int = 50
 
     except Exception as e:
         return DTE.IMAGE_COMPRESS.format(error=e)
+
+
+@tool
+@track_tool_call("images_to_pdf")
+def images_to_pdf(image_files: str, output_pdf: str) -> str:
+    """
+    Convert one or more images to a single PDF file.
+
+    Args:
+        image_files: Comma-separated list of image paths, or a single image path
+        output_pdf: Path for the output PDF file
+
+    Returns:
+        str: Success message or error description
+    """
+    try:
+        get_global_logger().tool(f"Converting images to PDF: {output_pdf}")
+
+        file_list = [f.strip() for f in image_files.split(",")]
+        pillow_heif.register_heif_opener()
+
+        images = []
+        for img_path in file_list:
+            if not os.path.exists(img_path):
+                return f"Image file not found: {img_path}"
+
+            img = Image.open(img_path)
+            # Convert to RGB if needed (PDF doesn't support RGBA)
+            if img.mode in ['RGBA', 'P']:
+                img = img.convert('RGB')
+            images.append(img)
+
+        if not images:
+            return "No valid images to convert"
+
+        # Save first image and append the rest
+        first_img = images[0]
+        if len(images) > 1:
+            first_img.save(output_pdf, "PDF", save_all=True, append_images=images[1:])
+        else:
+            first_img.save(output_pdf, "PDF")
+
+        return f"Successfully created PDF with {len(images)} image(s): {output_pdf}"
+
+    except Exception as e:
+        return f"Error converting images to PDF: {e}"
 
 
 @tool
@@ -936,6 +988,258 @@ def get_media_info(file_path: str) -> str:
 
 
 # ============================================================================
+# System Directory Tools
+# ============================================================================
+
+@tool
+@track_tool_call("get_user_directory")
+def get_user_directory(directory_name: str) -> str:
+    """
+    Get the path to a standard user directory.
+
+    Args:
+        directory_name: Name of the directory - 'home', 'documents', 'downloads',
+                       'desktop', 'pictures', 'videos', 'music'
+
+    Returns:
+        str: Full path to the directory or error if not recognized
+    """
+    try:
+        get_global_logger().tool(f"Getting user directory: {directory_name}")
+
+        dir_map = {
+            "home": get_home_dir,
+            "documents": get_documents_dir,
+            "docs": get_documents_dir,
+            "downloads": get_downloads_dir,
+            "desktop": get_desktop_dir,
+            "pictures": get_pictures_dir,
+            "photos": get_pictures_dir,
+            "videos": get_videos_dir,
+            "movies": get_videos_dir,
+            "music": get_music_dir,
+        }
+
+        name = directory_name.lower().strip()
+        if name in dir_map:
+            path = dir_map[name]()
+            return str(path)
+
+        return f"Unknown directory name: {directory_name}. Valid options: home, documents, downloads, desktop, pictures, videos, music"
+
+    except Exception as e:
+        return f"Error getting directory: {e}"
+
+
+@tool
+@track_tool_call("get_system_directory")
+def get_system_directory(directory_name: str) -> str:
+    """
+    Get the path to a system/application directory.
+
+    Args:
+        directory_name: Name of the directory - 'appdata', 'localappdata', 'roaming', 'temp'
+
+    Returns:
+        str: Full path to the directory or error if not recognized
+    """
+    try:
+        get_global_logger().tool(f"Getting system directory: {directory_name}")
+
+        dir_map = {
+            "appdata": get_local_appdata_dir,
+            "localappdata": get_local_appdata_dir,
+            "local appdata": get_local_appdata_dir,
+            "roaming": get_roaming_appdata_dir,
+            "roaming appdata": get_roaming_appdata_dir,
+            "temp": get_temp_dir,
+            "tmp": get_temp_dir,
+        }
+
+        name = directory_name.lower().strip()
+        if name in dir_map:
+            path = dir_map[name]()
+            return str(path)
+
+        return f"Unknown directory name: {directory_name}. Valid options: appdata, localappdata, roaming, temp"
+
+    except Exception as e:
+        return f"Error getting directory: {e}"
+
+
+@tool
+@track_tool_call("list_user_directories")
+def list_user_directories() -> str:
+    """
+    List all standard user directories with their full paths.
+
+    Returns:
+        str: Formatted list of user directories and their paths
+    """
+    try:
+        get_global_logger().tool("Listing all user directories")
+
+        dirs = get_all_user_dirs()
+        result = "User Directories:\n"
+        for name, path in dirs.items():
+            exists = "exists" if path.exists() else "does not exist"
+            result += f"  {name.capitalize()}: {path} ({exists})\n"
+
+        return result
+
+    except Exception as e:
+        return f"Error listing directories: {e}"
+
+
+@tool
+@track_tool_call("list_system_directories")
+def list_system_directories() -> str:
+    """
+    List all system/application directories with their full paths.
+
+    Returns:
+        str: Formatted list of system directories and their paths
+    """
+    try:
+        get_global_logger().tool("Listing all system directories")
+
+        dirs = get_all_system_dirs()
+        result = "System Directories:\n"
+        for name, path in dirs.items():
+            if path is None:
+                result += f"  {name}: Not available on this platform\n"
+            else:
+                exists = "exists" if path.exists() else "does not exist"
+                result += f"  {name}: {path} ({exists})\n"
+
+        return result
+
+    except Exception as e:
+        return f"Error listing directories: {e}"
+
+
+@tool
+@track_tool_call("resolve_path")
+def resolve_path(path_or_alias: str) -> str:
+    """
+    Resolve a path alias or expand a path with special prefixes.
+
+    Supports aliases like:
+    - ~, home -> Home directory
+    - documents, docs -> Documents
+    - downloads -> Downloads
+    - desktop -> Desktop
+    - pictures, photos -> Pictures
+    - videos, movies -> Videos
+    - music -> Music
+    - appdata, localappdata -> Local AppData
+    - roaming -> Roaming AppData
+    - temp, tmp -> Temp directory
+
+    Args:
+        path_or_alias: A path alias or path starting with an alias (e.g., "downloads/myfile.txt")
+
+    Returns:
+        str: Resolved full path
+    """
+    try:
+        get_global_logger().tool(f"Resolving path: {path_or_alias}")
+
+        # Check if it's a simple alias first
+        resolved = resolve_path_alias(path_or_alias)
+        if resolved:
+            return str(resolved)
+
+        # Try to split and resolve the first component
+        parts = path_or_alias.replace("\\", "/").split("/")
+        first_part = parts[0]
+
+        base = resolve_path_alias(first_part)
+        if base:
+            # Join with remaining parts
+            full_path = base
+            for part in parts[1:]:
+                if part:
+                    full_path = full_path / part
+            return str(full_path)
+
+        # If not an alias, return as-is (might be a regular path)
+        return path_or_alias
+
+    except Exception as e:
+        return f"Error resolving path: {e}"
+
+
+@tool
+@track_tool_call("list_directory_contents")
+def list_directory_contents(directory: str, show_hidden: bool = False, max_items: int = 50) -> str:
+    """
+    List contents of a directory with details.
+
+    Args:
+        directory: Path to directory OR alias (e.g., 'downloads', 'desktop')
+        show_hidden: Include hidden files (default: False)
+        max_items: Maximum number of items to show (default: 50)
+
+    Returns:
+        str: Formatted directory listing
+    """
+    try:
+        # Resolve alias if needed
+        resolved = resolve_path_alias(directory)
+        dir_path = Path(resolved) if resolved else Path(directory)
+
+        if not dir_path.exists():
+            return f"Directory does not exist: {dir_path}"
+
+        if not dir_path.is_dir():
+            return f"Not a directory: {dir_path}"
+
+        get_global_logger().tool(f"Listing directory: {dir_path}")
+
+        items = []
+        for item in dir_path.iterdir():
+            if not show_hidden and item.name.startswith('.'):
+                continue
+
+            if item.is_dir():
+                item_type = "[DIR]"
+                size = ""
+            else:
+                item_type = "[FILE]"
+                size_bytes = item.stat().st_size
+                if size_bytes < 1024:
+                    size = f"{size_bytes}B"
+                elif size_bytes < 1024 * 1024:
+                    size = f"{size_bytes/1024:.1f}KB"
+                else:
+                    size = f"{size_bytes/(1024*1024):.1f}MB"
+
+            items.append((item_type, item.name, size))
+
+        # Sort: directories first, then files
+        items.sort(key=lambda x: (0 if x[0] == "[DIR]" else 1, x[1].lower()))
+
+        if not items:
+            return f"Directory is empty: {dir_path}"
+
+        result = f"Contents of {dir_path}:\n\n"
+        for item_type, name, size in items[:max_items]:
+            if size:
+                result += f"  {item_type} {name} ({size})\n"
+            else:
+                result += f"  {item_type} {name}\n"
+
+        if len(items) > max_items:
+            result += f"\n... and {len(items) - max_items} more items"
+
+        return result
+
+    except Exception as e:
+        return f"Error listing directory: {e}"
+
+
+# ============================================================================
 # Helper Functions
 # ============================================================================
 
@@ -1003,6 +1307,7 @@ def get_desktop_tools_list() -> list:
         image_convert,
         image_resize,
         image_compress,
+        images_to_pdf,
         batch_convert_images,
 
         # File Management Tools
@@ -1019,5 +1324,13 @@ def get_desktop_tools_list() -> list:
         video_to_audio,
         compress_video,
         get_media_info,
+
+        # System Directory Tools
+        get_user_directory,
+        get_system_directory,
+        list_user_directories,
+        list_system_directories,
+        resolve_path,
+        list_directory_contents,
     ]
     return tools
