@@ -107,6 +107,13 @@ def generous_question_scorer(
     if truth_words and truth_words.issubset(answer_words):
         return True, "words_match"
 
+    # Strategy 6: Unordered comma-separated list comparison
+    if ',' in ground_truth and ',' in model_answer:
+        truth_items = {normalize_str(item.strip()) for item in ground_truth.split(',')}
+        answer_items = {normalize_str(item.strip()) for item in model_answer.split(',')}
+        if truth_items and truth_items == answer_items:
+            return True, "unordered_list"
+
     return False, "no_match"
 
 
