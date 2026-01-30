@@ -22,7 +22,7 @@ const generateGroupName = () => {
 
 function App() {
   const [config, setConfig] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showLogsPanel, setShowLogsPanel] = useState(true)
   const [chatGroups, setChatGroups] = useState([])
   const [activeGroupId, setActiveGroupId] = useState(null)
