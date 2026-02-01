@@ -32,9 +32,17 @@ from colorama import init
 # Initialize colorama for Windows compatibility
 init(autoreset=True)
 
-# Suppress asyncio event loop cleanup warnings (common on HF Spaces)
+# Suppress asyncio event loop cleanup warnings (common on HF Spaces and Python 3.13+)
 warnings.filterwarnings('ignore', message='.*Invalid file descriptor.*')
+warnings.filterwarnings('ignore', category=ResourceWarning)
 logging.getLogger('asyncio').setLevel(logging.ERROR)
+
+# Suppress the BaseEventLoop.__del__ AttributeError on shutdown (Python 3.13 issue)
+import atexit
+import gc
+@atexit.register
+def _cleanup():
+    gc.collect()
 
 # Import configuration
 from app import config
