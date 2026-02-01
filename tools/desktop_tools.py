@@ -230,7 +230,7 @@ def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
 
 @tool
 @track_tool_call("pdf_to_images")
-def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dpi: int = 150) -> str:
+def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dpi: Optional[int] = None) -> str:
     """
     Convert PDF pages to images.
 
@@ -238,12 +238,17 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
         input_pdf: Path to the PDF file
         output_dir: Directory to save image files
         image_format: Output format - 'png' or 'jpg' (default: 'png')
-        dpi: Resolution in DPI (default: 150)
+        dpi: Resolution in DPI (default: from user config, or 200)
 
     Returns:
         str: Success message with number of images created
     """
     try:
+        # Get DPI from config if not provided
+        if dpi is None:
+            from utils.user_config import get_preference
+            dpi = get_preference("pdf_dpi", 200)
+
         get_global_logger().tool(DTS.PDF_TO_IMAGES.format(input_pdf=input_pdf, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
@@ -273,19 +278,24 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
 
 @tool
 @track_tool_call("image_convert")
-def image_convert(input_image: str, output_image: str, quality: int = 85) -> str:
+def image_convert(input_image: str, output_image: str, quality: Optional[int] = None) -> str:
     """
     Convert image between formats (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF).
 
     Args:
         input_image: Path to the source image file
         output_image: Path for the output image (format determined by extension)
-        quality: Quality for lossy formats like JPG (1-100, default: 85)
+        quality: Quality for lossy formats like JPG (1-100, default: from user config, or 85)
 
     Returns:
         str: Success message or error description
     """
     try:
+        # Get quality from config if not provided
+        if quality is None:
+            from utils.user_config import get_preference
+            quality = get_preference("image_quality", 85)
+
         get_global_logger().tool(DTS.IMAGE_CONVERT.format(input_image=input_image, output_image=output_image))
 
         input_ext = Path(input_image).suffix.lower()
@@ -484,7 +494,7 @@ def images_to_pdf(image_files: str, output_pdf: str) -> str:
 
 @tool
 @track_tool_call("batch_convert_images")
-def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "jpg", quality: int = 85) -> str:
+def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "jpg", quality: Optional[int] = None) -> str:
     """
     Convert all images in a directory to a specified format.
 
@@ -492,12 +502,17 @@ def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "
         input_dir: Directory containing source images
         output_dir: Directory for converted images
         output_format: Target format - 'jpg', 'png', 'webp' (default: 'jpg')
-        quality: Quality for lossy formats (1-100, default: 85)
+        quality: Quality for lossy formats (1-100, default: from user config, or 85)
 
     Returns:
         str: Summary of conversion results
     """
     try:
+        # Get quality from config if not provided
+        if quality is None:
+            from utils.user_config import get_preference
+            quality = get_preference("image_quality", 85)
+
         get_global_logger().tool(DTS.BATCH_CONVERT.format(input_dir=input_dir, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
