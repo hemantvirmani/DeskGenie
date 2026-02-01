@@ -313,7 +313,10 @@ def get_all_system_dirs() -> dict[str, Optional[Path]]:
 def resolve_path_alias(alias: str) -> Optional[Path]:
     """Resolve a path alias to an actual path.
 
+    First checks user-defined folder aliases, then falls back to built-in aliases.
+
     Supports aliases like:
+    - User-defined aliases from config (e.g., "prax", "finance")
     - ~, home, $HOME -> Home directory
     - documents, docs -> Documents
     - downloads -> Downloads
@@ -331,7 +334,15 @@ def resolve_path_alias(alias: str) -> Optional[Path]:
     Returns:
         Resolved Path or None if alias not recognized
     """
-    alias = alias.lower().strip()
+    # Import here to avoid circular imports
+    from utils.user_config import get_folder_alias
+
+    alias_clean = alias.lower().strip()
+
+    # Check user-defined aliases first
+    user_path = get_folder_alias(alias_clean)
+    if user_path:
+        return Path(user_path)
 
     alias_map = {
         "~": get_home_dir,
@@ -359,6 +370,6 @@ def resolve_path_alias(alias: str) -> Optional[Path]:
         "tmp": get_temp_dir,
     }
 
-    if alias in alias_map:
-        return alias_map[alias]()
+    if alias_clean in alias_map:
+        return alias_map[alias_clean]()
     return None

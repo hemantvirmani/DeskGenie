@@ -261,6 +261,56 @@ organize_files_by_type.invoke({
 | `GOOGLE_API_KEY` | - | Google API key for Gemini model |
 | `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
 
+### User Configuration (config.json)
+
+DeskGenie supports user-defined folder aliases and preferences via a JSON config file.
+
+**Config Location:**
+| Platform | Path |
+|----------|------|
+| Windows | `%LOCALAPPDATA%\DeskGenie\config.json` |
+| macOS | `~/Library/Application Support/DeskGenie/config.json` |
+| Linux | `~/.local/share/DeskGenie/config.json` |
+
+**Setup:**
+1. Copy `config.sample.json` to the config location above
+2. Edit the file to add your folder aliases and preferences
+
+**Example config.json:**
+```json
+{
+  "folder_aliases": {
+    "prax": "C:/Users/YourName/Projects/Prax",
+    "finance": "C:/Users/YourName/Documents/Finance",
+    "work": "C:/Users/YourName/Work",
+    "photos": "D:/Photos/2024"
+  },
+  "preferences": {
+    "default_output_dir": "downloads",
+    "image_quality": 85,
+    "pdf_dpi": 200
+  }
+}
+```
+
+**Using Folder Aliases:**
+
+Once configured, you can use aliases in natural language commands:
+```
+"List files in prax"
+"Convert all images in finance to PDF"
+"Move report.pdf to work"
+```
+
+The agent will automatically resolve aliases like `prax` to their full paths.
+
+**Available Preferences:**
+| Key | Default | Description |
+|-----|---------|-------------|
+| `default_output_dir` | `downloads` | Default directory for output files |
+| `image_quality` | `85` | Default JPEG/WebP quality (1-100) |
+| `pdf_dpi` | `200` | Default DPI for PDF operations |
+
 ## Project Structure
 
 ```
@@ -284,7 +334,10 @@ DeskGenie/
 │   ├── langfuse_tracking.py # Observability
 │   ├── log_streamer.py     # Logging functionality
 │   ├── result_formatter.py # Result formatting utilities
-│   └── validators.py       # Input validation utilities
+│   ├── validators.py       # Input validation utilities
+│   ├── data_dir.py         # Cross-platform directory paths
+│   ├── user_config.py      # User preferences and folder aliases
+│   └── chat_storage.py     # Chat persistence
 │
 ├── runners/
 │   ├── agent_runner.py     # Execution orchestrator
@@ -312,6 +365,7 @@ DeskGenie/
 │   └── questions.json      # Benchmark questions
 │
 ├── requirements.txt        # Python dependencies
+├── config.sample.json      # Sample user configuration
 └── README.md               # This file
 ```
 
@@ -390,13 +444,13 @@ This project is provided as-is for educational and hobbyist purposes. The author
 ## Roadmap
 
 - [ ] Add more file format conversions
-- [ ] Improve batch processing performance
 - [ ] Add more web search and research tools
-- [ ] Implement user preferences and settings
+- [x] Implement user preferences and settings
 - [ ] Add support for more LLM providers
 - [ ] Create plugin system for custom tools
 - [ ] Add comprehensive test suite
 - [ ] Improve documentation and tutorials
+- [ ] Make it easy to access it, other than chat interface.
 
 ## Contact
 

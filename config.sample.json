@@ -1,0 +1,13 @@
+{
+  "folder_aliases": {
+    "prax": "C:/Users/YourName/Projects/Prax",
+    "finance": "C:/Users/YourName/Documents/Finance",
+    "work": "C:/Users/YourName/Work",
+    "photos": "D:/Photos/2024"
+  },
+  "preferences": {
+    "default_output_dir": "downloads",
+    "image_quality": 85,
+    "pdf_dpi": 200
+  }
+}

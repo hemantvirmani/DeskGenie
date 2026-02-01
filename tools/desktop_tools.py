@@ -1124,17 +1124,19 @@ def resolve_path(path_or_alias: str) -> str:
     """
     Resolve a path alias or expand a path with special prefixes.
 
-    Supports aliases like:
-    - ~, home -> Home directory
-    - documents, docs -> Documents
-    - downloads -> Downloads
-    - desktop -> Desktop
-    - pictures, photos -> Pictures
-    - videos, movies -> Videos
-    - music -> Music
-    - appdata, localappdata -> Local AppData
-    - roaming -> Roaming AppData
-    - temp, tmp -> Temp directory
+    Supports:
+    - User-defined aliases from config.json (e.g., "prax", "finance")
+    - Built-in aliases:
+      - ~, home -> Home directory
+      - documents, docs -> Documents
+      - downloads -> Downloads
+      - desktop -> Desktop
+      - pictures, photos -> Pictures
+      - videos, movies -> Videos
+      - music -> Music
+      - appdata, localappdata -> Local AppData
+      - roaming -> Roaming AppData
+      - temp, tmp -> Temp directory
 
     Args:
         path_or_alias: A path alias or path starting with an alias (e.g., "downloads/myfile.txt")
@@ -1168,6 +1170,74 @@ def resolve_path(path_or_alias: str) -> str:
 
     except Exception as e:
         return f"Error resolving path: {e}"
+
+
+@tool
+@track_tool_call("list_folder_aliases")
+def list_folder_aliases() -> str:
+    """
+    List all configured folder aliases.
+
+    Returns:
+        str: Formatted list of aliases and their paths
+    """
+    try:
+        from utils.user_config import list_folder_aliases as _list_aliases
+
+        get_global_logger().tool("Listing folder aliases")
+
+        aliases = _list_aliases()
+
+        if not aliases:
+            return "No folder aliases configured. Use set_folder_alias to add one."
+
+        result = "Configured Folder Aliases:\n"
+        for alias, path in sorted(aliases.items()):
+            exists = "exists" if os.path.exists(path) else "path not found"
+            result += f"  {alias}: {path} ({exists})\n"
+
+        return result
+
+    except Exception as e:
+        return f"Error listing folder aliases: {e}"
+
+
+@tool
+@track_tool_call("get_user_preference")
+def get_user_preference(key: str) -> str:
+    """
+    Get a user preference value.
+
+    Available preferences:
+    - default_output_dir: Default directory for output files
+    - image_quality: Default image quality (1-100)
+    - pdf_dpi: Default DPI for PDF operations
+
+    Args:
+        key: The preference key
+
+    Returns:
+        str: The preference value or message if not set
+    """
+    try:
+        from utils.user_config import get_preference, get_all_preferences
+
+        get_global_logger().tool(f"Getting preference: {key}")
+
+        if key == "all":
+            prefs = get_all_preferences()
+            result = "User Preferences:\n"
+            for k, v in sorted(prefs.items()):
+                result += f"  {k}: {v}\n"
+            return result
+
+        value = get_preference(key)
+        if value is not None:
+            return f"{key}: {value}"
+        return f"Preference '{key}' not set"
+
+    except Exception as e:
+        return f"Error getting preference: {e}"
 
 
 @tool
@@ -1237,6 +1307,96 @@ def list_directory_contents(directory: str, show_hidden: bool = False, max_items
 
     except Exception as e:
         return f"Error listing directory: {e}"
+
+
+@tool
+@track_tool_call("list_files_recursive")
+def list_files_recursive(
+    directory: str,
+    pattern: str = "*",
+    show_hidden: bool = False,
+    max_files: int = 200
+) -> str:
+    """
+    Recursively list all files in a directory and its subdirectories.
+
+    Args:
+        directory: Path to directory OR alias (e.g., 'downloads', 'prax')
+        pattern: Glob pattern to filter files (default: '*' for all files).
+                 Examples: '*.pdf', '*.jpg', 'report*', '*.py'
+        show_hidden: Include hidden files and directories (default: False)
+        max_files: Maximum number of files to return (default: 200)
+
+    Returns:
+        str: Formatted list of files with relative paths and sizes
+    """
+    try:
+        # Resolve alias if needed
+        resolved = resolve_path_alias(directory)
+        dir_path = Path(resolved) if resolved else Path(directory)
+
+        if not dir_path.exists():
+            return f"Directory does not exist: {dir_path}"
+
+        if not dir_path.is_dir():
+            return f"Not a directory: {dir_path}"
+
+        get_global_logger().tool(f"Recursively listing files in: {dir_path} (pattern: {pattern})")
+
+        files = []
+        for file_path in dir_path.rglob(pattern):
+            # Skip directories
+            if file_path.is_dir():
+                continue
+
+            # Skip hidden files/directories if not requested
+            if not show_hidden:
+                # Check if any part of the path is hidden
+                if any(part.startswith('.') for part in file_path.relative_to(dir_path).parts):
+                    continue
+
+            try:
+                size_bytes = file_path.stat().st_size
+                if size_bytes < 1024:
+                    size = f"{size_bytes}B"
+                elif size_bytes < 1024 * 1024:
+                    size = f"{size_bytes/1024:.1f}KB"
+                else:
+                    size = f"{size_bytes/(1024*1024):.1f}MB"
+
+                rel_path = file_path.relative_to(dir_path)
+                files.append((str(rel_path), size, size_bytes))
+            except OSError:
+                continue
+
+        if not files:
+            return f"No files found in {dir_path} matching pattern '{pattern}'"
+
+        # Sort by path
+        files.sort(key=lambda x: x[0].lower())
+
+        # Build result
+        total_size = sum(f[2] for f in files)
+        if total_size < 1024 * 1024:
+            total_str = f"{total_size/1024:.1f}KB"
+        elif total_size < 1024 * 1024 * 1024:
+            total_str = f"{total_size/(1024*1024):.1f}MB"
+        else:
+            total_str = f"{total_size/(1024*1024*1024):.2f}GB"
+
+        result = f"Files in {dir_path} (pattern: {pattern}):\n"
+        result += f"Total: {len(files)} files, {total_str}\n\n"
+
+        for rel_path, size, _ in files[:max_files]:
+            result += f"  {rel_path} ({size})\n"
+
+        if len(files) > max_files:
+            result += f"\n... and {len(files) - max_files} more files"
+
+        return result
+
+    except Exception as e:
+        return f"Error listing files: {e}"
 
 
 # ============================================================================
@@ -1332,5 +1492,10 @@ def get_desktop_tools_list() -> list:
         list_system_directories,
         resolve_path,
         list_directory_contents,
+        list_files_recursive,
+
+        # User Config Tools (read-only)
+        list_folder_aliases,
+        get_user_preference,
     ]
     return tools
