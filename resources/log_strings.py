@@ -1,4 +1,4 @@
-"""Centralized log strings for DeskGenie.
+"""Centralized log strings for Desktop AI Agent.
 
 This module contains all informational and diagnostic log messages
 used throughout the application. These messages are used with print()
@@ -37,7 +37,7 @@ class CLIMessages:
     
     # Startup messages
     SECTION_SEPARATOR = f"\n{LogSeparators.SECTION}\n"
-    LAUNCHING_UI = "Launching DeskGenie Web UI..."
+    LAUNCHING_UI = "Launching Web UI..."
     BACKEND_API = "  Backend API: http://localhost:8000"
     FRONTEND_PRODUCTION = "  Frontend:    http://localhost:8000 (production) or http://localhost:5173 (dev)"
     DEV_INSTRUCTIONS = "\nFor development, run 'cd frontend && npm run dev' in a separate terminal."

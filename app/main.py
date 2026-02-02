@@ -1,5 +1,5 @@
 """
-DeskGenie - Desktop AI Agent
+Desktop AI Agent - Main Entry Point
 
 Copyright (c) 2026 Hemant Virmani. All rights reserved.
 

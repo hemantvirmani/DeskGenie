@@ -1,5 +1,5 @@
 /**
- * Centralized log strings for DeskGenie frontend.
+ * Centralized log strings for Desktop AI Agent frontend.
  * All log messages displayed in the Logs panel are defined here.
  * This makes it easy to update messaging and enables future localization.
  */

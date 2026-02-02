@@ -1,4 +1,4 @@
-"""User configuration management for DeskGenie.
+"""User configuration management for Desktop AI Agent.
 
 Handles user preferences and folder aliases stored in a JSON config file.
 Config is stored in the application data directory.

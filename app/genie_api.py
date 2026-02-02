@@ -1,4 +1,4 @@
-"""FastAPI backend for DeskGenie."""
+"""FastAPI backend for Desktop AI Agent."""
 
 import sys
 from pathlib import Path
@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="DeskGenie API",
+    title=S.API_TITLE,
     description="Desktop AI Agent API",
     version="1.0.0",
     lifespan=lifespan
@@ -127,7 +127,7 @@ class ChatGroup(BaseModel):
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "service": "DeskGenie"}
+    return {"status": "ok", "service": S.SERVICE_NAME}
 
 @app.get("/api/config", response_model=ConfigInfo)
 async def get_config():

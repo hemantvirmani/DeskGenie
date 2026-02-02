@@ -288,7 +288,7 @@ function App() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <span className="text-2xl">🧞‍♂️</span>
-              DeskGenie
+              {UIStrings.APP_TITLE}
             </h1>
 
             <div className="flex items-center gap-3">

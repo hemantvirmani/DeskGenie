@@ -1,5 +1,5 @@
 """
-DeskGenie - Desktop AI Agent
+Desktop AI Agent - Tools
 Desktop Tools Module
 
 Copyright (c) 2026 Hemant Virmani. All rights reserved.

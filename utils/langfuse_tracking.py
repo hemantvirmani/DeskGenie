@@ -1,4 +1,4 @@
-"""Langfuse tracking integration for DeskGenie Desktop Agent.
+"""Langfuse tracking integration for Desktop AI Agent.
 
 This module provides decorators and context managers for tracking:
 - Agent execution sessions
@@ -72,7 +72,7 @@ class LangfuseTracker:
     @property
     def project_name(self) -> str:
         """Get project name for tagging traces."""
-        return self._project_name or "DeskGenie"
+        return self._project_name or "Desktop-Agent"
 
 
 # Global tracker instance

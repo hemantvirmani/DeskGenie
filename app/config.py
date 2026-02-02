@@ -1,16 +1,16 @@
-"""Configuration settings for DeskGenie - Desktop AI Agent."""
+"""Configuration settings for Desktop AI Agent."""
 
 import os
 from resources.state_strings import ModelProviders
 
 # =============================================================================
-# DeskGenie Desktop Agent Configuration
+# Desktop Agent Configuration
 # =============================================================================
 
 # Desktop Agent Settings
 DESKTOP_FILES_DIR = os.getenv("DESKGENIE_FILES_DIR", os.path.expanduser("~/Desktop"))
 DESKTOP_DOWNLOADS_DIR = os.getenv("DESKGENIE_DOWNLOADS_DIR", os.path.expanduser("~/Downloads"))
-DESKTOP_OUTPUT_DIR = os.getenv("DESKGENIE_OUTPUT_DIR", os.path.expanduser("~/DeskGenie_Output"))
+DESKTOP_OUTPUT_DIR = os.getenv("DESKGENIE_OUTPUT_DIR", os.path.expanduser("~/Desktop_Agent_Output"))
 
 # Tool Categories (for UI organization)
 TOOL_CATEGORIES = {
@@ -73,15 +73,9 @@ INITIAL_RETRY_DELAY = 2.0  # seconds
 RETRY_BACKOFF_FACTOR = 2.0
 
 # =============================================================================
-# Feature Flags
-# =============================================================================
-
-#None as of now
-
-# =============================================================================
 # Langfuse Observability
 # =============================================================================
 
 # Project name for Langfuse tagging (helps distinguish from other projects)
-LANGFUSE_PROJECT_NAME = "DeskGenie"
+LANGFUSE_PROJECT_NAME = "Desktop-Agent"
 

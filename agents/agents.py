@@ -1,4 +1,4 @@
-"""Agent wrapper module for DeskGenie."""
+"""Agent wrapper module."""
 
 from app import config
 from utils.log_streamer import ConsoleLogger, Logger

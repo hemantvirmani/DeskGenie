@@ -1,4 +1,4 @@
-"""Centralized state keys and success return strings for DeskGenie.
+"""Centralized state keys and success return strings for Desktop AI Agent.
 
 This module contains:
 1. State keys used in LangGraph agent states

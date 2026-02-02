@@ -1,5 +1,5 @@
 /**
- * Centralized console strings for DeskGenie frontend.
+ * Centralized console strings for Desktop AI Agent frontend.
  * All console.log, console.error, console.warn messages are defined here.
  * This makes it easy to update messaging and enables future localization.
  * 

@@ -39,7 +39,7 @@ secrets.yaml
 secrets.yml
 
 # Output files
-DeskGenie_Output/
+Desktop_Agent_Output/
 output/
 temp/
 

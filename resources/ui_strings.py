@@ -1,4 +1,4 @@
-"""Centralized UI strings for DeskGenie.
+"""Centralized UI strings for Desktop AI Agent.
 
 All user-facing strings displayed in the UI log panel and console are defined here.
 This makes it easy to update messaging and enables future localization.
@@ -149,6 +149,10 @@ class DesktopToolStrings:
 
 class APIStrings:
     """Strings for API operations."""
+
+    # API Identity
+    API_TITLE = "DeskGenie API"
+    SERVICE_NAME = "DeskGenie"
 
     # Chat
     CHAT_COMPLETED_WITH_TIME = "Chat completed in {minutes}m {seconds}s"

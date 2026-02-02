@@ -123,7 +123,7 @@ graph TB
 
 ### Storage
 - **Local File System**: Direct access to user's files and directories
-- **Output Directory**: Default location for generated files (~/DeskGenie_Output)
+- **Output Directory**: Default location for generated files (~/Desktop_Agent_Output)
 - **Questions & Metadata**: Benchmark questions and execution metadata
 
 ## Data Flow

@@ -1,4 +1,4 @@
-"""Centralized error strings for DeskGenie.
+"""Centralized error strings for Desktop AI Agent.
 
 This module contains all error messages returned by agents and tools.
 Separating errors from success messages allows for:

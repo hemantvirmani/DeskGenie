@@ -1,5 +1,5 @@
 /**
- * Centralized UI strings for DeskGenie frontend.
+ * Centralized UI strings for Desktop AI Agent frontend.
  * All user-facing strings displayed in the React components are defined here.
  * This makes it easy to update messaging and enables future localization.
  */

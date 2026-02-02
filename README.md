@@ -259,7 +259,7 @@ organize_files_by_type.invoke({
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GOOGLE_API_KEY` | - | Google API key for Gemini model |
-| `DESKGENIE_OUTPUT_DIR` | `~/DeskGenie_Output` | Default output directory |
+| `DESKGENIE_OUTPUT_DIR` | `~/Desktop_Agent_Output` | Default output directory |
 
 ### User Configuration (config.json)
 

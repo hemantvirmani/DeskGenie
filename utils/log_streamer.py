@@ -1,4 +1,4 @@
-"""Log streaming for DeskGenie UI.
+"""Log streaming for Desktop AI Agent UI.
 
 This module provides a LogStreamer class that can be used to stream logs
 from agents and question runners to the frontend via SSE.
