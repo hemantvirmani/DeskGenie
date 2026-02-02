@@ -138,9 +138,18 @@ class QuestionRunnerMessages:
     ERROR_INITIALIZING_AGENT = "Failed to initialize agent"
 
 
+class ConfigMessages:
+    """Messages for configuration operations."""
+
+    # Config loading
+    CONFIG_PARSE_ERROR = "[WARNING] Invalid JSON in config.json: {error}. Using default settings."
+    CONFIG_READ_ERROR = "[WARNING] Could not read config.json: {error}. Using default settings."
+    CONFIG_PATH_INFO = "  Config location: {path}"
+
+
 class LangfuseMessages:
     """Messages for Langfuse tracking operations."""
-    
+
     # Installation check
     NOT_INSTALLED = "[INFO] Langfuse not installed. Tracking is disabled. Install with: pip install langfuse"
     

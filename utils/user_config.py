@@ -28,6 +28,8 @@ def _load_config() -> dict:
     Returns:
         Configuration dictionary, or default config if file doesn't exist
     """
+    from resources.log_strings import ConfigMessages as CM
+
     config_path = get_config_path()
 
     if not config_path.exists():
@@ -43,7 +45,13 @@ def _load_config() -> dict:
             merged["preferences"] = {**merged.get("preferences", {}),
                                       **config.get("preferences", {})}
             return merged
-    except (json.JSONDecodeError, IOError):
+    except json.JSONDecodeError as e:
+        print(CM.CONFIG_PARSE_ERROR.format(error=str(e)))
+        print(CM.CONFIG_PATH_INFO.format(path=config_path))
+        return DEFAULT_CONFIG.copy()
+    except IOError as e:
+        print(CM.CONFIG_READ_ERROR.format(error=str(e)))
+        print(CM.CONFIG_PATH_INFO.format(path=config_path))
         return DEFAULT_CONFIG.copy()
 
 
