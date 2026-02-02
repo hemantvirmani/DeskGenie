@@ -29,6 +29,7 @@ from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
 from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
 from resources.ui_strings import APIStrings as S
+from resources.log_strings import APIMessages as API
 
 # Track background tasks for cleanup
 _background_tasks = set()
@@ -37,18 +38,18 @@ _background_tasks = set()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
-    print("[API] Server starting...")
+    print(API.SERVER_STARTING)
     # Set global logger to LogStreamer for UI mode (no console output)
     set_global_logger(LogStreamer(task_id="global", console_output=False))
     yield
     # Cleanup on shutdown
-    print("[API] Server shutting down, cancelling background tasks...")
+    print(API.SERVER_SHUTTING_DOWN)
     for task in _background_tasks:
         task.cancel()
     if _background_tasks:
         await asyncio.gather(*_background_tasks, return_exceptions=True)
     _background_tasks.clear()
-    print("[API] Shutdown complete.")
+    print(API.SHUTDOWN_COMPLETE)
 
 
 # Initialize FastAPI app

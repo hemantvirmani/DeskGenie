@@ -53,6 +53,12 @@ from runners.question_runner import run_gaia_questions
 # Import logger utilities
 from utils.log_streamer import set_global_logger, ConsoleLogger
 
+# Import log strings
+from resources.log_strings import (
+    CLIMessages as CLI,
+    LogSeparators as LS
+)
+
 # --- Run Modes ---
 class RunMode(Enum):
     UI = "ui"   # Web UI mode (FastAPI + React)
@@ -80,9 +86,9 @@ def run_single_query(query: str) -> str:
     from agents.agents import MyGAIAAgents
     from utils.langfuse_tracking import track_session
 
-    print(f"\n{'=' * 60}")
-    print(f"Query: {query}")
-    print(f"{'=' * 60}\n")
+    print(CLI.QUERY_HEADER)
+    print(CLI.QUERY_PREFIX.format(query=query))
+    print(CLI.QUERY_SEPARATOR)
 
     start_time = time.time()
 
@@ -99,9 +105,10 @@ def run_single_query(query: str) -> str:
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
 
-    print(f"{'=' * 60}\n")
-    print(f"Completed in {minutes}m {seconds}s")
-    print(f"Response: {result}\n{'=' * 60}\n{'=' * 60}\n")
+    print(CLI.QUERY_SEPARATOR.rstrip() + "\n")
+    print(CLI.COMPLETED_IN.format(minutes=minutes, seconds=seconds))
+    print(CLI.RESPONSE_PREFIX.format(result=result))
+    print(CLI.RESPONSE_SEPARATOR)
 
     return result
 
@@ -162,10 +169,10 @@ def main() -> None:
 
     # Handle parsing errors
     if options.error:
-        print(f"Error: {options.error}")
+        print(CLI.ERROR_PREFIX.format(error=options.error))
         return
 
-    print(f"{'-' * 74}\n")
+    print(CLI.SECTION_SEPARATOR)
 
     # Set global logger for CLI mode (UI mode sets it in genie_api.py)
     if options.run_mode == RunMode.CLI:
@@ -176,10 +183,10 @@ def main() -> None:
         import uvicorn
         from app.genie_api import app
 
-        print("Launching DeskGenie Web UI...")
-        print("  Backend API: http://localhost:8000")
-        print("  Frontend:    http://localhost:8000 (production) or http://localhost:5173 (dev)")
-        print("\nFor development, run 'cd frontend && npm run dev' in a separate terminal.")
+        print(CLI.LAUNCHING_UI)
+        print(CLI.BACKEND_API)
+        print(CLI.FRONTEND_PRODUCTION)
+        print(CLI.DEV_INSTRUCTIONS)
 
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
@@ -189,7 +196,7 @@ def main() -> None:
 
     else: # GAIA benchmark mode (--test or --testall)
         filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
-        print(f"Running GAIA benchmark on {filter_desc} questions...")
+        print(CLI.RUNNING_BENCHMARK.format(count=filter_desc))
 
         # Results are streamed via logger, function returns None
         run_gaia_questions(filter=options.test_filter)

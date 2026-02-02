@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import ChatGroupList from './components/ChatGroupList'
 import { UIStrings } from './uiStrings'
+import { Logger } from './consoleStrings'
 
 // Helper functions for chat groups
 const generateGroupId = () => {
@@ -66,7 +67,7 @@ function App() {
           saveChat(newGroup)
         }
       } catch (err) {
-        console.error('Failed to load chats:', err)
+        Logger.error('CHAT_LOAD_FAILED', { error: err.message })
         // Create default group on error
         const newGroup = {
           id: generateGroupId(),
@@ -90,7 +91,7 @@ function App() {
     fetch('/api/config')
       .then(res => res.json())
       .then(data => setConfig(data))
-      .catch(err => console.error('Failed to fetch config:', err))
+      .catch(err => Logger.error('CONFIG_FETCH_FAILED', { error: err.message }))
   }, [])
 
   // Save chat to API
@@ -102,7 +103,7 @@ function App() {
         body: JSON.stringify(chat)
       })
     } catch (err) {
-      console.error('Failed to save chat:', err)
+      Logger.error('CHAT_SAVE_FAILED', { error: err.message })
     }
   }, [])
 
@@ -111,7 +112,7 @@ function App() {
     try {
       await fetch(`/api/chats/${chatId}`, { method: 'DELETE' })
     } catch (err) {
-      console.error('Failed to delete chat:', err)
+      Logger.error('CHAT_DELETE_FAILED', { error: err.message })
     }
   }, [])
 

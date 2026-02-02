@@ -12,76 +12,76 @@ class AgentStrings:
     LINE_SEPARATOR = "=" * 60
 
     # Initialization
-    ERROR_INSTANTIATING_AGENT = "Error instantiating agent: {error}"
-    GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_API_KEY not found - analyze_youtube_video will fail"
+    ERROR_INSTANTIATING_AGENT = "Failed to Create Agent: {error}"
+    GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_API_KEY Not Found"
 
     # Execution
-    RUNNING_AGENT_ON_QUESTIONS = "Running agent on {total} questions..."
-    SKIPPING_MISSING_DATA = "Skipping item with missing task_id or question: {item}"
-    TASK_RESULT = "Task {task_id}: {answer}"
+    RUNNING_AGENT_ON_QUESTIONS = "Processing {total} Questions..."
+    SKIPPING_MISSING_DATA = "Skipping Invalid Questions: {item}"
+    TASK_RESULT = "Task {task_id} Complete: {answer}"
     QUESTION_TEXT = "Q{num}: {question}"
-    EXCEPTION_RUNNING_AGENT = "Exception running agent on task {task_id}: {error}"
+    EXCEPTION_RUNNING_AGENT = "Agent Error (Task {task_id}): {error}"
 
     # LangGraph Agent
-    LANGGRAPH_STARTING = "LangGraph Agent starting - Question: {question}"
+    LANGGRAPH_STARTING = "LangGraph Agent Starting: {question}"
     LANGGRAPH_FILE = "File: {file_name}"
-    LANGGRAPH_REQUESTING_TOOLS = "Agent requesting {count} tool(s): {tools}"
-    LANGGRAPH_MAX_STEPS = "Max steps (40) reached, forcing termination"
-    LANGGRAPH_NULL_ANSWER = "Agent completed but returned None as answer"
+    LANGGRAPH_REQUESTING_TOOLS = "Requesting {count} Tool(s): {tools}"
+    LANGGRAPH_MAX_STEPS = "Maximum Steps Reached (40)"
+    LANGGRAPH_NULL_ANSWER = "Agent Returned No Answer"
 
     # ReAct Agent
-    REACT_STARTING = "ReAct Agent starting - Question: {question}"
-    REACT_NO_MESSAGES = "Agent completed but returned no messages"
-    REACT_NULL_ANSWER = "Agent completed but returned None as answer"
+    REACT_STARTING = "ReAct Agent Starting: {question}"
+    REACT_NO_MESSAGES = "Agent Returned No Messages"
+    REACT_NULL_ANSWER = "Agent Returned No Answer"
 
     # LLM Calls
     STEP_CALLING_LLM = "Step {step}: Calling LLM with {count} messages"
-    RETRY_ATTEMPT = "Attempt {attempt}/{max_retries} failed with 504 DEADLINE_EXCEEDED"
+    RETRY_ATTEMPT = "Retry {attempt}/{max_retries}: Timeout"
     RETRY_WAITING = "Retrying in {delay:.1f} seconds..."
-    RETRIES_EXHAUSTED = "All {max_retries} retries exhausted for 504 error"
-    LLM_INVOCATION_FAILED_RETRIES = "LLM invocation failed after retries: {error}"
-    LLM_INVOCATION_FAILED = "LLM invocation failed: {error}"
-    AGENT_INVOCATION_FAILED_RETRIES = "Agent invocation failed after retries: {error}"
-    AGENT_INVOCATION_FAILED = "Agent invocation failed: {error}"
+    RETRIES_EXHAUSTED = "Retries Exhausted ({max_retries})"
+    LLM_INVOCATION_FAILED_RETRIES = "LLM Failed After Retries: {error}"
+    LLM_INVOCATION_FAILED = "LLM Failed: {error}"
+    AGENT_INVOCATION_FAILED_RETRIES = "Agent Failed After Retries: {error}"
+    AGENT_INVOCATION_FAILED = "Agent Failed: {error}"
 
     # Results
-    FINAL_ANSWER = "Final answer: {answer}"
+    FINAL_ANSWER = "Final Answer: {answer}"
 
 
 class ToolStrings:
     """Strings for tool operations."""
 
     # Web Search
-    WEBSEARCH_CALLED = "websearch called: {query}"
-    WEBSEARCH_RESULTS = "websearch results: {count}"
+    WEBSEARCH_CALLED = "WebSearch: {query}"
+    WEBSEARCH_RESULTS = "Web Search Results: {count}"
 
     # Wikipedia
-    WIKI_SEARCH_CALLED = "wiki_search called: {query}"
-    WIKI_RESULTS = "wiki_results: {count} characters"
+    WIKI_SEARCH_CALLED = "Wikipedia: {query}"
+    WIKI_RESULTS = "Wikipedia Results: {count} characters"
 
     # ArXiv
-    ARXIV_SEARCH_CALLED = "arvix_search called: {query}"
-    ARXIV_RESULTS = "arvix_results: {count} characters"
+    ARXIV_SEARCH_CALLED = "ArXivSearch: {query}"
+    ARXIV_RESULTS = "ArXiv Results: {count} characters"
 
     # YouTube
-    YOUTUBE_TRANSCRIPT_CALLED = "get_youtube_transcript called: {url}"
-    YOUTUBE_TRANSCRIPT_RESULT = "youtube_transcript: {count} characters"
-    YOUTUBE_TRANSCRIPT_ERROR = "Failed to get transcript for video {url}: {error}"
-    ANALYZE_YOUTUBE_CALLED = "analyze_youtube_video called: {url} with question: {question}"
-    ANALYZE_YOUTUBE_ERROR = "Error analyzing YouTube video {url}: {error}"
+    YOUTUBE_TRANSCRIPT_CALLED = "YouTube Transcript: {url}"
+    YOUTUBE_TRANSCRIPT_RESULT = "YouTube Transcript Results: {count} characters"
+    YOUTUBE_TRANSCRIPT_ERROR = "Failed to Get Transcript: {url}"
+    ANALYZE_YOUTUBE_CALLED = "Analyzing YouTube Video: {url}"
+    ANALYZE_YOUTUBE_ERROR = "Error Analyzing YouTube Video: {url}"
 
     # Webpage
-    WEBPAGE_CONTENT_CALLED = "get_webpage_content called: with url {url}"
-    WEBPAGE_CONTENT_RESULT = "webpage_content: {count} characters"
+    WEBPAGE_CONTENT_CALLED = "Webpage: {url}"
+    WEBPAGE_CONTENT_RESULT = "Webpage Content: {count} characters"
 
     # Files
-    READ_EXCEL_CALLED = "read_excel_file called: with file {file_name}"
-    READ_PYTHON_CALLED = "read_python_script called: with file {file_name}"
-    PARSE_AUDIO_CALLED = "parse_audio_file called: with file {file_name}"
+    READ_EXCEL_CALLED = "Excel: {file_name}"
+    READ_PYTHON_CALLED = "Python Script: {file_name}"
+    PARSE_AUDIO_CALLED = "Audio File: {file_name}"
 
     # Image Analysis
-    ANALYZE_IMAGE_CALLED = "analyze_image called: {file_name} with question: {question}"
-    ANALYZE_IMAGE_ERROR = "Error analyzing image {file_name}: {error}"
+    ANALYZE_IMAGE_CALLED = "Analyzing Image: {file_name}"
+    ANALYZE_IMAGE_ERROR = "Error Analyzing Image: {file_name}"
 
 
 class QuestionRunnerStrings:
@@ -98,8 +98,8 @@ class QuestionRunnerStrings:
 
     # Processing
     PROCESSING_HEADER = "=== Processing GAIA Questions ==="
-    RUNNING_SELECTED = "Running {count} selected questions"
-    RUNNING_ALL = "Running all {count} questions"
+    RUNNING_SELECTED = "Processing {count} Selected Questions"
+    RUNNING_ALL = "Processing All {count} Questions"
     COMPLETED_HEADER = "=== Completed GAIA Questions ==="
     ERROR_INITIALIZING_AGENT = "Error initializing agent."
 
@@ -119,32 +119,32 @@ class DesktopToolStrings:
     """Strings for desktop tool operations."""
 
     # PDF Tools
-    PDF_EXTRACT_PAGES = "pdf_extract_pages: {input_pdf} -> {output_pdf}, pages: {page_range}"
-    PDF_DELETE_PAGES = "pdf_delete_pages: {input_pdf} -> {output_pdf}, delete pages: {page_range}"
-    PDF_MERGE = "pdf_merge: {pdf_files} -> {output_pdf}"
-    PDF_SPLIT = "pdf_split: {input_pdf} -> {output_dir}, {pages_per_split} pages each"
-    PDF_TO_IMAGES = "pdf_to_images: {input_pdf} -> {output_dir}"
-    EXTRACT_TEXT_PDF = "extract_text_from_pdf: {input_pdf}"
+    PDF_EXTRACT_PAGES = "Extracting PDF Pages: {input_pdf}"
+    PDF_DELETE_PAGES = "Deleting PDF Pages: {input_pdf}"
+    PDF_MERGE = "Merging PDFs: {output_pdf}"
+    PDF_SPLIT = "Splitting PDF: {input_pdf}"
+    PDF_TO_IMAGES = "Converting PDF to Images: {input_pdf}"
+    EXTRACT_TEXT_PDF = "Extracting Text from PDF: {input_pdf}"
 
     # Image Tools
-    IMAGE_CONVERT = "image_convert: {input_image} -> {output_image}"
-    IMAGE_RESIZE = "image_resize: {input_image} -> {output_image}"
-    IMAGE_COMPRESS = "image_compress: {input_image} -> {output_image}, target: {target_size_kb}KB"
-    BATCH_CONVERT = "batch_convert_images: {input_dir} -> {output_dir}"
+    IMAGE_CONVERT = "Converting Image: {input_image}"
+    IMAGE_RESIZE = "Resizing Image: {input_image}"
+    IMAGE_COMPRESS = "Compressing Image: {input_image}"
+    BATCH_CONVERT = "Batch Converting Images: {input_dir}"
 
     # File Management Tools
-    BATCH_RENAME = "batch_rename_files: {directory}, pattern: {pattern} -> {replacement}"
-    ORGANIZE_FILES = "organize_files_by_type: {source_dir}, by: {organize_by}"
-    FIND_DUPLICATES = "find_duplicate_files: {directory}, by_content: {by_content}"
+    BATCH_RENAME = "Renaming Files: {directory}"
+    ORGANIZE_FILES = "Organizing Files: {source_dir}"
+    FIND_DUPLICATES = "Finding Duplicates: {directory}"
 
     # Document Tools
-    WORD_TO_PDF = "word_to_pdf: {input_docx} -> {output_pdf}"
-    OCR_IMAGE = "ocr_image: {input_image}"
+    WORD_TO_PDF = "Converting Word to PDF: {input_docx}"
+    OCR_IMAGE = "Extracting Text via OCR: {input_image}"
 
     # Media Tools
-    VIDEO_TO_AUDIO = "video_to_audio: {input_video} -> {output_audio}"
-    COMPRESS_VIDEO = "compress_video: {input_video} -> {output_video}, target: {target_size_mb}MB"
-    GET_MEDIA_INFO = "get_media_info: {file_path}"
+    VIDEO_TO_AUDIO = "Extracting Audio: {input_video}"
+    COMPRESS_VIDEO = "Compressing Video: {input_video}"
+    GET_MEDIA_INFO = "Media Info: {file_path}"
 
 
 class APIStrings:

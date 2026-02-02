@@ -5,6 +5,7 @@ import requests
 from typing import Callable, Any
 from functools import wraps
 from app import config
+from resources.log_strings import UtilityMessages as UM
 
 
 def retry_with_backoff(
@@ -34,12 +35,12 @@ def retry_with_backoff(
                 except exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
-                        print(f"[RETRY] Attempt {attempt + 1}/{max_retries} failed: {e}")
-                        print(f"[RETRY] Retrying in {delay:.1f} seconds...")
+                        print(UM.RETRY_FAILED.format(attempt=attempt + 1, max_retries=max_retries, error=e))
+                        print(UM.RETRY_WAITING.format(delay=delay))
                         time.sleep(delay)
                         delay *= backoff_factor
                     else:
-                        print(f"[RETRY] All {max_retries} retries exhausted")
+                        print(UM.RETRY_EXHAUSTED.format(max_retries=max_retries))
 
             # Re-raise the last exception if all retries failed
             raise last_exception
@@ -90,7 +91,7 @@ def extract_text_from_content(content: Any) -> str:
         if 'text' in content:
             return str(content['text'])
         else:
-            print(f"[WARNING] Content was dict without 'text' field, converting to string")
+            print(UM.CONTENT_DICT_WARNING)
             return str(content)
 
     # Handle list format (e.g., [{'type': 'text', 'text': 'answer'}])

@@ -14,6 +14,7 @@ from typing import Any, Optional, Dict
 from contextlib import contextmanager
 
 from app import config
+from resources.log_strings import LangfuseMessages as LF
 
 # Langfuse will be imported conditionally
 langfuse = None
@@ -23,7 +24,7 @@ try:
     LANGFUSE_AVAILABLE = True
 except ImportError:
     LANGFUSE_AVAILABLE = False
-    print("[INFO] Langfuse not installed. Tracking is disabled. Install with: pip install langfuse")
+    print(LF.NOT_INSTALLED)
 
 
 class LangfuseTracker:
@@ -54,9 +55,9 @@ class LangfuseTracker:
                     host=host
                 )
                 self._enabled = True
-                print(f"[LANGFUSE] Tracking enabled (project: {self._project_name}, host: {host})")
+                print(LF.TRACKING_ENABLED.format(project_name=self._project_name, host=host))
             else:
-                print("[LANGFUSE] Tracking disabled. Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY to enable.")
+                print(LF.TRACKING_DISABLED)
 
     @property
     def enabled(self) -> bool:
