@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Send, CirclePlay, CirclePlus } from 'lucide-react'
 import { UIStrings } from '../uiStrings'
 
 function ChatInput({ onSendMessage, disabled, onRunPresets, onRunCustom }) {
   const [message, setMessage] = useState('')
+  const textareaRef = useRef(null)
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -13,16 +14,35 @@ function ChatInput({ onSendMessage, disabled, onRunPresets, onRunCustom }) {
     }
   }
 
+  const handleKeyDown = (e) => {
+    // Submit on Enter, new line on Shift+Enter
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e)
+    }
+  }
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px'
+    }
+  }, [message])
+
   return (
     <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700">
-      <div className="flex gap-2 items-center">
-        <input
-          type="text"
+      <div className="flex gap-2 items-end">
+        <textarea
+          ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={UIStrings.INPUT_PLACEHOLDER}
           disabled={disabled}
-          className="flex-1 min-w-0 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          rows={3}
+          className="flex-1 min-w-0 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none overflow-y-auto"
         />
         <button
           type="submit"
