@@ -1,0 +1,67 @@
+---
+config:
+  layout: dagre
+---
+flowchart TB
+ subgraph subGraph0["Frontend Layer"]
+        WebUI["Web UI<br>React + Tailwind CSS"]
+        CLI["CLI Interface"]
+  end
+ subgraph subGraph1["Backend Layer"]
+        API["FastAPI REST API"]
+        MainApp["Main Application"]
+  end
+ subgraph subGraph2["AI Agent Layer"]
+        Agent["AI Agent<br>LangGraph + Gemini LLM"]
+        ToolRegistry["Tool Registry"]
+  end
+ subgraph subGraph3["Tools Layer"]
+        PDFTools["PDF Operations"]
+        ImageTools["Image Processing"]
+        FileTools["File Management"]
+        MediaTools["Video/Audio Processing"]
+        WebTools["Web Search & Research"]
+  end
+ subgraph subGraph4["External Services"]
+        Gemini["Google Gemini API"]
+        FFmpeg["FFmpeg Media Engine"]
+        Tesseract["Tesseract OCR"]
+        WebAPIs["Web APIs<br>Wikipedia, ArXiv, etc."]
+  end
+ subgraph Storage["Storage"]
+        FileSystem["Local File System"]
+        OutputDir["Output Directory"]
+        DataFiles["Questions & Metadata"]
+  end
+    User["User"] --> WebUI & CLI
+    WebUI --> API
+    CLI --> MainApp
+    API --> MainApp
+    MainApp --> Agent
+    Agent --> ToolRegistry & Gemini & DataFiles
+    ToolRegistry --> PDFTools & ImageTools & FileTools & MediaTools & WebTools
+    PDFTools --> FFmpeg & Tesseract & FileSystem & OutputDir
+    MediaTools --> FFmpeg & FileSystem & OutputDir
+    WebTools --> WebAPIs
+    ImageTools --> FileSystem & OutputDir
+    FileTools --> FileSystem & OutputDir
+
+    style User fill:#e1f5fe,stroke:#01579b
+    style WebUI fill:#f3e5f5,stroke:#4a148c
+    style CLI fill:#f3e5f5,stroke:#4a148c
+    style API fill:#e8f5e8,stroke:#1b5e20
+    style MainApp fill:#e8f5e8,stroke:#1b5e20
+    style Agent fill:#fff3e0,stroke:#e65100
+    style ToolRegistry fill:#fff3e0,stroke:#e65100
+    style PDFTools fill:#fce4ec,stroke:#880e4f
+    style ImageTools fill:#fce4ec,stroke:#880e4f
+    style FileTools fill:#fce4ec,stroke:#880e4f
+    style MediaTools fill:#fce4ec,stroke:#880e4f
+    style WebTools fill:#fce4ec,stroke:#880e4f
+    style Gemini fill:#fff8e1,stroke:#f57f17
+    style FFmpeg fill:#fff8e1,stroke:#f57f17
+    style Tesseract fill:#fff8e1,stroke:#f57f17
+    style WebAPIs fill:#fff8e1,stroke:#f57f17
+    style FileSystem fill:#f1f8e9,stroke:#33691e
+    style OutputDir fill:#f1f8e9,stroke:#33691e
+    style DataFiles fill:#f1f8e9,stroke:#33691e
