@@ -12,52 +12,47 @@
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Features
-
-### 📄 PDF Operations
-- **Extract Pages**: "Extract the last 2 pages from report.pdf"
-- **Delete Pages**: "Delete pages 5-7 from document.pdf"
-- **Merge PDFs**: "Combine invoice1.pdf and invoice2.pdf"
-- **Split PDFs**: "Split presentation.pdf into individual pages"
-- **Convert to Images**: "Convert each page of brochure.pdf to PNG"
-
-### 🖼️ Image Processing
-- **Format Conversion**: "Convert photo.heic to jpg" (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF)
-- **Resize Images**: "Resize image.png to 800x600"
-- **Compress Images**: "Compress photo.jpg to under 500KB"
-- **Batch Convert**: "Convert all images in Downloads to JPG"
-
-### 📁 File Management
-- **Batch Rename**: "Rename all files matching 'IMG_*' to 'vacation_{n}.jpg'"
-- **Organize Files**: "Organize my Downloads folder by file type"
-- **Find Duplicates**: "Find duplicate files in my Documents"
-
-### 📝 Document Tools
-- **Word to PDF**: "Convert report.docx to PDF"
-- **Extract Text**: "Extract all text from manual.pdf"
-- **OCR**: "Extract text from screenshot.png using OCR"
-
-### 🎬 Media Tools
-- **Extract Audio**: "Extract audio from video.mp4 as MP3"
-- **Compress Video**: "Compress movie.mp4 to under 100MB"
-- **Media Info**: "Get details about video.mp4"
-
-### 🔍 Research & Web Tools (from GAIA Agent)
-- Web search via DuckDuckGo
-- Wikipedia integration
-- ArXiv academic paper search
-- YouTube video analysis
-- Web page content extraction
-
 ## Installation
 
 ### Prerequisites
 
 - Python 3.10+
+- Node.js 18+ (for the frontend)
 - [FFmpeg](https://ffmpeg.org/) (for audio/video processing)
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) (optional, for OCR features)
 
-### Quick Start
+### Automated Setup (Recommended)
+
+A setup script handles everything: virtual environment, Python & Node dependencies, and config file.
+
+**Linux / macOS:**
+```bash
+git clone https://github.com/hemantvirmani/DeskGenie.git
+cd DeskGenie
+chmod +x setup.sh
+./setup.sh
+```
+
+**Windows (Git Bash):**
+```bash
+git clone https://github.com/hemantvirmani/DeskGenie.git
+cd DeskGenie
+bash setup.sh
+```
+
+> **Windows without Git Bash?** Install [Git for Windows](https://git-scm.com/downloads/win) — it includes Git Bash. Alternatively, use WSL.
+
+The script will:
+1. Verify Python 3.10+
+2. Create and activate a virtual environment
+3. Install all Python dependencies
+4. Install frontend (npm) dependencies
+5. Copy `config.sample.json` to the correct platform-specific location
+6. Prompt for your Google API key and save it to `.env`
+
+---
+
+### Manual Setup
 
 1. **Clone the repository**:
 ```bash
@@ -140,6 +135,45 @@ sudo apt-get install tesseract-ocr
 # Windows
 # Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
 ```
+
+---
+
+## Features
+
+### 📄 PDF Operations
+- **Extract Pages**: "Extract the last 2 pages from report.pdf"
+- **Delete Pages**: "Delete pages 5-7 from document.pdf"
+- **Merge PDFs**: "Combine invoice1.pdf and invoice2.pdf"
+- **Split PDFs**: "Split presentation.pdf into individual pages"
+- **Convert to Images**: "Convert each page of brochure.pdf to PNG"
+
+### 🖼️ Image Processing
+- **Format Conversion**: "Convert photo.heic to jpg" (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF)
+- **Resize Images**: "Resize image.png to 800x600"
+- **Compress Images**: "Compress photo.jpg to under 500KB"
+- **Batch Convert**: "Convert all images in Downloads to JPG"
+
+### 📁 File Management
+- **Batch Rename**: "Rename all files matching 'IMG_*' to 'vacation_{n}.jpg'"
+- **Organize Files**: "Organize my Downloads folder by file type"
+- **Find Duplicates**: "Find duplicate files in my Documents"
+
+### 📝 Document Tools
+- **Word to PDF**: "Convert report.docx to PDF"
+- **Extract Text**: "Extract all text from manual.pdf"
+- **OCR**: "Extract text from screenshot.png using OCR"
+
+### 🎬 Media Tools
+- **Extract Audio**: "Extract audio from video.mp4 as MP3"
+- **Compress Video**: "Compress movie.mp4 to under 100MB"
+- **Media Info**: "Get details about video.mp4"
+
+### 🔍 Research & Web Tools (from GAIA Agent)
+- Web search via DuckDuckGo
+- Wikipedia integration
+- ArXiv academic paper search
+- YouTube video analysis
+- Web page content extraction
 
 ## Usage Examples
 
@@ -364,6 +398,7 @@ DeskGenie/
 │   ├── metadata.jsonl      # Metadata
 │   └── questions.json      # Benchmark questions
 │
+├── setup.sh                # Automated setup script (Linux/macOS/Git Bash)
 ├── requirements.txt        # Python dependencies
 ├── config.sample.json      # Sample user configuration
 └── README.md               # This file
@@ -443,14 +478,13 @@ This project is provided as-is for educational and hobbyist purposes. The author
 
 ## Roadmap
 
-- [ ] Add more file format conversions
-- [ ] Add more web search and research tools
-- [x] Implement user preferences and settings
-- [ ] Add support for more LLM providers
-- [ ] Create plugin system for custom tools
+- [ ] Improve Web search tools
+- [ ] Add MCP Server Support. Test with MCP of Home Assistant
+- [ ] Make LLM provider support configurable
+- [ ] Create simple plugin system for custom tools. does not need to be drag n drop
 - [ ] Add comprehensive test suite
 - [ ] Improve documentation and tutorials
-- [ ] Make it easy to access it, other than chat interface.
+- [ ] Make it easy to access it, other than chat interface. Ideas TBD.
 
 ## Contact
 
