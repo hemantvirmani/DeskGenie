@@ -96,3 +96,11 @@ These functions should be public (no underscore):
 - scorer.py is copied from official GAIA - do NOT modify function names
 - Prefer using existing utilities over creating new ones
 - Document external dependencies clearly
+
+## String Management
+- NO hardcoded strings anywhere in the codebase
+- All user-facing strings (UI labels, log messages, error messages, button text, tooltips) MUST be defined in a centralized strings file:
+  - Python backend: `resources/ui_strings.py` (AgentStrings, ToolStrings, DesktopToolStrings, etc.)
+  - Frontend: `frontend/src/uiStrings.js` (UIStrings), `frontend/src/logStrings.js` (LogStrings)
+- When adding new strings, add the constant to the appropriate class/object first, then reference it at the call site
+- Never pass a string literal directly to a logger, UI component, or API response — always reference a named constant

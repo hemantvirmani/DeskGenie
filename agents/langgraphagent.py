@@ -210,7 +210,7 @@ class LangGraphAgent:
 
         # Has tool calls, log them
         tools_list = ', '.join(tc['name'] for tc in response.tool_calls)
-        self.logger.tool(S.LANGGRAPH_REQUESTING_TOOLS.format(count=len(response.tool_calls), tools=tools_list))
+        self.logger.tool_call(S.CALLING_TOOLS, tools_list)
 
         return {
             SK.MESSAGES: [response],

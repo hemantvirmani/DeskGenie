@@ -36,7 +36,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
       const benchmarkLog = filterQuestions
         ? formatLog(LogStrings.STARTING_BENCHMARK_CUSTOM, { questions: filterQuestions.join(', ') })
         : LogStrings.STARTING_BENCHMARK_ALL
-      addLog(benchmarkLog, 'info')
+      addLog(benchmarkLog, 'question')
     }
 
     // Add placeholder for benchmark result
@@ -72,6 +72,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
           // Map log levels to display types
           const levelMap = {
             'info': 'info',
+            'question': 'question',
             'error': 'error',
             'warning': 'warning',
             'success': 'success',
@@ -153,7 +154,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
     if (setShowLogsPanel) setShowLogsPanel(true)
     if (addLog) addLog(LogStrings.LOG_SEPARATOR, 'info')
     const preview = content.slice(0, 50) + (content.length > 50 ? '...' : '')
-    if (addLog) addLog(formatLog(LogStrings.CHAT_PREFIX, { preview }), 'info')
+    if (addLog) addLog(formatLog(LogStrings.CHAT_PREFIX, { preview }), 'question')
 
     // Add placeholder for assistant response
     const assistantPlaceholder = { role: 'assistant', content: '', status: 'loading' }
@@ -188,6 +189,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
           // Map log levels to display types
           const levelMap = {
             'info': 'info',
+            'question': 'question',
             'error': 'error',
             'warning': 'warning',
             'success': 'success',

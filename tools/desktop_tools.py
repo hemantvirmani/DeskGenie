@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Optional
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import get_global_logger
+from utils.log_streamer import get_global_logger, log_tool_call
 from utils.data_dir import (
     get_home_dir, get_documents_dir, get_downloads_dir, get_desktop_dir,
     get_pictures_dir, get_videos_dir, get_music_dir, get_local_appdata_dir,
@@ -67,6 +67,7 @@ except ImportError:
 
 @tool
 @track_tool_call("pdf_extract_pages")
+@log_tool_call(DTS.PDF_EXTRACT_PAGES)
 def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
     """
     Extract specific pages from a PDF file and save to a new PDF.
@@ -80,8 +81,6 @@ def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(DTS.PDF_EXTRACT_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
-
         reader = PdfReader(input_pdf)
         writer = PdfWriter()
         total_pages = len(reader.pages)
@@ -106,6 +105,7 @@ def pdf_extract_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
 
 @tool
 @track_tool_call("pdf_delete_pages")
+@log_tool_call(DTS.PDF_DELETE_PAGES)
 def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
     """
     Delete specific pages from a PDF file and save the result.
@@ -119,8 +119,6 @@ def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(DTS.PDF_DELETE_PAGES.format(input_pdf=input_pdf, output_pdf=output_pdf, page_range=page_range))
-
         reader = PdfReader(input_pdf)
         writer = PdfWriter()
         total_pages = len(reader.pages)
@@ -151,6 +149,7 @@ def pdf_delete_pages(input_pdf: str, output_pdf: str, page_range: str) -> str:
 
 @tool
 @track_tool_call("pdf_merge")
+@log_tool_call(DTS.PDF_MERGE, detail_param=1)
 def pdf_merge(pdf_files: str, output_pdf: str) -> str:
     """
     Merge multiple PDF files into a single PDF.
@@ -163,7 +162,6 @@ def pdf_merge(pdf_files: str, output_pdf: str) -> str:
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(DTS.PDF_MERGE.format(pdf_files=pdf_files, output_pdf=output_pdf))
         file_list = [f.strip() for f in pdf_files.split(",")]
         writer = PdfWriter()
         total_pages = 0
@@ -188,6 +186,7 @@ def pdf_merge(pdf_files: str, output_pdf: str) -> str:
 
 @tool
 @track_tool_call("pdf_split")
+@log_tool_call(DTS.PDF_SPLIT)
 def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
     """
     Split a PDF into multiple smaller PDFs.
@@ -201,8 +200,6 @@ def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
         str: Success message with list of created files
     """
     try:
-        get_global_logger().tool(DTS.PDF_SPLIT.format(input_pdf=input_pdf, output_dir=output_dir, pages_per_split=pages_per_split))
-
         os.makedirs(output_dir, exist_ok=True)
         reader = PdfReader(input_pdf)
         total_pages = len(reader.pages)
@@ -230,6 +227,7 @@ def pdf_split(input_pdf: str, output_dir: str, pages_per_split: int = 1) -> str:
 
 @tool
 @track_tool_call("pdf_to_images")
+@log_tool_call(DTS.PDF_TO_IMAGES)
 def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dpi: Optional[int] = None) -> str:
     """
     Convert PDF pages to images.
@@ -248,8 +246,6 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
         if dpi is None:
             from utils.user_config import get_preference
             dpi = get_preference("pdf_dpi", 200)
-
-        get_global_logger().tool(DTS.PDF_TO_IMAGES.format(input_pdf=input_pdf, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
         doc = fitz.open(input_pdf)
@@ -278,6 +274,7 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
 
 @tool
 @track_tool_call("image_convert")
+@log_tool_call(DTS.IMAGE_CONVERT)
 def image_convert(input_image: str, output_image: str, quality: Optional[int] = None) -> str:
     """
     Convert image between formats (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF).
@@ -295,8 +292,6 @@ def image_convert(input_image: str, output_image: str, quality: Optional[int] = 
         if quality is None:
             from utils.user_config import get_preference
             quality = get_preference("image_quality", 85)
-
-        get_global_logger().tool(DTS.IMAGE_CONVERT.format(input_image=input_image, output_image=output_image))
 
         input_ext = Path(input_image).suffix.lower()
         output_ext = Path(output_image).suffix.lower()
@@ -335,6 +330,7 @@ def image_convert(input_image: str, output_image: str, quality: Optional[int] = 
 
 @tool
 @track_tool_call("image_resize")
+@log_tool_call(DTS.IMAGE_RESIZE)
 def image_resize(input_image: str, output_image: str, width: Optional[int] = None,
                  height: Optional[int] = None, maintain_aspect: bool = True) -> str:
     """
@@ -351,8 +347,6 @@ def image_resize(input_image: str, output_image: str, width: Optional[int] = Non
         str: Success message with old and new dimensions
     """
     try:
-        get_global_logger().tool(DTS.IMAGE_RESIZE.format(input_image=input_image, output_image=output_image))
-
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
             pillow_heif.register_heif_opener()
@@ -390,6 +384,7 @@ def image_resize(input_image: str, output_image: str, width: Optional[int] = Non
 
 @tool
 @track_tool_call("image_compress")
+@log_tool_call(DTS.IMAGE_COMPRESS)
 def image_compress(input_image: str, output_image: str, target_size_kb: int = 500) -> str:
     """
     Compress an image to target file size while maintaining quality.
@@ -403,8 +398,6 @@ def image_compress(input_image: str, output_image: str, target_size_kb: int = 50
         str: Success message with compression results
     """
     try:
-        get_global_logger().tool(DTS.IMAGE_COMPRESS.format(input_image=input_image, output_image=output_image, target_size_kb=target_size_kb))
-
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
             pillow_heif.register_heif_opener()
@@ -448,6 +441,7 @@ def image_compress(input_image: str, output_image: str, target_size_kb: int = 50
 
 @tool
 @track_tool_call("images_to_pdf")
+@log_tool_call(DTS.IMAGES_TO_PDF, detail_param=1)
 def images_to_pdf(image_files: str, output_pdf: str) -> str:
     """
     Convert one or more images to a single PDF file.
@@ -460,8 +454,6 @@ def images_to_pdf(image_files: str, output_pdf: str) -> str:
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(f"Converting images to PDF: {output_pdf}")
-
         file_list = [f.strip() for f in image_files.split(",")]
         pillow_heif.register_heif_opener()
 
@@ -494,6 +486,7 @@ def images_to_pdf(image_files: str, output_pdf: str) -> str:
 
 @tool
 @track_tool_call("batch_convert_images")
+@log_tool_call(DTS.BATCH_CONVERT)
 def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "jpg", quality: Optional[int] = None) -> str:
     """
     Convert all images in a directory to a specified format.
@@ -512,8 +505,6 @@ def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "
         if quality is None:
             from utils.user_config import get_preference
             quality = get_preference("image_quality", 85)
-
-        get_global_logger().tool(DTS.BATCH_CONVERT.format(input_dir=input_dir, output_dir=output_dir))
 
         os.makedirs(output_dir, exist_ok=True)
         pillow_heif.register_heif_opener()
@@ -557,6 +548,7 @@ def batch_convert_images(input_dir: str, output_dir: str, output_format: str = "
 
 @tool
 @track_tool_call("batch_rename_files")
+@log_tool_call(DTS.BATCH_RENAME)
 def batch_rename_files(directory: str, pattern: str, replacement: str, preview_only: bool = True) -> str:
     """
     Batch rename files in a directory using pattern matching.
@@ -571,8 +563,6 @@ def batch_rename_files(directory: str, pattern: str, replacement: str, preview_o
         str: List of renames (preview or completed)
     """
     try:
-        get_global_logger().tool(DTS.BATCH_RENAME.format(directory=directory, pattern=pattern, replacement=replacement))
-
         import fnmatch
         import re
 
@@ -618,6 +608,7 @@ def batch_rename_files(directory: str, pattern: str, replacement: str, preview_o
 
 @tool
 @track_tool_call("organize_files_by_type")
+@log_tool_call(DTS.ORGANIZE_FILES)
 def organize_files_by_type(source_dir: str, organize_by: str = "extension") -> str:
     """
     Organize files in a directory into subfolders by type or date.
@@ -630,8 +621,6 @@ def organize_files_by_type(source_dir: str, organize_by: str = "extension") -> s
         str: Summary of organization results
     """
     try:
-        get_global_logger().tool(DTS.ORGANIZE_FILES.format(source_dir=source_dir, organize_by=organize_by))
-
         type_mapping = {
             'Images': {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic', '.heif', '.tiff', '.svg'},
             'Documents': {'.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt', '.xls', '.xlsx', '.ppt', '.pptx'},
@@ -682,6 +671,7 @@ def organize_files_by_type(source_dir: str, organize_by: str = "extension") -> s
 
 @tool
 @track_tool_call("find_duplicate_files")
+@log_tool_call(DTS.FIND_DUPLICATES)
 def find_duplicate_files(directory: str, by_content: bool = False) -> str:
     """
     Find duplicate files in a directory.
@@ -694,8 +684,6 @@ def find_duplicate_files(directory: str, by_content: bool = False) -> str:
         str: List of potential duplicates grouped together
     """
     try:
-        get_global_logger().tool(DTS.FIND_DUPLICATES.format(directory=directory, by_content=by_content))
-
         import hashlib
         from collections import defaultdict
 
@@ -760,6 +748,7 @@ def find_duplicate_files(directory: str, by_content: bool = False) -> str:
 
 @tool
 @track_tool_call("word_to_pdf")
+@log_tool_call(DTS.WORD_TO_PDF)
 def word_to_pdf(input_docx: str, output_pdf: str) -> str:
     """
     Convert a Word document (.docx) to PDF.
@@ -772,8 +761,6 @@ def word_to_pdf(input_docx: str, output_pdf: str) -> str:
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(DTS.WORD_TO_PDF.format(input_docx=input_docx, output_pdf=output_pdf))
-
         docx_to_pdf_convert(input_docx, output_pdf)
 
         return DTR.DOCX_TO_PDF_SUCCESS.format(input_docx=input_docx, output_pdf=output_pdf)
@@ -784,6 +771,7 @@ def word_to_pdf(input_docx: str, output_pdf: str) -> str:
 
 @tool
 @track_tool_call("extract_text_from_pdf")
+@log_tool_call(DTS.EXTRACT_TEXT_PDF)
 def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> str:
     """
     Extract all text from a PDF file.
@@ -796,8 +784,6 @@ def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> s
         str: Extracted text or success message if saved to file
     """
     try:
-        get_global_logger().tool(DTS.EXTRACT_TEXT_PDF.format(input_pdf=input_pdf))
-
         doc = fitz.open(input_pdf)
         text = ""
 
@@ -822,6 +808,7 @@ def extract_text_from_pdf(input_pdf: str, output_txt: Optional[str] = None) -> s
 
 @tool
 @track_tool_call("ocr_image")
+@log_tool_call(DTS.OCR_IMAGE)
 def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str = "eng") -> str:
     """
     Extract text from an image using OCR (Optical Character Recognition).
@@ -838,8 +825,6 @@ def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str 
     try:
         if not TESSERACT_AVAILABLE:
             return DTE.OCR_NOT_INSTALLED
-
-        get_global_logger().tool(DTS.OCR_IMAGE.format(input_image=input_image))
 
         input_ext = Path(input_image).suffix.lower()
         if input_ext in ['.heic', '.heif']:
@@ -865,6 +850,7 @@ def ocr_image(input_image: str, output_txt: Optional[str] = None, language: str 
 
 @tool
 @track_tool_call("video_to_audio")
+@log_tool_call(DTS.VIDEO_TO_AUDIO)
 def video_to_audio(input_video: str, output_audio: str, audio_format: str = "mp3") -> str:
     """
     Extract audio from a video file.
@@ -878,8 +864,6 @@ def video_to_audio(input_video: str, output_audio: str, audio_format: str = "mp3
         str: Success message or error description
     """
     try:
-        get_global_logger().tool(DTS.VIDEO_TO_AUDIO.format(input_video=input_video, output_audio=output_audio))
-
         video = VideoFileClip(input_video)
         audio = video.audio
 
@@ -900,6 +884,7 @@ def video_to_audio(input_video: str, output_audio: str, audio_format: str = "mp3
 
 @tool
 @track_tool_call("compress_video")
+@log_tool_call(DTS.COMPRESS_VIDEO)
 def compress_video(input_video: str, output_video: str, target_size_mb: int = 50) -> str:
     """
     Compress a video to a target file size.
@@ -913,8 +898,6 @@ def compress_video(input_video: str, output_video: str, target_size_mb: int = 50
         str: Success message with compression results
     """
     try:
-        get_global_logger().tool(DTS.COMPRESS_VIDEO.format(input_video=input_video, output_video=output_video, target_size_mb=target_size_mb))
-
         video = VideoFileClip(input_video)
         original_size = os.path.getsize(input_video) / (1024 * 1024)  # MB
 
@@ -948,6 +931,7 @@ def compress_video(input_video: str, output_video: str, target_size_mb: int = 50
 
 @tool
 @track_tool_call("get_media_info")
+@log_tool_call(DTS.GET_MEDIA_INFO)
 def get_media_info(file_path: str) -> str:
     """
     Get detailed information about a media file (video, audio, or image).
@@ -959,8 +943,6 @@ def get_media_info(file_path: str) -> str:
         str: Formatted media information
     """
     try:
-        get_global_logger().tool(DTS.GET_MEDIA_INFO.format(file_path=file_path))
-
         ext = Path(file_path).suffix.lower()
         info = [f"File: {file_path}"]
         info.append(f"Size: {os.path.getsize(file_path) / 1024:.1f} KB")
@@ -1008,6 +990,7 @@ def get_media_info(file_path: str) -> str:
 
 @tool
 @track_tool_call("get_user_directory")
+@log_tool_call(DTS.USER_DIRECTORY)
 def get_user_directory(directory_name: str) -> str:
     """
     Get the path to a standard user directory.
@@ -1020,8 +1003,6 @@ def get_user_directory(directory_name: str) -> str:
         str: Full path to the directory or error if not recognized
     """
     try:
-        get_global_logger().tool(f"Getting user directory: {directory_name}")
-
         dir_map = {
             "home": get_home_dir,
             "documents": get_documents_dir,
@@ -1048,6 +1029,7 @@ def get_user_directory(directory_name: str) -> str:
 
 @tool
 @track_tool_call("get_system_directory")
+@log_tool_call(DTS.SYSTEM_DIRECTORY)
 def get_system_directory(directory_name: str) -> str:
     """
     Get the path to a system/application directory.
@@ -1059,8 +1041,6 @@ def get_system_directory(directory_name: str) -> str:
         str: Full path to the directory or error if not recognized
     """
     try:
-        get_global_logger().tool(f"Getting system directory: {directory_name}")
-
         dir_map = {
             "appdata": get_local_appdata_dir,
             "localappdata": get_local_appdata_dir,
@@ -1084,6 +1064,7 @@ def get_system_directory(directory_name: str) -> str:
 
 @tool
 @track_tool_call("list_user_directories")
+@log_tool_call(DTS.LIST_USER_DIRECTORIES)
 def list_user_directories() -> str:
     """
     List all standard user directories with their full paths.
@@ -1092,8 +1073,6 @@ def list_user_directories() -> str:
         str: Formatted list of user directories and their paths
     """
     try:
-        get_global_logger().tool("Listing all user directories")
-
         dirs = get_all_user_dirs()
         result = "User Directories:\n"
         for name, path in dirs.items():
@@ -1108,6 +1087,7 @@ def list_user_directories() -> str:
 
 @tool
 @track_tool_call("list_system_directories")
+@log_tool_call(DTS.LIST_SYSTEM_DIRECTORIES)
 def list_system_directories() -> str:
     """
     List all system/application directories with their full paths.
@@ -1116,8 +1096,6 @@ def list_system_directories() -> str:
         str: Formatted list of system directories and their paths
     """
     try:
-        get_global_logger().tool("Listing all system directories")
-
         dirs = get_all_system_dirs()
         result = "System Directories:\n"
         for name, path in dirs.items():
@@ -1135,6 +1113,7 @@ def list_system_directories() -> str:
 
 @tool
 @track_tool_call("resolve_path")
+@log_tool_call(DTS.RESOLVING_PATH)
 def resolve_path(path_or_alias: str) -> str:
     """
     Resolve a path alias or expand a path with special prefixes.
@@ -1160,8 +1139,6 @@ def resolve_path(path_or_alias: str) -> str:
         str: Resolved full path
     """
     try:
-        get_global_logger().tool(f"Resolving path: {path_or_alias}")
-
         # Check if it's a simple alias first
         resolved = resolve_path_alias(path_or_alias)
         if resolved:
@@ -1189,6 +1166,7 @@ def resolve_path(path_or_alias: str) -> str:
 
 @tool
 @track_tool_call("list_folder_aliases")
+@log_tool_call(DTS.FOLDER_ALIASES)
 def list_folder_aliases() -> str:
     """
     List all configured folder aliases.
@@ -1198,8 +1176,6 @@ def list_folder_aliases() -> str:
     """
     try:
         from utils.user_config import list_folder_aliases as _list_aliases
-
-        get_global_logger().tool("Listing folder aliases")
 
         aliases = _list_aliases()
 
@@ -1219,6 +1195,7 @@ def list_folder_aliases() -> str:
 
 @tool
 @track_tool_call("get_user_preference")
+@log_tool_call(DTS.PREFERENCE)
 def get_user_preference(key: str) -> str:
     """
     Get a user preference value.
@@ -1236,8 +1213,6 @@ def get_user_preference(key: str) -> str:
     """
     try:
         from utils.user_config import get_preference, get_all_preferences
-
-        get_global_logger().tool(f"Getting preference: {key}")
 
         if key == "all":
             prefs = get_all_preferences()
@@ -1257,6 +1232,7 @@ def get_user_preference(key: str) -> str:
 
 @tool
 @track_tool_call("list_directory_contents")
+@log_tool_call(DTS.LIST_DIRECTORY)
 def list_directory_contents(directory: str, show_hidden: bool = False, max_items: int = 50) -> str:
     """
     List contents of a directory with details.
@@ -1279,8 +1255,6 @@ def list_directory_contents(directory: str, show_hidden: bool = False, max_items
 
         if not dir_path.is_dir():
             return f"Not a directory: {dir_path}"
-
-        get_global_logger().tool(f"Listing directory: {dir_path}")
 
         items = []
         for item in dir_path.iterdir():
@@ -1326,6 +1300,7 @@ def list_directory_contents(directory: str, show_hidden: bool = False, max_items
 
 @tool
 @track_tool_call("list_files_recursive")
+@log_tool_call(DTS.LIST_FILES_RECURSIVE)
 def list_files_recursive(
     directory: str,
     pattern: str = "*",
@@ -1355,8 +1330,6 @@ def list_files_recursive(
 
         if not dir_path.is_dir():
             return f"Not a directory: {dir_path}"
-
-        get_global_logger().tool(f"Recursively listing files in: {dir_path} (pattern: {pattern})")
 
         files = []
         for file_path in dir_path.rglob(pattern):

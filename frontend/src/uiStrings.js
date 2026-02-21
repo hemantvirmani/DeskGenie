@@ -11,6 +11,7 @@ export const UIStrings = {
   VERSION_INFO: "DeskGenie v1.0.0",
   LOGS_TITLE: "Logs",
   CLEAR_LOGS: "Clear",
+  CLEAR_LOGS_TOOLTIP: "Clear logs",
   LOGS_PLACEHOLDER: "Logs will appear here when you chat or run benchmarks",
 
   // ChatGroupList.jsx strings

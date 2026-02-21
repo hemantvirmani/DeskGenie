@@ -16,7 +16,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import extract
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import get_global_logger
+from utils.log_streamer import get_global_logger, log_tool_call
 from resources.ui_strings import ToolStrings as S
 from resources.state_strings import ToolReturns as TR
 from resources.error_strings import ToolErrors as TE
@@ -210,6 +210,7 @@ def get_current_time_in_timezone(timezone: str) -> str:
 
 @tool
 @track_tool_call("websearch")
+@log_tool_call(S.WEBSEARCH_CALLED)
 def websearch(query: str) -> str:
     """This tool will search the web using DuckDuckGo.
 
@@ -218,7 +219,6 @@ def websearch(query: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.WEBSEARCH_CALLED.format(query=query))
         with DDGS() as ddgs:
             results = ddgs.text(query, max_results=5, timelimit='y')  # Limit to past year for faster results
             if results:
@@ -230,14 +230,13 @@ def websearch(query: str) -> str:
 
 @tool
 @track_tool_call("wiki_search")
+@log_tool_call(S.WIKI_SEARCH_CALLED)
 def wiki_search(query: str) -> str:
     """Search Wikipedia for a query and return maximum 3 results.
 
     Args:
         query: The search query."""
     try:
-        get_global_logger().tool(S.WIKI_SEARCH_CALLED.format(query=query))
-
         search_docs = WikipediaLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
             [
@@ -251,14 +250,13 @@ def wiki_search(query: str) -> str:
 
 @tool
 @track_tool_call("arvix_search")
+@log_tool_call(S.ARXIV_SEARCH_CALLED)
 def arvix_search(query: str) -> str:
     """Search Arxiv for a query and return maximum 3 result.
 
     Args:
         query: The search query."""
     try:
-        get_global_logger().tool(S.ARXIV_SEARCH_CALLED.format(query=query))
-
         search_docs = ArxivLoader(query=query, load_max_docs=3).load()
         formatted_search_docs = "\n\n---\n\n".join(
             [
@@ -273,14 +271,13 @@ def arvix_search(query: str) -> str:
 
 @tool
 @track_tool_call("get_youtube_transcript")
+@log_tool_call(S.YOUTUBE_TRANSCRIPT_CALLED)
 def get_youtube_transcript(page_url: str) -> str:
     """Get the transcript of a YouTube video
 
     Args:
         page_url (str): YouTube URL of the video
     """
-    get_global_logger().tool(S.YOUTUBE_TRANSCRIPT_CALLED.format(url=page_url))
-
     try:
         # get video ID from URL
         video_id = extract.video_id(page_url)
@@ -300,6 +297,7 @@ def get_youtube_transcript(page_url: str) -> str:
 
 @tool
 @track_tool_call("get_webpage_content")
+@log_tool_call(S.WEBPAGE_CONTENT_CALLED)
 def get_webpage_content(page_url: str) -> str:
     """Load a web page and return it as markdown if possible
 
@@ -311,7 +309,6 @@ def get_webpage_content(page_url: str) -> str:
    """
 
     try:
-        get_global_logger().tool(S.WEBPAGE_CONTENT_CALLED.format(url=page_url))
         r = requests.get(page_url, timeout=30)  # Add 30s timeout
         r.raise_for_status()
         text = ""
@@ -336,6 +333,7 @@ def get_webpage_content(page_url: str) -> str:
 
 @tool
 @track_tool_call("read_excel_file")
+@log_tool_call(S.READ_EXCEL_CALLED)
 def read_excel_file(file_name: str) -> str:
     """
     Reads an Excel file (.xlsx) and returns its content as a Markdown table.
@@ -349,8 +347,6 @@ def read_excel_file(file_name: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.READ_EXCEL_CALLED.format(file_name=file_name))
-
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
         if not success:
@@ -365,6 +361,7 @@ def read_excel_file(file_name: str) -> str:
 
 @tool
 @track_tool_call("read_python_script")
+@log_tool_call(S.READ_PYTHON_CALLED)
 def read_python_script(file_name: str) -> str:
     """
     Reads the source code of a Python script.
@@ -379,8 +376,6 @@ def read_python_script(file_name: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.READ_PYTHON_CALLED.format(file_name=file_name))
-
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='text')
         if not success:
@@ -393,6 +388,7 @@ def read_python_script(file_name: str) -> str:
 
 @tool
 @track_tool_call("parse_audio_file")
+@log_tool_call(S.PARSE_AUDIO_CALLED)
 def parse_audio_file(file_name: str) -> str:
     """
     Transcribes audio from an MP3 file into text.
@@ -406,8 +402,6 @@ def parse_audio_file(file_name: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.PARSE_AUDIO_CALLED.format(file_name=file_name))
-
         # Get file content using helper function
         success, data = _get_file_content(file_name, mode='binary')
         if not success:
@@ -436,6 +430,7 @@ def parse_audio_file(file_name: str) -> str:
 
 @tool
 @track_tool_call("analyze_youtube_video")
+@log_tool_call(S.ANALYZE_YOUTUBE_CALLED, detail_param=1)
 def analyze_youtube_video(question: str, youtube_url: str) -> str:
     """
     Uses a multimodal AI model to analyze a YouTube video and answer a specific question.
@@ -447,8 +442,6 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.ANALYZE_YOUTUBE_CALLED.format(url=youtube_url, question=question))
-
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             return TE.API_KEY_NOT_SET
@@ -478,6 +471,7 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
 
 @tool
 @track_tool_call("analyze_image")
+@log_tool_call(S.ANALYZE_IMAGE_CALLED, detail_param=1)
 def analyze_image(question: str, file_name: str) -> str:
     """
     Analyzes an image file and answers a specific question about it using AI vision.
@@ -492,8 +486,6 @@ def analyze_image(question: str, file_name: str) -> str:
     """
 
     try:
-        get_global_logger().tool(S.ANALYZE_IMAGE_CALLED.format(file_name=file_name, question=question))
-
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             return TE.API_KEY_NOT_SET

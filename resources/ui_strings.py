@@ -27,6 +27,7 @@ class AgentStrings:
     LANGGRAPH_FILE = "File: {file_name}"
     LANGGRAPH_REQUESTING_TOOLS = "Requesting {count} Tool(s): {tools}"
     LANGGRAPH_MAX_STEPS = "Maximum Steps Reached (40)"
+    CALLING_TOOLS = "Calling tools"
     LANGGRAPH_NULL_ANSWER = "Agent Returned No Answer"
 
     # ReAct Agent
@@ -52,35 +53,35 @@ class ToolStrings:
     """Strings for tool operations."""
 
     # Web Search
-    WEBSEARCH_CALLED = "WebSearch: {query}"
+    WEBSEARCH_CALLED = "Web Search"
     WEBSEARCH_RESULTS = "Web Search Results: {count}"
 
     # Wikipedia
-    WIKI_SEARCH_CALLED = "Wikipedia: {query}"
+    WIKI_SEARCH_CALLED = "Wikipedia"
     WIKI_RESULTS = "Wikipedia Results: {count} characters"
 
     # ArXiv
-    ARXIV_SEARCH_CALLED = "ArXivSearch: {query}"
+    ARXIV_SEARCH_CALLED = "ArXiv Search"
     ARXIV_RESULTS = "ArXiv Results: {count} characters"
 
     # YouTube
-    YOUTUBE_TRANSCRIPT_CALLED = "YouTube Transcript: {url}"
+    YOUTUBE_TRANSCRIPT_CALLED = "YouTube Transcript"
     YOUTUBE_TRANSCRIPT_RESULT = "YouTube Transcript Results: {count} characters"
     YOUTUBE_TRANSCRIPT_ERROR = "Failed to Get Transcript: {url}"
-    ANALYZE_YOUTUBE_CALLED = "Analyzing YouTube Video: {url}"
+    ANALYZE_YOUTUBE_CALLED = "YouTube Video"
     ANALYZE_YOUTUBE_ERROR = "Error Analyzing YouTube Video: {url}"
 
     # Webpage
-    WEBPAGE_CONTENT_CALLED = "Webpage: {url}"
+    WEBPAGE_CONTENT_CALLED = "Web Page"
     WEBPAGE_CONTENT_RESULT = "Webpage Content: {count} characters"
 
     # Files
-    READ_EXCEL_CALLED = "Excel: {file_name}"
-    READ_PYTHON_CALLED = "Python Script: {file_name}"
-    PARSE_AUDIO_CALLED = "Audio File: {file_name}"
+    READ_EXCEL_CALLED = "Excel File"
+    READ_PYTHON_CALLED = "Python Script"
+    PARSE_AUDIO_CALLED = "Audio File"
 
     # Image Analysis
-    ANALYZE_IMAGE_CALLED = "Analyzing Image: {file_name}"
+    ANALYZE_IMAGE_CALLED = "Image Analysis"
     ANALYZE_IMAGE_ERROR = "Error Analyzing Image: {file_name}"
 
 
@@ -116,35 +117,52 @@ class QuestionRunnerStrings:
 
 
 class DesktopToolStrings:
-    """Strings for desktop tool operations."""
+    """Strings for desktop tool operations.
+
+    Each constant holds the display name passed as the first argument to
+    logger.tool_call(name, detail). The detail (file path, directory, etc.)
+    is passed separately at the call site.
+    """
 
     # PDF Tools
-    PDF_EXTRACT_PAGES = "Extracting PDF Pages: {input_pdf}"
-    PDF_DELETE_PAGES = "Deleting PDF Pages: {input_pdf}"
-    PDF_MERGE = "Merging PDFs: {output_pdf}"
-    PDF_SPLIT = "Splitting PDF: {input_pdf}"
-    PDF_TO_IMAGES = "Converting PDF to Images: {input_pdf}"
-    EXTRACT_TEXT_PDF = "Extracting Text from PDF: {input_pdf}"
+    PDF_EXTRACT_PAGES = "Extracting PDF Pages"
+    PDF_DELETE_PAGES = "Deleting PDF Pages"
+    PDF_MERGE = "Merging PDFs"
+    PDF_SPLIT = "Splitting PDF"
+    PDF_TO_IMAGES = "Converting PDF to Images"
+    EXTRACT_TEXT_PDF = "Extracting Text from PDF"
 
     # Image Tools
-    IMAGE_CONVERT = "Converting Image: {input_image}"
-    IMAGE_RESIZE = "Resizing Image: {input_image}"
-    IMAGE_COMPRESS = "Compressing Image: {input_image}"
-    BATCH_CONVERT = "Batch Converting Images: {input_dir}"
+    IMAGE_CONVERT = "Converting Image"
+    IMAGE_RESIZE = "Resizing Image"
+    IMAGE_COMPRESS = "Compressing Image"
+    BATCH_CONVERT = "Batch Converting Images"
+    IMAGES_TO_PDF = "Converting Images to PDF"
 
     # File Management Tools
-    BATCH_RENAME = "Renaming Files: {directory}"
-    ORGANIZE_FILES = "Organizing Files: {source_dir}"
-    FIND_DUPLICATES = "Finding Duplicates: {directory}"
+    BATCH_RENAME = "Renaming Files"
+    ORGANIZE_FILES = "Organizing Files"
+    FIND_DUPLICATES = "Finding Duplicates"
 
     # Document Tools
-    WORD_TO_PDF = "Converting Word to PDF: {input_docx}"
-    OCR_IMAGE = "Extracting Text via OCR: {input_image}"
+    WORD_TO_PDF = "Converting Word to PDF"
+    OCR_IMAGE = "Extracting Text via OCR"
 
     # Media Tools
-    VIDEO_TO_AUDIO = "Extracting Audio: {input_video}"
-    COMPRESS_VIDEO = "Compressing Video: {input_video}"
-    GET_MEDIA_INFO = "Media Info: {file_path}"
+    VIDEO_TO_AUDIO = "Extracting Audio"
+    COMPRESS_VIDEO = "Compressing Video"
+    GET_MEDIA_INFO = "Media Info"
+
+    # Directory / System Tools
+    USER_DIRECTORY = "User Directory"
+    SYSTEM_DIRECTORY = "System Directory"
+    LIST_USER_DIRECTORIES = "List User Directories"
+    LIST_SYSTEM_DIRECTORIES = "List System Directories"
+    RESOLVING_PATH = "Resolving Path"
+    FOLDER_ALIASES = "Folder Aliases"
+    PREFERENCE = "Preference"
+    LIST_DIRECTORY = "List Directory"
+    LIST_FILES_RECURSIVE = "List Files Recursively"
 
 
 class APIStrings:

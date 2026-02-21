@@ -5,6 +5,8 @@ from agents and question runners to the frontend via SSE.
 """
 
 import asyncio
+import functools
+import inspect
 import time
 from typing import Optional, Callable, List, Dict, Any
 from dataclasses import dataclass, field
@@ -52,6 +54,7 @@ class LogLevel(Enum):
     """Log levels for categorizing messages."""
     DEBUG = "debug"
     INFO = "info"
+    QUESTION = "question"
     WARNING = "warning"
     ERROR = "error"
     SUCCESS = "success"
@@ -123,6 +126,7 @@ class LogStreamer:
             self._colors = {
                 LogLevel.DEBUG: Fore.BLUE,
                 LogLevel.INFO: Fore.BLUE,
+                LogLevel.QUESTION: Fore.YELLOW,
                 LogLevel.WARNING: Fore.YELLOW,
                 LogLevel.ERROR: Fore.RED,
                 LogLevel.SUCCESS: Fore.GREEN,
@@ -187,6 +191,7 @@ class LogStreamer:
             level_prefix = {
                 LogLevel.DEBUG: "[DEBUG]",
                 LogLevel.INFO: "[INFO]",
+                LogLevel.QUESTION: "[QUESTION]",
                 LogLevel.WARNING: "[WARNING]",
                 LogLevel.ERROR: "[ERROR]",
                 LogLevel.SUCCESS: "[SUCCESS]",
@@ -200,6 +205,10 @@ class LogStreamer:
     def info(self, message: str, **metadata):
         """Log an info message."""
         self.log(message, LogLevel.INFO, **metadata)
+
+    def question(self, message: str, **metadata):
+        """Log a question-related message."""
+        self.log(message, LogLevel.QUESTION, **metadata)
 
     def error(self, message: str, **metadata):
         """Log an error message."""
@@ -215,6 +224,19 @@ class LogStreamer:
 
     def tool(self, message: str, **metadata):
         """Log a tool call message."""
+        self.log(message, LogLevel.TOOL, **metadata)
+
+    def tool_call(self, name: str, detail: str = '', **metadata):
+        """Log a tool invocation in standard format: '* Name: detail'.
+
+        Use this instead of tool() for all tool invocations so that
+        the log format is consistent and the frontend can bold the label.
+
+        Args:
+            name: Tool display name, e.g. 'Web Search', 'Web Page'
+            detail: The key argument, e.g. query string or URL
+        """
+        message = f"* {name}: {detail}" if detail else f"* {name}"
         self.log(message, LogLevel.TOOL, **metadata)
 
     def step(self, message: str, **metadata):
@@ -288,6 +310,7 @@ class ConsoleLogger:
             self._colors = {
                 LogLevel.DEBUG: Fore.BLUE,
                 LogLevel.INFO: Fore.BLUE,
+                LogLevel.QUESTION: Fore.YELLOW,
                 LogLevel.WARNING: Fore.YELLOW,
                 LogLevel.ERROR: Fore.RED,
                 LogLevel.SUCCESS: Fore.GREEN,
@@ -304,6 +327,7 @@ class ConsoleLogger:
         level_prefix = {
             LogLevel.DEBUG: "[DEBUG]",
             LogLevel.INFO: "[INFO]",
+            LogLevel.QUESTION: "[QUESTION]",
             LogLevel.WARNING: "[WARNING]",
             LogLevel.ERROR: "[ERROR]",
             LogLevel.SUCCESS: "[SUCCESS]",
@@ -317,6 +341,9 @@ class ConsoleLogger:
     def info(self, message: str, **metadata):
         self.log(message, LogLevel.INFO, **metadata)
 
+    def question(self, message: str, **metadata):
+        self.log(message, LogLevel.QUESTION, **metadata)
+
     def error(self, message: str, **metadata):
         self.log(message, LogLevel.ERROR, **metadata)
 
@@ -327,6 +354,11 @@ class ConsoleLogger:
         self.log(message, LogLevel.SUCCESS, **metadata)
 
     def tool(self, message: str, **metadata):
+        self.log(message, LogLevel.TOOL, **metadata)
+
+    def tool_call(self, name: str, detail: str = '', **metadata):
+        """Log a tool invocation in standard format: '* Name: detail'."""
+        message = f"* {name}: {detail}" if detail else f"* {name}"
         self.log(message, LogLevel.TOOL, **metadata)
 
     def step(self, message: str, **metadata):
@@ -364,3 +396,38 @@ def create_logger(task_id: str, streaming: bool = True, console_output: bool = N
         return LogStreamer.create_or_get(task_id, console_output=console_output)
     else:
         return ConsoleLogger(task_id)
+
+
+def log_tool_call(display_name: str, detail_param: int = 0):
+    """Decorator that logs a tool invocation via the global logger before execution.
+
+    This is the single place where all tool call logging originates. Apply it to
+    every tool function so the body never needs a manual get_global_logger().tool_call().
+
+    Args:
+        display_name: The display name string constant (e.g. ToolStrings.WEBSEARCH_CALLED).
+        detail_param: Index of the positional parameter to use as the log detail
+                      (default 0 = first parameter). Resolved from *args or **kwargs.
+
+    Usage:
+        @tool
+        @track_tool_call("websearch")
+        @log_tool_call(ToolStrings.WEBSEARCH_CALLED)
+        def websearch(query: str) -> str:
+            ...
+    """
+    def decorator(func):
+        params = list(inspect.signature(func).parameters.keys())
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            detail = ''
+            if detail_param < len(args):
+                detail = str(args[detail_param])
+            elif detail_param < len(params):
+                detail = str(kwargs.get(params[detail_param], ''))
+            get_global_logger().tool_call(display_name, detail)
+            return func(*args, **kwargs)
+
+        return wrapper
+    return decorator

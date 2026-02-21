@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, ScrollText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ScrollText, Trash2 } from 'lucide-react'
 import ChatWindow from './components/ChatWindow'
 import ChatGroupList from './components/ChatGroupList'
 import { UIStrings } from './uiStrings'
@@ -247,6 +247,20 @@ function App() {
     ))
   }
 
+  // Bold the label before the first ":" in a log message
+  const renderLogMessage = (message) => {
+    const colonIdx = message.indexOf(':')
+    if (colonIdx > 0 && colonIdx < message.length - 1) {
+      return (
+        <>
+          <span className="font-bold">{message.slice(0, colonIdx)}</span>
+          {message.slice(colonIdx)}
+        </>
+      )
+    }
+    return message
+  }
+
   return (
     <div className="flex h-screen bg-slate-900 text-white">
       {/* Sidebar - Chat Groups */}
@@ -326,12 +340,14 @@ function App() {
             <div className="w-96 bg-slate-800 flex flex-col">
               <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
                 <h3 className="font-medium text-slate-300">{UIStrings.LOGS_TITLE}</h3>
-                  <button
-                    onClick={clearLogs}
-                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    {UIStrings.CLEAR_LOGS}
-                  </button>
+                <button
+                  onClick={clearLogs}
+                  title={UIStrings.CLEAR_LOGS_TOOLTIP}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors text-xs"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {UIStrings.CLEAR_LOGS}
+                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
@@ -345,23 +361,15 @@ function App() {
                       <div
                         key={index}
                         className={`${
-                          log.type === 'error'
+                          log.type === 'question'
+                            ? 'text-amber-300'
+                            : log.type === 'error'
                             ? 'text-red-400'
-                            : log.type === 'warning'
-                            ? 'text-yellow-400'
-                            : log.type === 'success'
-                            ? 'text-green-400'
-                            : log.type === 'result'
-                            ? 'text-emerald-300'
-                            : log.type === 'tool'
-                            ? 'text-purple-400'
-                            : log.type === 'step'
-                            ? 'text-cyan-400'
-                            : 'text-blue-400'
+                            : 'text-slate-300'
                         }`}
                       >
                         <span className="text-slate-500">[{log.timestamp}]</span>{' '}
-                        {log.message}
+                        {renderLogMessage(log.message)}
                       </div>
                     ))}
                     <div ref={logsEndRef} />

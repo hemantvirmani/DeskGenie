@@ -90,11 +90,11 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
 
             # Stream to logger (q_num is 1-based index)
             if is_correct:
-                logger.success(S.QUESTION_CORRECT.format(num=q_num, match_type=match_type, expected=correct_answer, actual=answer))
+                logger.question(S.QUESTION_CORRECT.format(num=q_num, match_type=match_type, expected=correct_answer, actual=answer))
             else:
-                logger.error(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
+                logger.question(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
         else:
-            logger.warning(S.QUESTION_NO_TRUTH.format(num=q_num))
+            logger.question(S.QUESTION_NO_TRUTH.format(num=q_num))
 
     # Add summary statistics
     accuracy = (correct_count / total_count) * 100 if total_count > 0 else 0
