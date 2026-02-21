@@ -5,6 +5,7 @@ verifying answers against ground truth, and formatting results.
 """
 
 import json
+import threading
 import time
 
 from app import config
@@ -54,7 +55,12 @@ def _load_ground_truth(file_path: str = config.METADATA_FILE, logger: Logger = N
     return truth_mapping
 
 
-def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None) -> dict:
+def _verify_answers(
+    results: list,
+    logger: Logger = None,
+    runtime: tuple = None,
+    stop_event: threading.Event | None = None
+) -> dict:
     """Verify answers against ground truth using the official GAIA scorer.
 
     Args:
@@ -74,6 +80,9 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
     total_count = 0
 
     for idx, (task_id, _question_text, answer) in enumerate(results):
+        if stop_event and stop_event.is_set():
+            logger.warning(S.SHUTDOWN_STOPPING_VERIFICATION)
+            break
         q_num = idx + 1  # 1-based question number
         if task_id in ground_truth:
             truth_data = ground_truth[task_id]
@@ -92,9 +101,9 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
             if is_correct:
                 logger.question(S.QUESTION_CORRECT.format(num=q_num, match_type=match_type, expected=correct_answer, actual=answer))
             else:
-                logger.question(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
+                logger.error(S.QUESTION_INCORRECT.format(num=q_num, expected=correct_answer, actual=answer))
         else:
-            logger.question(S.QUESTION_NO_TRUTH.format(num=q_num))
+            logger.warning(S.QUESTION_NO_TRUTH.format(num=q_num))
 
     # Add summary statistics
     accuracy = (correct_count / total_count) * 100 if total_count > 0 else 0
@@ -107,7 +116,7 @@ def _verify_answers(results: list, logger: Logger = None, runtime: tuple = None)
     return {"correct": correct_count, "total": total_count, "accuracy": accuracy}
 
 
-def run_gaia_questions(filter=None, logger: Logger = None) -> dict:
+def run_gaia_questions(filter=None, logger: Logger = None, stop_event: threading.Event | None = None) -> dict:
     """Run GAIA benchmark questions.
 
     Args:
@@ -159,7 +168,7 @@ def run_gaia_questions(filter=None, logger: Logger = None) -> dict:
         "filter": str(filter) if filter else "all",
         "mode": "test"
     }):
-        results = AgentRunner(logger=logger).run_on_questions(questions_to_process)
+        results = AgentRunner(logger=logger).run_on_questions(questions_to_process, stop_event=stop_event)
 
     if results is None:
         logger.error(S.ERROR_INITIALIZING_AGENT)
@@ -172,4 +181,4 @@ def run_gaia_questions(filter=None, logger: Logger = None) -> dict:
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
 
-    return _verify_answers(results, logger=logger, runtime=(minutes, seconds))
+    return _verify_answers(results, logger=logger, runtime=(minutes, seconds), stop_event=stop_event)

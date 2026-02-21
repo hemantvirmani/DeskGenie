@@ -398,7 +398,7 @@ def create_logger(task_id: str, streaming: bool = True, console_output: bool = N
         return ConsoleLogger(task_id)
 
 
-def log_tool_call(display_name: str, detail_param: int = 0):
+def log_tool_call(display_name: str, detail_param: int | None = None):
     """Decorator that logs a tool invocation via the global logger before execution.
 
     This is the single place where all tool call logging originates. Apply it to
@@ -406,8 +406,8 @@ def log_tool_call(display_name: str, detail_param: int = 0):
 
     Args:
         display_name: The display name string constant (e.g. ToolStrings.WEBSEARCH_CALLED).
-        detail_param: Index of the positional parameter to use as the log detail
-                      (default 0 = first parameter). Resolved from *args or **kwargs.
+        detail_param: Optional index of a preferred positional parameter to log.
+                      If None, all passed parameters are logged as key=value pairs.
 
     Usage:
         @tool
@@ -417,15 +417,39 @@ def log_tool_call(display_name: str, detail_param: int = 0):
             ...
     """
     def decorator(func):
-        params = list(inspect.signature(func).parameters.keys())
+        signature = inspect.signature(func)
+        params = list(signature.parameters.keys())
+
+        def _format_value(value: Any, max_len: int = 120) -> str:
+            rendered = value if isinstance(value, str) else repr(value)
+            if len(rendered) > max_len:
+                return f"{rendered[:max_len - 3]}..."
+            return rendered
+
+        def _resolve_detail(args, kwargs) -> str:
+            # Backward-compatible behavior for tools that explicitly set detail_param
+            if detail_param is not None:
+                if detail_param < len(args):
+                    arg_name = params[detail_param] if detail_param < len(params) else f"arg{detail_param}"
+                    return f"{arg_name}={_format_value(args[detail_param])}"
+                if detail_param < len(params) and params[detail_param] in kwargs:
+                    arg_name = params[detail_param]
+                    return f"{arg_name}={_format_value(kwargs[arg_name])}"
+                return ""
+
+            # Default behavior: log all bound parameters
+            try:
+                bound = signature.bind_partial(*args, **kwargs)
+                return ", ".join(
+                    f"{name}={_format_value(value)}"
+                    for name, value in bound.arguments.items()
+                )
+            except Exception:
+                return ""
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            detail = ''
-            if detail_param < len(args):
-                detail = str(args[detail_param])
-            elif detail_param < len(params):
-                detail = str(kwargs.get(params[detail_param], ''))
+            detail = _resolve_detail(args, kwargs)
             get_global_logger().tool_call(display_name, detail)
             return func(*args, **kwargs)
 

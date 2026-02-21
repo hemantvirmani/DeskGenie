@@ -12,6 +12,7 @@ import asyncio
 import json
 import signal
 import time
+import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,17 +34,20 @@ from resources.log_strings import APIMessages as API
 
 # Track background tasks for cleanup
 _background_tasks = set()
+_shutdown_event = threading.Event()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
     print(API.SERVER_STARTING)
+    _shutdown_event.clear()
     # Set global logger to LogStreamer for UI mode (no console output)
     set_global_logger(LogStreamer(task_id="global", console_output=False))
     yield
     # Cleanup on shutdown
     print(API.SERVER_SHUTTING_DOWN)
+    _shutdown_event.set()
     for task in _background_tasks:
         task.cancel()
     if _background_tasks:
@@ -308,7 +312,7 @@ async def run_predefined_task(task_id: str, filter_indices: list = None):
                 "question_count": len(filter_indices) if filter_indices else "all",
                 "mode": "benchmark"
             }):
-                return run_gaia_questions(filter=filter_tuple, logger=logger)
+                return run_gaia_questions(filter=filter_tuple, logger=logger, stop_event=_shutdown_event)
 
         stats = await loop.run_in_executor(None, execute_with_tracking)
 

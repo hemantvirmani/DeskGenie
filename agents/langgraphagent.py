@@ -208,10 +208,6 @@ class LangGraphAgent:
                 SK.STEP_COUNT: current_step
             }
 
-        # Has tool calls, log them
-        tools_list = ', '.join(tc['name'] for tc in response.tool_calls)
-        self.logger.tool_call(S.CALLING_TOOLS, tools_list)
-
         return {
             SK.MESSAGES: [response],
             SK.STEP_COUNT: current_step

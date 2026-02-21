@@ -21,6 +21,7 @@ class AgentStrings:
     TASK_RESULT = "Task {task_id} Complete: {answer}"
     QUESTION_TEXT = "Q{num}: {question}"
     EXCEPTION_RUNNING_AGENT = "Agent Error (Task {task_id}): {error}"
+    SHUTDOWN_STOPPING_AGENT_LOOP = "Shutdown requested. Stopping remaining question processing."
 
     # LangGraph Agent
     LANGGRAPH_STARTING = "LangGraph Agent Starting: {question}"
@@ -110,6 +111,7 @@ class QuestionRunnerStrings:
     QUESTION_CORRECT = "Q{num}: ✓ Correct ({match_type}) (expected: {expected}, got: {actual})"
     QUESTION_INCORRECT = "Q{num}: ✗ Incorrect (expected: {expected}, got: {actual})"
     QUESTION_NO_TRUTH = "Q{num}: No ground truth found"
+    SHUTDOWN_STOPPING_VERIFICATION = "Shutdown requested. Stopping verification early."
 
     # Summary
     SUMMARY = "SUMMARY: {correct}/{total} correct ({accuracy:.1f}%)"

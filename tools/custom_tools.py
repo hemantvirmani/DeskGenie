@@ -16,7 +16,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import extract
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import get_global_logger, log_tool_call
+from utils.log_streamer import log_tool_call
 from resources.ui_strings import ToolStrings as S
 from resources.state_strings import ToolReturns as TR
 from resources.error_strings import ToolErrors as TE
@@ -222,7 +222,6 @@ def websearch(query: str) -> str:
         with DDGS() as ddgs:
             results = ddgs.text(query, max_results=5, timelimit='y')  # Limit to past year for faster results
             if results:
-                get_global_logger().info(S.WEBSEARCH_RESULTS.format(count=len(results)))
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
             return TE.SEARCH_NO_RESULTS
     except Exception as e:
@@ -243,7 +242,6 @@ def wiki_search(query: str) -> str:
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content}\n</Document>'
                 for doc in search_docs
             ])
-        get_global_logger().info(S.WIKI_RESULTS.format(count=len(formatted_search_docs)))
         return {TR.WIKI_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.WIKI_SEARCH.format(error=e)
@@ -263,8 +261,6 @@ def arvix_search(query: str) -> str:
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content[:1000]}\n</Document>'
                 for doc in search_docs
             ])
-
-        get_global_logger().info(S.ARXIV_RESULTS.format(count=len(formatted_search_docs)))
         return {TR.ARVIX_RESULTS: formatted_search_docs}
     except Exception as e:
         return TE.ARXIV_SEARCH.format(error=e)
@@ -288,11 +284,9 @@ def get_youtube_transcript(page_url: str) -> str:
 
         # keep only text
         txt = '\n'.join([s.text for s in transcript.snippets])
-        get_global_logger().info(S.YOUTUBE_TRANSCRIPT_RESULT.format(count=len(txt)))
         return txt
     except Exception as e:
         msg = S.YOUTUBE_TRANSCRIPT_ERROR.format(url=page_url, error=e)
-        get_global_logger().error(msg)
         return msg
 
 @tool
@@ -326,7 +320,6 @@ def get_webpage_content(page_url: str) -> str:
             else:
                 # return the raw content
                 text = r.text
-        get_global_logger().info(S.WEBPAGE_CONTENT_RESULT.format(count=len(text)))
         return text
     except Exception as e:
         return TE.WEBPAGE_FETCH.format(error=e)
@@ -466,7 +459,6 @@ def analyze_youtube_video(question: str, youtube_url: str) -> str:
         return response.text
     except Exception as e:
         error_msg = S.ANALYZE_YOUTUBE_ERROR.format(url=youtube_url, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
-        get_global_logger().error(error_msg)
         return error_msg
 
 @tool
@@ -518,7 +510,6 @@ def analyze_image(question: str, file_name: str) -> str:
 
     except Exception as e:
         error_msg = S.ANALYZE_IMAGE_ERROR.format(file_name=file_name, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
-        get_global_logger().error(error_msg)
         return error_msg
 
 # ============================================================================
