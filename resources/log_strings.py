@@ -223,6 +223,16 @@ class AgentLogging:
 class ToolLogging:
     """Logging strings for tool operations."""
 
+    # Basic utilities
+    ADD_CALLED = "Add"
+    SUBTRACT_CALLED = "Subtract"
+    MULTIPLY_CALLED = "Multiply"
+    DIVIDE_CALLED = "Divide"
+    POWER_CALLED = "Power"
+    MODULUS_CALLED = "Modulus"
+    STRING_REVERSE_CALLED = "String Reverse"
+    CURRENT_TIME_CALLED = "Current Time"
+
     # Web Search
     WEBSEARCH_CALLED = "websearch called: {query}"
     WEBSEARCH_RESULTS = "websearch results: {count}"

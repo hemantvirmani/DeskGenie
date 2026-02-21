@@ -18,6 +18,7 @@ from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
 from utils.log_streamer import log_tool_call
 from resources.ui_strings import ToolStrings as S
+from resources.log_strings import ToolLogging as L
 from resources.state_strings import ToolReturns as TR
 from resources.error_strings import ToolErrors as TE
 
@@ -109,6 +110,7 @@ def _get_mime_type(file_name: str) -> str:
 
 @tool
 @track_tool_call("add")
+@log_tool_call(L.ADD_CALLED)
 def add(a: float, b: float) -> str:
     """Add two numbers.
 
@@ -120,6 +122,7 @@ def add(a: float, b: float) -> str:
 
 @tool
 @track_tool_call("subtract")
+@log_tool_call(L.SUBTRACT_CALLED)
 def subtract(a: float, b: float) -> str:
     """Subtract b from a.
 
@@ -131,6 +134,7 @@ def subtract(a: float, b: float) -> str:
 
 @tool
 @track_tool_call("multiply")
+@log_tool_call(L.MULTIPLY_CALLED)
 def multiply(a: float, b: float) -> str:
     """Multiply two numbers.
 
@@ -142,6 +146,7 @@ def multiply(a: float, b: float) -> str:
 
 @tool
 @track_tool_call("divide")
+@log_tool_call(L.DIVIDE_CALLED)
 def divide(a: float, b: float) -> str:
     """Divide a by b.
 
@@ -155,6 +160,7 @@ def divide(a: float, b: float) -> str:
 
 @tool
 @track_tool_call("power")
+@log_tool_call(L.POWER_CALLED)
 def power(a: float, b: float) -> str:
     """Raise a to the power of b.
 
@@ -166,6 +172,7 @@ def power(a: float, b: float) -> str:
 
 @tool
 @track_tool_call("modulus")
+@log_tool_call(L.MODULUS_CALLED)
 def modulus(a: int, b: int) -> int:
     """Get the modulus of two numbers.
 
@@ -177,6 +184,7 @@ def modulus(a: int, b: int) -> int:
 
 @tool
 @track_tool_call("string_reverse")
+@log_tool_call(L.STRING_REVERSE_CALLED)
 def string_reverse(input_string: str) -> str:
     """
     Reverses the input string. Useful whenever a string seems to be non-sensical or
@@ -194,6 +202,7 @@ def string_reverse(input_string: str) -> str:
 
 @tool
 @track_tool_call("get_current_time_in_timezone")
+@log_tool_call(L.CURRENT_TIME_CALLED)
 def get_current_time_in_timezone(timezone: str) -> str:
     """A tool that fetches the current local time in a specified timezone.
     Args:
