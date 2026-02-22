@@ -57,20 +57,26 @@ AGENT_REACT_LANGGRAPH = "ReActLangGraph"
 ACTIVE_AGENT = AGENT_LANGGRAPH  # Active agent to use by default
 
 # Model Configuration
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL_2_5 = "gemini-2.5-flash"
 GEMINI_TEMPERATURE = 0
 GEMINI_MAX_TOKENS = 1024
+
+GEMINI_MODEL_LATEST = "gemini-3.1-pro-preview"
 
 OLLAMA_QWEN_MODEL = "qwen2.5:7b-instruct"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
-ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL
+ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL_LATEST
 DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 2.0  # seconds
 RETRY_BACKOFF_FACTOR = 2.0
+
+# Agent Step / Recursion Limits
+AGENT_MAX_STEPS = 50
+AGENT_RECURSION_LIMIT = 100
 
 # =============================================================================
 # Langfuse Observability

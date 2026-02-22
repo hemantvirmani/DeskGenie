@@ -220,7 +220,7 @@ class LangGraphAgent:
         step_count = state.get(SK.STEP_COUNT, 0)
 
         # Stop if we've exceeded maximum steps
-        if step_count >= 40:  # Increased from 25 to handle complex multi-step reasoning
+        if step_count >= config.AGENT_MAX_STEPS:
             self.logger.warning(S.LANGGRAPH_MAX_STEPS)
             # Force a final answer if we don't have one
             if not state.get(SK.ANSWER):
@@ -260,7 +260,7 @@ class LangGraphAgent:
             file_name: Optional file name if the question references a file
         """
 
-        truncated_q = f"{question[:30]}..." if len(question) > 30 else question
+        truncated_q = f"{question[:50]}..." if len(question) > 50 else question
         self.logger.step(S.LANGGRAPH_STARTING.format(question=truncated_q))
         if file_name:
             self.logger.info(S.LANGGRAPH_FILE.format(file_name=file_name))
@@ -268,7 +268,7 @@ class LangGraphAgent:
         try:
             response = self.graph.invoke(
                 {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: None, SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
-                config={"recursion_limit": 80}  # Must be >= 2x step limit (40 * 2 = 80)
+                config={"recursion_limit": config.AGENT_RECURSION_LIMIT}
             )
 
             answer = response.get(SK.ANSWER)
