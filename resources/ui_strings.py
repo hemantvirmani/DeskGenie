@@ -41,6 +41,7 @@ class AgentStrings:
     STEP_CALLING_LLM = "Step {step}: Calling LLM with {count} messages"
     RETRY_ATTEMPT = "Retry {attempt}/{max_retries}: Timeout"
     RETRY_EMPTY_RESPONSE = "Retry {attempt}/{max_retries}: Empty LLM response (no tools, no content)"
+    EMPTY_RESPONSE_NUDGE = "Your previous response was empty. Please use the available tools to research and answer the question."
     RETRY_WAITING = "Retrying in {delay:.1f} seconds..."
     RETRIES_EXHAUSTED = "Retries Exhausted ({max_retries})"
     LLM_INVOCATION_FAILED_RETRIES = "LLM Failed After Retries: {error}"

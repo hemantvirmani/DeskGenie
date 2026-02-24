@@ -6,6 +6,7 @@ from typing import Callable, Any
 from functools import wraps
 from app import config
 from resources.log_strings import UtilityMessages as UM
+from resources.state_strings import ModelProviders
 
 
 def retry_with_backoff(
@@ -120,6 +121,24 @@ def extract_text_from_content(content: Any) -> str:
     # Fallback for other types
     else:
         return str(content)
+
+
+def get_default_model_name(provider: str = None) -> str:
+    """Return the default model name string for a given provider.
+
+    Args:
+        provider: One of the ModelProviders constants. Defaults to config.DEFAULT_MODEL_PROVIDER.
+
+    Returns:
+        The default model name string for that provider.
+    """
+    provider = provider or config.DEFAULT_MODEL_PROVIDER
+    return {
+        ModelProviders.GOOGLE: config.GEMINI_MODEL_2_5,
+        ModelProviders.ANTHROPIC: config.ANTHROPIC_MODEL,
+        ModelProviders.HUGGINGFACE: config.HUGGINGFACE_LLAMA_MODEL,
+        ModelProviders.OLLAMA: config.OLLAMA_QWEN_MODEL,
+    }.get(provider, config.GEMINI_MODEL_2_5)
 
 
 def cleanup_answer(answer: Any) -> str:

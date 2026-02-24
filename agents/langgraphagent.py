@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore', module='tensorflow')
 warnings.filterwarnings('ignore', module='tf_keras')
 
 from typing import TypedDict, Optional, List, Annotated
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.errors import GraphRecursionError
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -24,7 +24,7 @@ from langchain_anthropic import ChatAnthropic
 
 from tools.custom_tools import get_custom_tools_list
 from resources.system_prompt import SYSTEM_PROMPT
-from utils.utils import cleanup_answer, extract_text_from_content
+from utils.utils import cleanup_answer, extract_text_from_content, get_default_model_name
 from app import config
 
 from tools.desktop_tools import get_desktop_tools_list
@@ -84,7 +84,7 @@ class LangGraphAgent:
         if model_provider == MP.GOOGLE:
 
             return ChatGoogleGenerativeAI(
-                model=config.ACTIVE_AGENT_LLM_MODEL,
+                model=get_default_model_name(model_provider),
                 temperature=0,
                 api_key=config.GOOGLE_API_KEY,
                 timeout=60  # Add timeout to prevent hanging
@@ -115,7 +115,7 @@ class LangGraphAgent:
 
         elif model_provider == MP.ANTHROPIC:
             return ChatAnthropic(
-                model=config.ANTHROPIC_MODEL,
+                model=get_default_model_name(model_provider),
                 api_key=config.ANTHROPIC_API_KEY,
                 temperature=0
             ).bind_tools(self.tools)
@@ -137,7 +137,7 @@ class LangGraphAgent:
             SK.STEP_COUNT: 0  # Initialize step counter
                 }
 
-    @track_llm_call(config.ACTIVE_AGENT_LLM_MODEL)
+    @track_llm_call(get_default_model_name())
     def _assistant(self, state: AgentState):
         """Assistant node which calls the LLM with tools"""
 
@@ -145,13 +145,14 @@ class LangGraphAgent:
         current_step = state.get(SK.STEP_COUNT, 0) + 1
         self.logger.step(S.STEP_CALLING_LLM.format(step=current_step, count=len(state[SK.MESSAGES])))
 
-        # Invoke LLM with tools enabled, with retry logic for 504 errors
+        # Invoke LLM with tools enabled, with retry logic for 504 errors and empty responses
         max_retries = config.MAX_RETRIES
         delay = config.INITIAL_RETRY_DELAY
+        messages_to_send = state[SK.MESSAGES]  # may be extended with nudge on empty-response retry
 
         for attempt in range(max_retries + 1):
             try:
-                response = self.llm_client_with_tools.invoke(state[SK.MESSAGES])
+                response = self.llm_client_with_tools.invoke(messages_to_send)
             except Exception as e:
                 error_msg = str(e)
 
@@ -187,6 +188,13 @@ class LangGraphAgent:
                     self.logger.info(S.RETRY_WAITING.format(delay=delay))
                     time.sleep(delay)
                     delay *= config.RETRY_BACKOFF_FACTOR
+                    # Append nudge so the model sees different input and is prompted to use tools
+                    messages_to_send = list(state[SK.MESSAGES]) + [
+                        AIMessage(content=""),
+                        HumanMessage(content=S.EMPTY_RESPONSE_NUDGE)
+                    ]
+                    # Recreate the LLM client to clear any stale session state
+                    self.llm_client_with_tools = self._create_llm_client()
                     continue
                 # All retries exhausted with empty responses - fall through
                 self.logger.warning(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))

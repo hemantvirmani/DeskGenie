@@ -73,13 +73,16 @@ pip install -r requirements.txt
 
 4. **Set up environment variables**:
 ```bash
-# Required for AI features
-export GOOGLE_API_KEY="your_google_api_key"
+# Required for AI features — set the key for your chosen provider
+export GOOGLE_API_KEY="your_google_api_key"       # Google Gemini
+export ANTHROPIC_API_KEY="your_anthropic_api_key" # Anthropic Claude (alternative)
 
 # Optional: Langfuse observability
 export LANGFUSE_PUBLIC_KEY="pk-lf-..."
 export LANGFUSE_SECRET_KEY="sk-lf-..."
 ```
+
+> **Switching providers**: Set `DEFAULT_MODEL_PROVIDER` in `app/config.py` to `ModelProviders.GOOGLE` or `ModelProviders.ANTHROPIC` (also supports `HUGGINGFACE` and `OLLAMA`).
 
 5. **Run DeskGenie**:
 
@@ -292,8 +295,11 @@ organize_files_by_type.invoke({
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GOOGLE_API_KEY` | - | Google API key for Gemini model |
+| `GOOGLE_API_KEY` | - | Google API key (required when using Gemini) |
+| `ANTHROPIC_API_KEY` | - | Anthropic API key (required when using Claude) |
 | `DESKGENIE_OUTPUT_DIR` | `~/Desktop_Agent_Output` | Default output directory |
+
+Set the active provider in `app/config.py` via `DEFAULT_MODEL_PROVIDER`. Supported providers: `GOOGLE` (Gemini 2.5 Flash), `ANTHROPIC` (Claude Sonnet), `HUGGINGFACE`, `OLLAMA`.
 
 ### User Configuration (config.json)
 
@@ -457,7 +463,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 This project builds upon several excellent open-source libraries and frameworks:
 
 - **LangGraph** by LangChain - Agent framework
-- **Google Gemini** - LLM provider for natural language processing
+- **Google Gemini** - LLM provider (Gemini 2.5 Flash)
+- **Anthropic Claude** - LLM provider (Claude Sonnet)
 - **FastAPI** - Modern web framework for APIs
 - **React** - UI library
 - **Tailwind CSS** - Utility-first CSS framework
@@ -477,7 +484,7 @@ This project is provided as-is for educational and hobbyist purposes. The author
 
 - [ ] Improve Web search tools
 - [ ] Add MCP Server Support. Test with MCP of Home Assistant
-- [ ] Make LLM provider support configurable
+- [x] Make LLM provider support configurable (Google Gemini, Anthropic Claude, HuggingFace, Ollama)
 - [ ] Create simple plugin system for custom tools. does not need to be drag n drop
 - [ ] Add comprehensive test suite
 - [ ] Improve documentation and tutorials
