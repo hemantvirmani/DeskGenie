@@ -20,6 +20,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from langchain_ollama import ChatOllama
+from langchain_anthropic import ChatAnthropic
 
 from tools.custom_tools import get_custom_tools_list
 from resources.system_prompt import SYSTEM_PROMPT
@@ -112,6 +113,13 @@ class LangGraphAgent:
                 num_ctx=4096,  # Context window size
             ).bind_tools(self.tools)
 
+        elif model_provider == MP.ANTHROPIC:
+            return ChatAnthropic(
+                model=config.ANTHROPIC_MODEL,
+                api_key=config.ANTHROPIC_API_KEY,
+                temperature=0
+            ).bind_tools(self.tools)
+
     # Nodes
     def _init_questions(self, state: AgentState):
         """Initialize the messages in the state with system prompt and user question."""
@@ -144,8 +152,6 @@ class LangGraphAgent:
         for attempt in range(max_retries + 1):
             try:
                 response = self.llm_client_with_tools.invoke(state[SK.MESSAGES])
-                # Success - break out of retry loop
-                break
             except Exception as e:
                 error_msg = str(e)
 
@@ -173,6 +179,20 @@ class LangGraphAgent:
                         SK.ANSWER: AE.AGENT_FAILED.format(error=str(e)[:100]),
                         SK.STEP_COUNT: current_step
                     }
+
+            # Retry if the model returned no tool calls and no content (silent empty response)
+            if not response.tool_calls and not str(response.content).strip():
+                if attempt < max_retries:
+                    self.logger.warning(S.RETRY_EMPTY_RESPONSE.format(attempt=attempt + 1, max_retries=max_retries))
+                    self.logger.info(S.RETRY_WAITING.format(delay=delay))
+                    time.sleep(delay)
+                    delay *= config.RETRY_BACKOFF_FACTOR
+                    continue
+                # All retries exhausted with empty responses - fall through
+                self.logger.warning(S.RETRIES_EXHAUSTED.format(max_retries=max_retries))
+
+            # Valid response (has tool calls or non-empty content) - exit retry loop
+            break
 
         # If no tool calls, set the final answer
         if not response.tool_calls:

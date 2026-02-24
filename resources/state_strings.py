@@ -22,7 +22,7 @@ class ModelProviders:
     GOOGLE = "google"
     HUGGINGFACE = "huggingface"
     OLLAMA = "ollama"
-
+    ANTHROPIC = "anthropic"
 
 class AgentReturns:
     """Non-error return strings for agent operations."""

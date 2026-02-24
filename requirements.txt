@@ -22,6 +22,7 @@ langchain-google-genai
 langchain-huggingface
 langchain-community
 langchain_ollama
+langchain-anthropic
 
 # =============================================================================
 # Web & Research Tools

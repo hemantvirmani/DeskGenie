@@ -47,6 +47,7 @@ SEPARATOR_WIDTH = 60  # Width of separator lines
 
 # Environment Variables
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
@@ -60,9 +61,10 @@ GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"
 
 OLLAMA_QWEN_MODEL = "qwen2.5:7b-instruct"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
-ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL_3_1
 DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
+ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL_2_5
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
