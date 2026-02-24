@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore', module='tensorflow')
 warnings.filterwarnings('ignore', module='tf_keras')
 
 from typing import TypedDict, Optional, List, Annotated
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.errors import GraphRecursionError
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -148,7 +148,8 @@ class LangGraphAgent:
         # Invoke LLM with tools enabled, with retry logic for 504 errors and empty responses
         max_retries = config.MAX_RETRIES
         delay = config.INITIAL_RETRY_DELAY
-        messages_to_send = state[SK.MESSAGES]  # may be extended with nudge on empty-response retry
+        empty_delay = config.EMPTY_RESPONSE_RETRY_DELAY
+        messages_to_send = state[SK.MESSAGES]  # may have nudge appended on empty-response retry
 
         for attempt in range(max_retries + 1):
             try:
@@ -185,14 +186,15 @@ class LangGraphAgent:
             if not response.tool_calls and not str(response.content).strip():
                 if attempt < max_retries:
                     self.logger.warning(S.RETRY_EMPTY_RESPONSE.format(attempt=attempt + 1, max_retries=max_retries))
-                    self.logger.info(S.RETRY_WAITING.format(delay=delay))
-                    time.sleep(delay)
-                    delay *= config.RETRY_BACKOFF_FACTOR
-                    # Append nudge so the model sees different input and is prompted to use tools
-                    messages_to_send = list(state[SK.MESSAGES]) + [
-                        AIMessage(content=""),
-                        HumanMessage(content=S.EMPTY_RESPONSE_NUDGE)
-                    ]
+                    self.logger.info(S.RETRY_WAITING.format(delay=empty_delay))
+                    time.sleep(empty_delay)
+                    empty_delay *= config.EMPTY_RESPONSE_RETRY_BACKOFF
+                    # Inline nudge into the original HumanMessage (avoids invalid empty AIMessage)
+                    original_messages = state[SK.MESSAGES]
+                    last_human = next((m for m in reversed(original_messages) if isinstance(m, HumanMessage)), None)
+                    if last_human:
+                        nudged = HumanMessage(content=last_human.content + S.EMPTY_RESPONSE_NUDGE)
+                        messages_to_send = [nudged if m is last_human else m for m in original_messages]
                     # Recreate the LLM client to clear any stale session state
                     self.llm_client_with_tools = self._create_llm_client()
                     continue

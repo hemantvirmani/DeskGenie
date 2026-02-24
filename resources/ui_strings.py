@@ -22,6 +22,7 @@ class AgentStrings:
     QUESTION_TEXT = "Q{num}: {question}"
     EXCEPTION_RUNNING_AGENT = "Agent Error (Task {task_id}): {error}"
     SHUTDOWN_STOPPING_AGENT_LOOP = "Shutdown requested. Stopping remaining question processing."
+    INTER_QUESTION_PAUSE = "Pausing {seconds}s before next question..."
 
     # LangGraph Agent
     LANGGRAPH_STARTING = "LangGraph Agent Starting: {question}"
@@ -41,7 +42,7 @@ class AgentStrings:
     STEP_CALLING_LLM = "Step {step}: Calling LLM with {count} messages"
     RETRY_ATTEMPT = "Retry {attempt}/{max_retries}: Timeout"
     RETRY_EMPTY_RESPONSE = "Retry {attempt}/{max_retries}: Empty LLM response (no tools, no content)"
-    EMPTY_RESPONSE_NUDGE = "Your previous response was empty. Please use the available tools to research and answer the question."
+    EMPTY_RESPONSE_NUDGE = "\n\nIMPORTANT: You must use the available tools to research and answer this question. Do not return an empty response."
     RETRY_WAITING = "Retrying in {delay:.1f} seconds..."
     RETRIES_EXHAUSTED = "Retries Exhausted ({max_retries})"
     LLM_INVOCATION_FAILED_RETRIES = "LLM Failed After Retries: {error}"

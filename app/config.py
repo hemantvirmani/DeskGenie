@@ -63,16 +63,21 @@ OLLAMA_QWEN_MODEL = "qwen2.5:7b-instruct"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
-DEFAULT_MODEL_PROVIDER = ModelProviders.ANTHROPIC
+DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 2.0  # seconds
 RETRY_BACKOFF_FACTOR = 2.0
 
+# Retry configuration for silent empty LLM responses (longer delays needed)
+EMPTY_RESPONSE_RETRY_DELAY = 15.0  # seconds (initial delay before first retry)
+EMPTY_RESPONSE_RETRY_BACKOFF = 2.0  # multiplier for subsequent retries
+
 # Agent Step / Recursion Limits
 AGENT_MAX_STEPS = 25
 AGENT_RECURSION_LIMIT = 100
+INTER_QUESTION_PAUSE_SECONDS = 5  # Pause between questions in batch mode (0 to disable)
 
 # =============================================================================
 # Langfuse Observability

@@ -1,9 +1,10 @@
 """Agent execution functionality for running questions through the GAIA agent."""
 
 import threading
+import time
 from typing import Optional, Tuple, List, Dict
 from agents.agents import MyGAIAAgents
-from app.config import *
+from app import config
 from utils.langfuse_tracking import track_question_processing
 from utils.log_streamer import ConsoleLogger, Logger
 from resources.ui_strings import AgentStrings as S
@@ -69,5 +70,10 @@ class AgentRunner:
                 self.logger.error(S.EXCEPTION_RUNNING_AGENT.format(task_id=task_id, error=e))
                 error_msg = f"AGENT ERROR: {str(e)[:config.ERROR_MESSAGE_LENGTH]}"
                 results.append((task_id, question_text, error_msg))
+
+            # Pause between questions (skip after the last one)
+            if config.INTER_QUESTION_PAUSE_SECONDS > 0 and idx < total:
+                self.logger.info(S.INTER_QUESTION_PAUSE.format(seconds=config.INTER_QUESTION_PAUSE_SECONDS))
+                time.sleep(config.INTER_QUESTION_PAUSE_SECONDS)
 
         return results
