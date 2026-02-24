@@ -163,7 +163,6 @@ def run_gaia_questions(filter=None, logger: Logger = None, stop_event: threading
 
     # Run agent on selected questions (with Langfuse session tracking)
     with track_session("Run", {
-        "agent": config.ACTIVE_AGENT,
         "question_count": len(questions_to_process),
         "filter": str(filter) if filter else "all",
         "mode": "test"

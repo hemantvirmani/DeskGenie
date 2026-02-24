@@ -50,23 +50,18 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
-# Agent Type Constants
-AGENT_LANGGRAPH = "LangGraph"
-AGENT_REACT_LANGGRAPH = "ReActLangGraph"
-
-ACTIVE_AGENT = AGENT_LANGGRAPH  # Active agent to use by default
-
 # Model Configuration
 GEMINI_MODEL_2_5 = "gemini-2.5-flash"
 GEMINI_TEMPERATURE = 0
 GEMINI_MAX_TOKENS = 1024
 
-GEMINI_MODEL_LATEST = "gemini-3.1-pro-preview"
+GEMINI_MODEL_3_0 = "gemini-3-pro-preview"
+GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"
 
 OLLAMA_QWEN_MODEL = "qwen2.5:7b-instruct"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
-ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL_LATEST
+ACTIVE_AGENT_LLM_MODEL = GEMINI_MODEL_3_1
 DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors

@@ -22,7 +22,6 @@ const generateGroupName = () => {
 }
 
 function App() {
-  const [config, setConfig] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showLogsPanel, setShowLogsPanel] = useState(true)
   const [chatGroups, setChatGroups] = useState([])
@@ -84,14 +83,6 @@ function App() {
     }
 
     loadChats()
-  }, [])
-
-  // Fetch config on mount
-  useEffect(() => {
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => setConfig(data))
-      .catch(err => Logger.error('CONFIG_FETCH_FAILED', { error: err.message }))
   }, [])
 
   // Save chat to API

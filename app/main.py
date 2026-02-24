@@ -93,7 +93,6 @@ def run_single_query(query: str) -> str:
     start_time = time.time()
 
     with track_session("CLI_Query", {
-        "agent_type": config.ACTIVE_AGENT,
         "query_length": len(query),
         "mode": "cli_query"
     }):

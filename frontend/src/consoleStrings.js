@@ -14,7 +14,6 @@
 export const ConsoleStrings = {
   // Data loading messages
   CHAT_LOAD_FAILED: 'Failed to load chats: {error}',
-  CONFIG_FETCH_FAILED: 'Failed to fetch config: {error}',
   
   // Chat operations
   CHAT_SAVE_FAILED: 'Failed to save chat: {error}',

@@ -97,10 +97,6 @@ class ToolInfo(BaseModel):
     description: str
     category: str
 
-class ConfigInfo(BaseModel):
-    active_agent: str
-    available_agents: list[str]
-
 class BenchmarkRequest(BaseModel):
     filter_indices: Optional[list[int]] = None  # e.g., [0, 2, 5] or None for all
 
@@ -132,14 +128,6 @@ class ChatGroup(BaseModel):
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok", "service": S.SERVICE_NAME}
-
-@app.get("/api/config", response_model=ConfigInfo)
-async def get_config():
-    """Get current configuration."""
-    return ConfigInfo(
-        active_agent=config.ACTIVE_AGENT,
-        available_agents=[config.AGENT_LANGGRAPH, config.AGENT_REACT_LANGGRAPH]
-    )
 
 @app.get("/api/tools", response_model=list[ToolInfo])
 async def get_tools():
@@ -198,7 +186,6 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None):
         def execute_with_tracking():
             with track_session("Chat_Request", {
                 "task_id": task_id,
-                "agent_type": config.ACTIVE_AGENT,
                 "has_file": file_name is not None,
                 "message_length": len(message),
                 "mode": "chat"
@@ -248,7 +235,6 @@ async def chat_sync(request: ChatRequest):
 
         def execute_with_tracking():
             with track_session("Chat_Sync", {
-                "agent_type": config.ACTIVE_AGENT,
                 "has_file": request.file_name is not None,
                 "message_length": len(request.message),
                 "mode": "chat_sync"
@@ -307,7 +293,6 @@ async def run_predefined_task(task_id: str, filter_indices: list = None):
         def execute_with_tracking():
             with track_session("Benchmark_Run", {
                 "task_id": task_id,
-                "agent_type": config.ACTIVE_AGENT,
                 "filter_indices": str(filter_indices) if filter_indices else "all",
                 "question_count": len(filter_indices) if filter_indices else "all",
                 "mode": "benchmark"

@@ -357,7 +357,6 @@ DeskGenie/
 ├── agents/
 │   ├── agents.py           # Agent wrapper/factory
 │   ├── langgraphagent.py   # Custom LangGraph agent
-│   └── reactlanggraphagent.py # LangGraph ReAct agent
 │
 ├── tools/
 │   ├── custom_tools.py     # Web search, analysis tools
@@ -421,8 +420,6 @@ python app/main.py --test 2,4,6
 # Run a single query (same as UI chat)
 python app/main.py --testq "What is the capital of France?"
 
-# Use a specific agent
-python app/main.py --test all --agent reactlangg
 ```
 
 See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAIA_Benchmark_Agent) for benchmark details.
