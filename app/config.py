@@ -75,7 +75,7 @@ INITIAL_RETRY_DELAY = 2.0  # seconds
 RETRY_BACKOFF_FACTOR = 2.0
 
 # Agent Step / Recursion Limits
-AGENT_MAX_STEPS = 50
+AGENT_MAX_STEPS = 25
 AGENT_RECURSION_LIMIT = 100
 
 # =============================================================================

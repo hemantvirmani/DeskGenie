@@ -28,6 +28,7 @@ class AgentStrings:
     LANGGRAPH_FILE = "File: {file_name}"
     LANGGRAPH_REQUESTING_TOOLS = "Requesting {count} Tool(s): {tools}"
     LANGGRAPH_MAX_STEPS = "Maximum Steps Reached (40)"
+    LANGGRAPH_RECURSION_LIMIT = "Recursion limit reached, agent could not resolve the question"
     CALLING_TOOLS = "Calling tools"
     LANGGRAPH_NULL_ANSWER = "Agent Returned No Answer"
 

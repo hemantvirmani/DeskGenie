@@ -199,6 +199,7 @@ class AgentLogging:
     LANGGRAPH_FILE = "File: {file_name}"
     LANGGRAPH_REQUESTING_TOOLS = "Agent requesting {count} tool(s): {tools}"
     LANGGRAPH_MAX_STEPS = "Max steps (40) reached, forcing termination"
+    LANGGRAPH_RECURSION_LIMIT = "Recursion limit reached, agent could not resolve the question"
     LANGGRAPH_NULL_ANSWER = "Agent completed but returned None as answer"
 
     # ReAct Agent

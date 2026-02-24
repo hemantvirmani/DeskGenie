@@ -12,6 +12,7 @@ warnings.filterwarnings('ignore', module='tf_keras')
 
 from typing import TypedDict, Optional, List, Annotated
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.errors import GraphRecursionError
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import tools_condition
@@ -286,6 +287,9 @@ class LangGraphAgent:
             self.logger.result(S.FINAL_ANSWER.format(answer=truncated_ans))
             return answer
 
+        except GraphRecursionError:
+            self.logger.warning(S.LANGGRAPH_RECURSION_LIMIT)
+            return AE.MAX_ITERATIONS
         except Exception as e:
             self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
             return AE.GENERIC.format(error=str(e)[:100])

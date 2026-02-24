@@ -9,6 +9,7 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 warnings.filterwarnings('ignore', module='tensorflow')
 warnings.filterwarnings('ignore', module='tf_keras')
 
+from langgraph.errors import GraphRecursionError
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
@@ -206,6 +207,9 @@ class ReActLangGraphAgent:
             self.logger.result(S.FINAL_ANSWER.format(answer=truncated_ans))
             return answer
 
+        except GraphRecursionError:
+            self.logger.warning(S.LANGGRAPH_RECURSION_LIMIT)
+            return AE.MAX_ITERATIONS
         except Exception as e:
             self.logger.error(S.AGENT_INVOCATION_FAILED.format(error=e))
             return AE.GENERIC.format(error=str(e)[:100])
