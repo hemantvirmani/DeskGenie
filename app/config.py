@@ -46,9 +46,9 @@ ERROR_MESSAGE_LENGTH = 100  # Characters to show in error messages
 SEPARATOR_WIDTH = 60  # Width of separator lines
 
 # Environment Variables
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN", "")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
 # Model Configuration

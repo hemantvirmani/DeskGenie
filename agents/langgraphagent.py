@@ -10,7 +10,7 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 warnings.filterwarnings('ignore', module='tensorflow')
 warnings.filterwarnings('ignore', module='tf_keras')
 
-from typing import TypedDict, Optional, List, Annotated
+from typing import Any, TypedDict, Optional, Annotated
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.errors import GraphRecursionError
 from langgraph.graph import MessagesState, StateGraph, START, END
@@ -52,7 +52,7 @@ class AgentState(TypedDict):
 
 class LangGraphAgent:
 
-    def __init__(self, logger: Logger = None):
+    def __init__(self, logger: Optional[Logger] = None):
         """Initialize the LangGraph agent.
 
         Args:
@@ -92,13 +92,13 @@ class LangGraphAgent:
 
         elif model_provider == MP.HUGGINGFACE:
 
-            llmObject = HuggingFaceEndpoint(
+            llmObject = HuggingFaceEndpoint(  # type: ignore[call-arg]
                 repo_id=config.HUGGINGFACE_LLAMA_MODEL,
                 task="text-generation",
                 max_new_tokens=512,
                 temperature=0.7,
-                do_sample=False,
-                repetition_penalty=1.03,
+                do_sample=False,  # type: ignore[call-arg]
+                repetition_penalty=1.03,  # type: ignore[call-arg]
                 huggingfacehub_api_token=config.HUGGINGFACE_API_KEY
             )
             return ChatHuggingFace(llm=llmObject).bind_tools(self.tools)
@@ -106,7 +106,7 @@ class LangGraphAgent:
         elif model_provider == MP.OLLAMA:
             # Ollama runs locally - ensure Ollama server is running with the model pulled
             # e.g., `ollama serve` then `ollama pull qwen2.5:14b-instruct`
-            return ChatOllama(
+            return ChatOllama(  # type: ignore[call-arg]
                 model=config.OLLAMA_QWEN_MODEL,
                 base_url=config.OLLAMA_BASE_URL,
                 temperature=0,
@@ -114,11 +114,13 @@ class LangGraphAgent:
             ).bind_tools(self.tools)
 
         elif model_provider == MP.ANTHROPIC:
-            return ChatAnthropic(
+            return ChatAnthropic(  # type: ignore[call-arg]
                 model=get_default_model_name(model_provider),
-                api_key=config.ANTHROPIC_API_KEY,
-                temperature=0
+                api_key=config.ANTHROPIC_API_KEY,  # type: ignore[call-arg]
+                temperature=0  # type: ignore[call-arg]
             ).bind_tools(self.tools)
+
+        raise ValueError(f"Unsupported model provider: {model_provider}")
 
     # Nodes
     def _init_questions(self, state: AgentState):
@@ -151,6 +153,7 @@ class LangGraphAgent:
         empty_delay = config.EMPTY_RESPONSE_RETRY_DELAY
         messages_to_send = state[SK.MESSAGES]  # may have nudge appended on empty-response retry
 
+        response = None
         for attempt in range(max_retries + 1):
             try:
                 response = self.llm_client_with_tools.invoke(messages_to_send)
@@ -193,7 +196,7 @@ class LangGraphAgent:
                     original_messages = state[SK.MESSAGES]
                     last_human = next((m for m in reversed(original_messages) if isinstance(m, HumanMessage)), None)
                     if last_human:
-                        nudged = HumanMessage(content=last_human.content + S.EMPTY_RESPONSE_NUDGE)
+                        nudged = HumanMessage(content=str(last_human.content) + S.EMPTY_RESPONSE_NUDGE)
                         messages_to_send = [nudged if m is last_human else m for m in original_messages]
                     # Recreate the LLM client to clear any stale session state
                     self.llm_client_with_tools = self._create_llm_client()
@@ -205,8 +208,9 @@ class LangGraphAgent:
             break
 
         # If no tool calls, set the final answer
+        assert response is not None
         if not response.tool_calls:
-            content = response.content
+            content: Any = response.content
 
             # Handle case where content is a list (e.g. mixed content from Gemini)
             if isinstance(content, list):
@@ -216,7 +220,7 @@ class LangGraphAgent:
                     if isinstance(item, dict) and 'text' in item:
                         text_parts.append(item['text'])
                     elif hasattr(item, 'text'):
-                        text_parts.append(item.text)
+                        text_parts.append(getattr(item, 'text'))
                     else:
                         text_parts.append(str(item))
                 content = " ".join(text_parts)
@@ -225,7 +229,7 @@ class LangGraphAgent:
                 content = content['text']
             elif hasattr(content, 'text'):
                 # Handle object with text attribute
-                content = content.text
+                content = getattr(content, 'text')
             else:
                 # Fallback to string conversion
                 content = str(content)
@@ -259,7 +263,7 @@ class LangGraphAgent:
             return END
 
         # Otherwise use the default tools_condition
-        return tools_condition(state)
+        return tools_condition(state)  # type: ignore[arg-type]
 
 
     def _build_graph(self):
@@ -283,7 +287,7 @@ class LangGraphAgent:
         return graph.compile()
 
     @track_agent_execution("LangGraph")
-    def __call__(self, question: str, file_name: str = None) -> str:
+    def __call__(self, question: str, file_name: Optional[str] = None) -> str:
         """Invoke the agent graph with the given question and return the final answer.
 
         Args:
@@ -298,7 +302,7 @@ class LangGraphAgent:
 
         try:
             response = self.graph.invoke(
-                {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: None, SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
+                {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: "", SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
                 config={"recursion_limit": config.AGENT_RECURSION_LIMIT}
             )
 
