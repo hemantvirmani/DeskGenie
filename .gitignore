@@ -48,3 +48,4 @@ venv/
 env/
 ENV/
 .venv/
+.claude/settings.local.json

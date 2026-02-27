@@ -306,7 +306,7 @@ function App() {
                 }`}
               >
                 <ScrollText className="w-4 h-4" />
-                Logs
+                {UIStrings.LOGS_TITLE}
               </button>
             </div>
           </div>
@@ -330,7 +330,7 @@ function App() {
           {showLogsPanel && (
             <div className="w-96 bg-slate-800 flex flex-col">
               <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-                <h3 className="font-medium text-slate-300">{UIStrings.LOGS_TITLE}</h3>
+                <h3 className="font-medium text-slate-300">{UIStrings.LOGS_SUBTITLE}</h3>
                 <button
                   onClick={clearLogs}
                   title={UIStrings.CLEAR_LOGS_TOOLTIP}
