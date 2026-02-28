@@ -1,3 +1,4 @@
+import concurrent.futures
 import pytz
 import datetime
 from ddgs import DDGS
@@ -229,7 +230,7 @@ def websearch(query: str) -> str:
 
     try:
         with DDGS() as ddgs:
-            results = ddgs.text(query, max_results=5, timelimit='y')  # Limit to past year for faster results
+            results = ddgs.text(query, max_results=config.WEBSEARCH_MAX_RESULTS)
             if results:
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
             return TE.SEARCH_NO_RESULTS
@@ -245,7 +246,7 @@ def wiki_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        search_docs = WikipediaLoader(query=query, load_max_docs=3).load()
+        search_docs = WikipediaLoader(query=query, load_max_docs=config.WIKI_MAX_DOCS).load()
         formatted_search_docs = "\n\n---\n\n".join(
             [
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content}\n</Document>'
@@ -264,13 +265,19 @@ def arvix_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        search_docs = ArxivLoader(query=query, load_max_docs=3).load()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                lambda: ArxivLoader(query=query, load_max_docs=config.ARXIV_MAX_DOCS).load()
+            )
+            search_docs = future.result(timeout=config.ARXIV_TIMEOUT_SECONDS)
         formatted_search_docs = "\n\n---\n\n".join(
             [
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content[:1000]}\n</Document>'
                 for doc in search_docs
             ])
         return {TR.ARVIX_RESULTS: formatted_search_docs}
+    except concurrent.futures.TimeoutError:
+        return TE.ARXIV_SEARCH.format(error=f"ArXiv timed out after {config.ARXIV_TIMEOUT_SECONDS}s — try websearch instead")
     except Exception as e:
         return TE.ARXIV_SEARCH.format(error=e)
 

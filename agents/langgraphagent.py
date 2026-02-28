@@ -85,7 +85,7 @@ class LangGraphAgent:
 
             return ChatGoogleGenerativeAI(
                 model=get_default_model_name(model_provider),
-                temperature=0,
+                temperature=config.AGENT_LLM_TEMPERATURE,
                 api_key=config.GOOGLE_API_KEY,
                 timeout=60  # Add timeout to prevent hanging
                 ).bind_tools(self.tools)
@@ -93,13 +93,13 @@ class LangGraphAgent:
         elif model_provider == MP.HUGGINGFACE:
 
             llmObject = HuggingFaceEndpoint(  # type: ignore[call-arg]
-                repo_id=config.HUGGINGFACE_LLAMA_MODEL,
-                task="text-generation",
-                max_new_tokens=512,
-                temperature=0.7,
+                repo_id=config.HUGGINGFACE_LLAMA_MODEL,  # type: ignore[call-arg]
+                task="text-generation",  # type: ignore[call-arg]
+                max_new_tokens=512,  # type: ignore[call-arg]
+                temperature=0.7,  # type: ignore[call-arg]
                 do_sample=False,  # type: ignore[call-arg]
                 repetition_penalty=1.03,  # type: ignore[call-arg]
-                huggingfacehub_api_token=config.HUGGINGFACE_API_KEY
+                huggingfacehub_api_token=config.HUGGINGFACE_API_KEY  # type: ignore[call-arg]
             )
             return ChatHuggingFace(llm=llmObject).bind_tools(self.tools)
 
@@ -109,7 +109,7 @@ class LangGraphAgent:
             return ChatOllama(  # type: ignore[call-arg]
                 model=config.OLLAMA_QWEN_MODEL,
                 base_url=config.OLLAMA_BASE_URL,
-                temperature=0,
+                temperature=config.AGENT_LLM_TEMPERATURE,
                 num_ctx=4096,  # Context window size
             ).bind_tools(self.tools)
 
@@ -117,7 +117,7 @@ class LangGraphAgent:
             return ChatAnthropic(  # type: ignore[call-arg]
                 model=get_default_model_name(model_provider),
                 api_key=config.ANTHROPIC_API_KEY,  # type: ignore[call-arg]
-                temperature=0  # type: ignore[call-arg]
+                temperature=config.AGENT_LLM_TEMPERATURE  # type: ignore[call-arg]
             ).bind_tools(self.tools)
 
         raise ValueError(f"Unsupported model provider: {model_provider}")
