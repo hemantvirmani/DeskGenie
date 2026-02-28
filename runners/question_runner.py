@@ -9,8 +9,11 @@ import threading
 import time
 
 from app import config
-from utils.generous_scorer import score_with_details
+from utils.llm_scorer import llm_question_scorer
+from utils.generous_scorer import generous_question_scorer
 from runners.agent_runner import AgentRunner
+
+_scorer = llm_question_scorer if config.SCORER == "llm" else generous_question_scorer
 from utils.validators import InputValidator, ValidationError
 from utils.langfuse_tracking import track_session
 from utils.log_streamer import ConsoleLogger, Logger
@@ -88,10 +91,7 @@ def _verify_answers(
             truth_data = ground_truth[task_id]
             correct_answer = truth_data["answer"]
 
-            # Use generous scorer with fallback matching strategies
-            result = score_with_details(str(answer), str(correct_answer))
-            is_correct = result["correct"]
-            match_type = result["match_type"]
+            is_correct, match_type = _scorer(str(answer), str(correct_answer))
 
             if is_correct:
                 correct_count += 1

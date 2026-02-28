@@ -52,10 +52,10 @@ ARXIV_MAX_DOCS = 3           # ArXiv docs per query (unchanged)
 ARXIV_TIMEOUT_SECONDS = 30  # Max wait for ArXiv loader before giving up
 
 # Environment Variables
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_API_TOKEN", "")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+GOOGLE_API_KEY = os.getenv("GOOGLE_DESKGENIE_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_DESKGENIE_KEY", "")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_DESKGENIE_TOKEN", "")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
 
 # Model Configuration
 GEMINI_MODEL_2_5 = "gemini-2.5-flash"
@@ -69,7 +69,7 @@ OLLAMA_QWEN_MODEL = "qwen2.5:3b"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
-DEFAULT_MODEL_PROVIDER = ModelProviders.ANTHROPIC
+DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
@@ -84,6 +84,9 @@ EMPTY_RESPONSE_RETRY_BACKOFF = 2.0  # multiplier for subsequent retries
 AGENT_MAX_STEPS = 25
 AGENT_RECURSION_LIMIT = 100
 INTER_QUESTION_PAUSE_SECONDS = 5  # Pause between questions in batch mode (0 to disable)
+
+# Scorer Configuration
+SCORER = "llm"  # Options: "llm" (Ollama LLM judge) | "generous" (rule-based matching)
 
 # =============================================================================
 # Langfuse Observability
