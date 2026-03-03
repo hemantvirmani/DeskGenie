@@ -62,7 +62,7 @@ class LangGraphMessages:
     """Messages for LangGraph agent operations."""
     
     # API configuration
-    GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_API_KEY environment variable not set"
+    GOOGLE_API_KEY_NOT_FOUND = "GOOGLE_DESKGENIE_KEY environment variable not set"
     
     # Retry logic
     RETRY_ATTEMPT = "Retry attempt {attempt}/{max_retries}..."

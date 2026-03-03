@@ -55,7 +55,7 @@ class ToolErrors:
     AUDIO_PARSE = "Error: Failed to parse the audio file. Reason: {error}"
 
     # Image/Video Analysis
-    API_KEY_NOT_SET = "Error: GOOGLE_API_KEY environment variable not set"
+    API_KEY_NOT_SET = "Error: GOOGLE_DESKGENIE_KEY environment variable not set"
     IMAGE_READ = "Error: Failed to read image file. {image_data}"
 
 
