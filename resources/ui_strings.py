@@ -75,10 +75,8 @@ class ToolStrings:
     ARXIV_RESULTS = "ArXiv Results: {count} characters"
 
     # YouTube
-    YOUTUBE_TRANSCRIPT_CALLED = "YouTube Transcript"
-    YOUTUBE_TRANSCRIPT_RESULT = "YouTube Transcript Results: {count} characters"
+    YOUTUBE_CALLED = "YouTube"
     YOUTUBE_TRANSCRIPT_ERROR = "Failed to Get Transcript: {url}"
-    ANALYZE_YOUTUBE_CALLED = "YouTube Video"
     ANALYZE_YOUTUBE_ERROR = "Error Analyzing YouTube Video: {url}"
 
     # Webpage
@@ -86,8 +84,8 @@ class ToolStrings:
     WEBPAGE_CONTENT_RESULT = "Webpage Content: {count} characters"
 
     # Files
-    READ_EXCEL_CALLED = "Excel File"
-    READ_PYTHON_CALLED = "Python Script"
+    CALCULATE_CALLED = "Calculate"
+    READ_FILE_CALLED = "Read File"
     PARSE_AUDIO_CALLED = "Audio File"
 
     # Image Analysis
@@ -144,9 +142,7 @@ class DesktopToolStrings:
     EXTRACT_TEXT_PDF = "Extracting Text from PDF"
 
     # Image Tools
-    IMAGE_CONVERT = "Converting Image"
-    IMAGE_RESIZE = "Resizing Image"
-    IMAGE_COMPRESS = "Compressing Image"
+    PROCESS_IMAGE = "Processing Image"
     BATCH_CONVERT = "Batch Converting Images"
     IMAGES_TO_PDF = "Converting Images to PDF"
 
@@ -165,15 +161,10 @@ class DesktopToolStrings:
     GET_MEDIA_INFO = "Media Info"
 
     # Directory / System Tools
-    USER_DIRECTORY = "User Directory"
-    SYSTEM_DIRECTORY = "System Directory"
-    LIST_USER_DIRECTORIES = "List User Directories"
-    LIST_SYSTEM_DIRECTORIES = "List System Directories"
+    GET_DIRECTORY = "Get Directory"
     RESOLVING_PATH = "Resolving Path"
-    FOLDER_ALIASES = "Folder Aliases"
     PREFERENCE = "Preference"
     LIST_DIRECTORY = "List Directory"
-    LIST_FILES_RECURSIVE = "List Files Recursively"
 
 
 class APIStrings:

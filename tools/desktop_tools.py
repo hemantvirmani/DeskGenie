@@ -273,170 +273,106 @@ def pdf_to_images(input_pdf: str, output_dir: str, image_format: str = "png", dp
 # ============================================================================
 
 @tool
-@track_tool_call("image_convert")
-@log_tool_call(DTS.IMAGE_CONVERT)
-def image_convert(input_image: str, output_image: str, quality: Optional[int] = None) -> str:
+@track_tool_call("process_image")
+@log_tool_call(DTS.PROCESS_IMAGE)
+def process_image(operation: str, input_image: str, output_image: str,
+                  width: Optional[int] = None, height: Optional[int] = None,
+                  quality: Optional[int] = None, target_size_kb: int = 500,
+                  maintain_aspect: bool = True) -> str:
     """
-    Convert image between formats (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF).
+    Convert, resize, or compress an image.
+
+    Operations:
+    - 'convert': Change image format (determined by output_image extension). Supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF.
+    - 'resize': Change image dimensions. Provide width and/or height in pixels.
+    - 'compress': Reduce image file size to target_size_kb (output should be .jpg for best results).
 
     Args:
-        input_image: Path to the source image file
-        output_image: Path for the output image (format determined by extension)
-        quality: Quality for lossy formats like JPG (1-100, default: from user config, or 85)
+        operation: 'convert', 'resize', or 'compress'
+        input_image: Path to the source image
+        output_image: Path for the output image
+        width: Target width in pixels for resize (optional)
+        height: Target height in pixels for resize (optional)
+        quality: Quality for lossy formats 1-100 (default: from user config, or 85)
+        target_size_kb: Target file size in KB for compress (default: 500)
+        maintain_aspect: Keep aspect ratio for resize (default: True)
 
     Returns:
         str: Success message or error description
     """
     try:
-        # Get quality from config if not provided
-        if quality is None:
-            from utils.user_config import get_preference
-            quality = get_preference("image_quality", 85)
-
         input_ext = Path(input_image).suffix.lower()
-        output_ext = Path(output_image).suffix.lower()
-
-        # Handle HEIC input
         if input_ext in ['.heic', '.heif']:
             pillow_heif.register_heif_opener()
 
-        img = Image.open(input_image)
+        if operation == "convert":
+            if quality is None:
+                from utils.user_config import get_preference
+                quality = get_preference("image_quality", 85)
+            output_ext = Path(output_image).suffix.lower()
+            img = Image.open(input_image)
+            if output_ext in ['.jpg', '.jpeg'] and img.mode in ['RGBA', 'P']:
+                img = img.convert('RGB')
+            save_kwargs = {}
+            if output_ext in ['.jpg', '.jpeg']:
+                save_kwargs['quality'] = quality
+                save_kwargs['optimize'] = True
+            elif output_ext == '.png':
+                save_kwargs['optimize'] = True
+            elif output_ext == '.webp':
+                save_kwargs['quality'] = quality
+            img.save(output_image, **save_kwargs)
+            input_size = os.path.getsize(input_image) / 1024
+            output_size = os.path.getsize(output_image) / 1024
+            return DTR.IMAGE_CONVERT_SUCCESS.format(input_image=input_image, input_size=input_size, output_image=output_image, output_size=output_size)
 
-        # Convert RGBA to RGB for formats that don't support alpha
-        if output_ext in ['.jpg', '.jpeg'] and img.mode in ['RGBA', 'P']:
-            img = img.convert('RGB')
+        elif operation == "resize":
+            img = Image.open(input_image)
+            original_size = img.size
+            if width is None and height is None:
+                return DTE.IMAGE_RESIZE_NO_DIMENSIONS
+            if maintain_aspect:
+                if width and height:
+                    img.thumbnail((width, height), Image.Resampling.LANCZOS)
+                elif width:
+                    ratio = width / img.width
+                    height = int(img.height * ratio)
+                    img = img.resize((width, height), Image.Resampling.LANCZOS)
+                else:
+                    ratio = height / img.height
+                    width = int(img.width * ratio)
+                    img = img.resize((width, height), Image.Resampling.LANCZOS)
+            else:
+                new_width = width or img.width
+                new_height = height or img.height
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            img.save(output_image)
+            return DTR.IMAGE_RESIZE_SUCCESS.format(input_image=input_image, original_size=original_size, new_size=img.size)
 
-        # Save with appropriate options
-        save_kwargs = {}
-        if output_ext in ['.jpg', '.jpeg']:
-            save_kwargs['quality'] = quality
-            save_kwargs['optimize'] = True
-        elif output_ext == '.png':
-            save_kwargs['optimize'] = True
-        elif output_ext == '.webp':
-            save_kwargs['quality'] = quality
+        elif operation == "compress":
+            img = Image.open(input_image)
+            original_size = os.path.getsize(input_image) / 1024
+            if img.mode in ['RGBA', 'P']:
+                img = img.convert('RGB')
+            from io import BytesIO as _BytesIO
+            min_quality, max_quality, best_quality = 10, 95, 95
+            while min_quality <= max_quality:
+                mid_quality = (min_quality + max_quality) // 2
+                buffer = _BytesIO()
+                img.save(buffer, format='JPEG', quality=mid_quality, optimize=True)
+                if buffer.tell() / 1024 <= target_size_kb:
+                    best_quality = mid_quality
+                    min_quality = mid_quality + 1
+                else:
+                    max_quality = mid_quality - 1
+            img.save(output_image, format='JPEG', quality=best_quality, optimize=True)
+            final_size = os.path.getsize(output_image) / 1024
+            return DTR.IMAGE_COMPRESS_SUCCESS.format(input_image=input_image, original_size=original_size, output_image=output_image, final_size=final_size, quality=best_quality)
 
-        img.save(output_image, **save_kwargs)
-
-        # Get file sizes for comparison
-        input_size = os.path.getsize(input_image) / 1024  # KB
-        output_size = os.path.getsize(output_image) / 1024  # KB
-
-        return DTR.IMAGE_CONVERT_SUCCESS.format(input_image=input_image, input_size=input_size, output_image=output_image, output_size=output_size)
+        return f"Unknown operation: {operation}. Valid: convert, resize, compress"
 
     except Exception as e:
         return DTE.IMAGE_CONVERT.format(error=e)
-
-
-@tool
-@track_tool_call("image_resize")
-@log_tool_call(DTS.IMAGE_RESIZE)
-def image_resize(input_image: str, output_image: str, width: Optional[int] = None,
-                 height: Optional[int] = None, maintain_aspect: bool = True) -> str:
-    """
-    Resize an image to specified dimensions.
-
-    Args:
-        input_image: Path to the source image
-        output_image: Path for the resized image
-        width: Target width in pixels (optional)
-        height: Target height in pixels (optional)
-        maintain_aspect: Keep aspect ratio if only one dimension specified (default: True)
-
-    Returns:
-        str: Success message with old and new dimensions
-    """
-    try:
-        input_ext = Path(input_image).suffix.lower()
-        if input_ext in ['.heic', '.heif']:
-            pillow_heif.register_heif_opener()
-
-        img = Image.open(input_image)
-        original_size = img.size
-
-        if width is None and height is None:
-            return DTE.IMAGE_RESIZE_NO_DIMENSIONS
-
-        if maintain_aspect:
-            if width and height:
-                # Fit within box while maintaining aspect ratio
-                img.thumbnail((width, height), Image.Resampling.LANCZOS)
-            elif width:
-                ratio = width / img.width
-                height = int(img.height * ratio)
-                img = img.resize((width, height), Image.Resampling.LANCZOS)
-            else:
-                ratio = height / img.height
-                width = int(img.width * ratio)
-                img = img.resize((width, height), Image.Resampling.LANCZOS)
-        else:
-            new_width = width or img.width
-            new_height = height or img.height
-            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-        img.save(output_image)
-
-        return DTR.IMAGE_RESIZE_SUCCESS.format(input_image=input_image, original_size=original_size, new_size=img.size)
-
-    except Exception as e:
-        return DTE.IMAGE_RESIZE.format(error=e)
-
-
-@tool
-@track_tool_call("image_compress")
-@log_tool_call(DTS.IMAGE_COMPRESS)
-def image_compress(input_image: str, output_image: str, target_size_kb: int = 500) -> str:
-    """
-    Compress an image to target file size while maintaining quality.
-
-    Args:
-        input_image: Path to the source image
-        output_image: Path for the compressed image (should be .jpg for best compression)
-        target_size_kb: Target file size in kilobytes (default: 500KB)
-
-    Returns:
-        str: Success message with compression results
-    """
-    try:
-        input_ext = Path(input_image).suffix.lower()
-        if input_ext in ['.heic', '.heif']:
-            pillow_heif.register_heif_opener()
-
-        img = Image.open(input_image)
-        original_size = os.path.getsize(input_image) / 1024
-
-        # Convert to RGB if needed
-        if img.mode in ['RGBA', 'P']:
-            img = img.convert('RGB')
-
-        # Binary search for optimal quality
-        min_quality = 10
-        max_quality = 95
-        best_quality = max_quality
-
-        while min_quality <= max_quality:
-            mid_quality = (min_quality + max_quality) // 2
-
-            # Save to temporary buffer
-            from io import BytesIO
-            buffer = BytesIO()
-            img.save(buffer, format='JPEG', quality=mid_quality, optimize=True)
-            size_kb = buffer.tell() / 1024
-
-            if size_kb <= target_size_kb:
-                best_quality = mid_quality
-                min_quality = mid_quality + 1
-            else:
-                max_quality = mid_quality - 1
-
-        # Save with best quality found
-        img.save(output_image, format='JPEG', quality=best_quality, optimize=True)
-        final_size = os.path.getsize(output_image) / 1024
-
-        return DTR.IMAGE_COMPRESS_SUCCESS.format(input_image=input_image, original_size=original_size, output_image=output_image, final_size=final_size, quality=best_quality)
-
-    except Exception as e:
-        return DTE.IMAGE_COMPRESS.format(error=e)
 
 
 @tool
@@ -989,18 +925,21 @@ def get_media_info(file_path: str) -> str:
 # ============================================================================
 
 @tool
-@track_tool_call("get_user_directory")
-@log_tool_call(DTS.USER_DIRECTORY)
-def get_user_directory(directory_name: str) -> str:
+@track_tool_call("get_directory")
+@log_tool_call(DTS.GET_DIRECTORY)
+def get_directory(name: str = "") -> str:
     """
-    Get the path to a standard user directory.
+    Get the path to a user or system directory, or list all available directories and aliases.
+
+    User directories: home, documents (docs), downloads, desktop, pictures (photos), videos (movies), music
+    System directories: appdata, localappdata, roaming, temp (tmp)
+    Leave name empty or pass 'all' to list every directory and configured alias.
 
     Args:
-        directory_name: Name of the directory - 'home', 'documents', 'downloads',
-                       'desktop', 'pictures', 'videos', 'music'
+        name: Directory name or alias (e.g., 'downloads', 'appdata'). Empty or 'all' to list everything.
 
     Returns:
-        str: Full path to the directory or error if not recognized
+        str: Full path to the directory, or a formatted list of all directories.
     """
     try:
         dir_map = {
@@ -1014,34 +953,6 @@ def get_user_directory(directory_name: str) -> str:
             "videos": get_videos_dir,
             "movies": get_videos_dir,
             "music": get_music_dir,
-        }
-
-        name = directory_name.lower().strip()
-        if name in dir_map:
-            path = dir_map[name]()
-            return str(path)
-
-        return f"Unknown directory name: {directory_name}. Valid options: home, documents, downloads, desktop, pictures, videos, music"
-
-    except Exception as e:
-        return f"Error getting directory: {e}"
-
-
-@tool
-@track_tool_call("get_system_directory")
-@log_tool_call(DTS.SYSTEM_DIRECTORY)
-def get_system_directory(directory_name: str) -> str:
-    """
-    Get the path to a system/application directory.
-
-    Args:
-        directory_name: Name of the directory - 'appdata', 'localappdata', 'roaming', 'temp'
-
-    Returns:
-        str: Full path to the directory or error if not recognized
-    """
-    try:
-        dir_map = {
             "appdata": get_local_appdata_dir,
             "localappdata": get_local_appdata_dir,
             "local appdata": get_local_appdata_dir,
@@ -1051,64 +962,44 @@ def get_system_directory(directory_name: str) -> str:
             "tmp": get_temp_dir,
         }
 
-        name = directory_name.lower().strip()
-        if name in dir_map:
-            path = dir_map[name]()
-            return str(path)
+        key = name.lower().strip()
 
-        return f"Unknown directory name: {directory_name}. Valid options: appdata, localappdata, roaming, temp"
+        if not key or key == "all":
+            result = "User Directories:\n"
+            for dir_name, path in get_all_user_dirs().items():
+                exists = "exists" if path.exists() else "does not exist"
+                result += f"  {dir_name.capitalize()}: {path} ({exists})\n"
+            result += "\nSystem Directories:\n"
+            for dir_name, path in get_all_system_dirs().items():
+                if path is None:
+                    result += f"  {dir_name}: Not available on this platform\n"
+                else:
+                    exists = "exists" if path.exists() else "does not exist"
+                    result += f"  {dir_name}: {path} ({exists})\n"
+            try:
+                from utils.user_config import list_folder_aliases as _list_aliases
+                aliases = _list_aliases()
+                if aliases:
+                    result += "\nConfigured Aliases:\n"
+                    for alias, path in sorted(aliases.items()):
+                        exists = "exists" if os.path.exists(path) else "path not found"
+                        result += f"  {alias}: {path} ({exists})\n"
+            except Exception:
+                pass
+            return result
+
+        if key in dir_map:
+            return str(dir_map[key]())
+
+        # Try user-defined alias
+        resolved = resolve_path_alias(name)
+        if resolved:
+            return str(resolved)
+
+        return f"Unknown directory: {name}. Valid: home, documents, downloads, desktop, pictures, videos, music, appdata, localappdata, roaming, temp"
 
     except Exception as e:
         return f"Error getting directory: {e}"
-
-
-@tool
-@track_tool_call("list_user_directories")
-@log_tool_call(DTS.LIST_USER_DIRECTORIES)
-def list_user_directories() -> str:
-    """
-    List all standard user directories with their full paths.
-
-    Returns:
-        str: Formatted list of user directories and their paths
-    """
-    try:
-        dirs = get_all_user_dirs()
-        result = "User Directories:\n"
-        for name, path in dirs.items():
-            exists = "exists" if path.exists() else "does not exist"
-            result += f"  {name.capitalize()}: {path} ({exists})\n"
-
-        return result
-
-    except Exception as e:
-        return f"Error listing directories: {e}"
-
-
-@tool
-@track_tool_call("list_system_directories")
-@log_tool_call(DTS.LIST_SYSTEM_DIRECTORIES)
-def list_system_directories() -> str:
-    """
-    List all system/application directories with their full paths.
-
-    Returns:
-        str: Formatted list of system directories and their paths
-    """
-    try:
-        dirs = get_all_system_dirs()
-        result = "System Directories:\n"
-        for name, path in dirs.items():
-            if path is None:
-                result += f"  {name}: Not available on this platform\n"
-            else:
-                exists = "exists" if path.exists() else "does not exist"
-                result += f"  {name}: {path} ({exists})\n"
-
-        return result
-
-    except Exception as e:
-        return f"Error listing directories: {e}"
 
 
 @tool
@@ -1164,33 +1055,6 @@ def resolve_path(path_or_alias: str) -> str:
         return f"Error resolving path: {e}"
 
 
-@tool
-@track_tool_call("list_folder_aliases")
-@log_tool_call(DTS.FOLDER_ALIASES)
-def list_folder_aliases() -> str:
-    """
-    List all configured folder aliases.
-
-    Returns:
-        str: Formatted list of aliases and their paths
-    """
-    try:
-        from utils.user_config import list_folder_aliases as _list_aliases
-
-        aliases = _list_aliases()
-
-        if not aliases:
-            return "No folder aliases configured. Use set_folder_alias to add one."
-
-        result = "Configured Folder Aliases:\n"
-        for alias, path in sorted(aliases.items()):
-            exists = "exists" if os.path.exists(path) else "path not found"
-            result += f"  {alias}: {path} ({exists})\n"
-
-        return result
-
-    except Exception as e:
-        return f"Error listing folder aliases: {e}"
 
 
 @tool
@@ -1231,22 +1095,24 @@ def get_user_preference(key: str) -> str:
 
 
 @tool
-@track_tool_call("list_directory_contents")
+@track_tool_call("list_directory")
 @log_tool_call(DTS.LIST_DIRECTORY)
-def list_directory_contents(directory: str, show_hidden: bool = False, max_items: int = 50) -> str:
+def list_directory(directory: str, recursive: bool = False, pattern: str = "*",
+                   show_hidden: bool = False, max_items: int = 50) -> str:
     """
-    List contents of a directory with details.
+    List the contents of a directory.
 
     Args:
-        directory: Path to directory OR alias (e.g., 'downloads', 'desktop')
+        directory: Path to directory or alias (e.g., 'downloads', 'desktop', 'prax')
+        recursive: If True, list all files in subdirectories too (default: False)
+        pattern: Glob pattern to filter files when recursive=True (default: '*' for all)
         show_hidden: Include hidden files (default: False)
-        max_items: Maximum number of items to show (default: 50)
+        max_items: Maximum items to show (default: 50)
 
     Returns:
         str: Formatted directory listing
     """
     try:
-        # Resolve alias if needed
         resolved = resolve_path_alias(directory)
         dir_path = Path(resolved) if resolved else Path(directory)
 
@@ -1256,135 +1122,75 @@ def list_directory_contents(directory: str, show_hidden: bool = False, max_items
         if not dir_path.is_dir():
             return f"Not a directory: {dir_path}"
 
-        items = []
-        for item in dir_path.iterdir():
-            if not show_hidden and item.name.startswith('.'):
-                continue
+        if recursive:
+            files = []
+            for file_path in dir_path.rglob(pattern):
+                if file_path.is_dir():
+                    continue
+                if not show_hidden and any(part.startswith('.') for part in file_path.relative_to(dir_path).parts):
+                    continue
+                try:
+                    size_bytes = file_path.stat().st_size
+                    if size_bytes < 1024:
+                        size = f"{size_bytes}B"
+                    elif size_bytes < 1024 * 1024:
+                        size = f"{size_bytes/1024:.1f}KB"
+                    else:
+                        size = f"{size_bytes/(1024*1024):.1f}MB"
+                    files.append((str(file_path.relative_to(dir_path)), size, size_bytes))
+                except OSError:
+                    continue
 
-            if item.is_dir():
-                item_type = "[DIR]"
-                size = ""
+            if not files:
+                return f"No files found in {dir_path} matching pattern '{pattern}'"
+
+            files.sort(key=lambda x: x[0].lower())
+            total_size = sum(f[2] for f in files)
+            if total_size < 1024 * 1024:
+                total_str = f"{total_size/1024:.1f}KB"
+            elif total_size < 1024 * 1024 * 1024:
+                total_str = f"{total_size/(1024*1024):.1f}MB"
             else:
-                item_type = "[FILE]"
-                size_bytes = item.stat().st_size
-                if size_bytes < 1024:
-                    size = f"{size_bytes}B"
-                elif size_bytes < 1024 * 1024:
-                    size = f"{size_bytes/1024:.1f}KB"
+                total_str = f"{total_size/(1024*1024*1024):.2f}GB"
+
+            result = f"Files in {dir_path} (pattern: {pattern}):\nTotal: {len(files)} files, {total_str}\n\n"
+            for rel_path, size, _ in files[:max_items]:
+                result += f"  {rel_path} ({size})\n"
+            if len(files) > max_items:
+                result += f"\n... and {len(files) - max_items} more files"
+            return result
+
+        else:
+            items = []
+            for item in dir_path.iterdir():
+                if not show_hidden and item.name.startswith('.'):
+                    continue
+                if item.is_dir():
+                    items.append(("[DIR]", item.name, ""))
                 else:
-                    size = f"{size_bytes/(1024*1024):.1f}MB"
+                    size_bytes = item.stat().st_size
+                    if size_bytes < 1024:
+                        size = f"{size_bytes}B"
+                    elif size_bytes < 1024 * 1024:
+                        size = f"{size_bytes/1024:.1f}KB"
+                    else:
+                        size = f"{size_bytes/(1024*1024):.1f}MB"
+                    items.append(("[FILE]", item.name, size))
 
-            items.append((item_type, item.name, size))
+            items.sort(key=lambda x: (0 if x[0] == "[DIR]" else 1, x[1].lower()))
 
-        # Sort: directories first, then files
-        items.sort(key=lambda x: (0 if x[0] == "[DIR]" else 1, x[1].lower()))
+            if not items:
+                return f"Directory is empty: {dir_path}"
 
-        if not items:
-            return f"Directory is empty: {dir_path}"
-
-        result = f"Contents of {dir_path}:\n\n"
-        for item_type, name, size in items[:max_items]:
-            if size:
-                result += f"  {item_type} {name} ({size})\n"
-            else:
-                result += f"  {item_type} {name}\n"
-
-        if len(items) > max_items:
-            result += f"\n... and {len(items) - max_items} more items"
-
-        return result
+            result = f"Contents of {dir_path}:\n\n"
+            for item_type, name, size in items[:max_items]:
+                result += f"  {item_type} {name} ({size})\n" if size else f"  {item_type} {name}\n"
+            if len(items) > max_items:
+                result += f"\n... and {len(items) - max_items} more items"
+            return result
 
     except Exception as e:
         return f"Error listing directory: {e}"
-
-
-@tool
-@track_tool_call("list_files_recursive")
-@log_tool_call(DTS.LIST_FILES_RECURSIVE)
-def list_files_recursive(
-    directory: str,
-    pattern: str = "*",
-    show_hidden: bool = False,
-    max_files: int = 200
-) -> str:
-    """
-    Recursively list all files in a directory and its subdirectories.
-
-    Args:
-        directory: Path to directory OR alias (e.g., 'downloads', 'prax')
-        pattern: Glob pattern to filter files (default: '*' for all files).
-                 Examples: '*.pdf', '*.jpg', 'report*', '*.py'
-        show_hidden: Include hidden files and directories (default: False)
-        max_files: Maximum number of files to return (default: 200)
-
-    Returns:
-        str: Formatted list of files with relative paths and sizes
-    """
-    try:
-        # Resolve alias if needed
-        resolved = resolve_path_alias(directory)
-        dir_path = Path(resolved) if resolved else Path(directory)
-
-        if not dir_path.exists():
-            return f"Directory does not exist: {dir_path}"
-
-        if not dir_path.is_dir():
-            return f"Not a directory: {dir_path}"
-
-        files = []
-        for file_path in dir_path.rglob(pattern):
-            # Skip directories
-            if file_path.is_dir():
-                continue
-
-            # Skip hidden files/directories if not requested
-            if not show_hidden:
-                # Check if any part of the path is hidden
-                if any(part.startswith('.') for part in file_path.relative_to(dir_path).parts):
-                    continue
-
-            try:
-                size_bytes = file_path.stat().st_size
-                if size_bytes < 1024:
-                    size = f"{size_bytes}B"
-                elif size_bytes < 1024 * 1024:
-                    size = f"{size_bytes/1024:.1f}KB"
-                else:
-                    size = f"{size_bytes/(1024*1024):.1f}MB"
-
-                rel_path = file_path.relative_to(dir_path)
-                files.append((str(rel_path), size, size_bytes))
-            except OSError:
-                continue
-
-        if not files:
-            return f"No files found in {dir_path} matching pattern '{pattern}'"
-
-        # Sort by path
-        files.sort(key=lambda x: x[0].lower())
-
-        # Build result
-        total_size = sum(f[2] for f in files)
-        if total_size < 1024 * 1024:
-            total_str = f"{total_size/1024:.1f}KB"
-        elif total_size < 1024 * 1024 * 1024:
-            total_str = f"{total_size/(1024*1024):.1f}MB"
-        else:
-            total_str = f"{total_size/(1024*1024*1024):.2f}GB"
-
-        result = f"Files in {dir_path} (pattern: {pattern}):\n"
-        result += f"Total: {len(files)} files, {total_str}\n\n"
-
-        for rel_path, size, _ in files[:max_files]:
-            result += f"  {rel_path} ({size})\n"
-
-        if len(files) > max_files:
-            result += f"\n... and {len(files) - max_files} more files"
-
-        return result
-
-    except Exception as e:
-        return f"Error listing files: {e}"
 
 
 # ============================================================================
@@ -1452,9 +1258,7 @@ def get_desktop_tools_list() -> list:
         pdf_to_images,
 
         # Image Tools
-        image_convert,
-        image_resize,
-        image_compress,
+        process_image,
         images_to_pdf,
         batch_convert_images,
 
@@ -1474,16 +1278,11 @@ def get_desktop_tools_list() -> list:
         get_media_info,
 
         # System Directory Tools
-        get_user_directory,
-        get_system_directory,
-        list_user_directories,
-        list_system_directories,
+        get_directory,
         resolve_path,
-        list_directory_contents,
-        list_files_recursive,
+        list_directory,
 
         # User Config Tools (read-only)
-        list_folder_aliases,
         get_user_preference,
     ]
     return tools

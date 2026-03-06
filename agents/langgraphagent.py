@@ -65,7 +65,7 @@ class LangGraphAgent:
         self.logger = logger or ConsoleLogger()
 
         # Validate API keys
-        if not os.getenv("GOOGLE_DESKGENIE_KEY"):
+        if not config.GOOGLE_API_KEY:
             self.logger.warning(S.GOOGLE_API_KEY_NOT_FOUND)
 
         self.tools = self._get_all_tools()

@@ -110,78 +110,31 @@ def _get_mime_type(file_name: str) -> str:
 # ============================================================================
 
 @tool
-@track_tool_call("add")
-@log_tool_call(L.ADD_CALLED)
-def add(a: float, b: float) -> str:
-    """Add two numbers.
+@track_tool_call("calculate")
+@log_tool_call(L.CALCULATE_CALLED)
+def calculate(operation: str, a: float, b: float) -> str:
+    """Perform a basic math operation on two numbers.
 
     Args:
-        a: first int
-        b: second int
+        operation: The operation to perform — 'add', 'subtract', 'multiply', 'divide', 'power', 'modulus'
+        a: first number
+        b: second number
     """
-    return str(a + b)
-
-@tool
-@track_tool_call("subtract")
-@log_tool_call(L.SUBTRACT_CALLED)
-def subtract(a: float, b: float) -> str:
-    """Subtract b from a.
-
-    Args:
-        a: first int
-        b: second int
-    """
-    return str(a - b)
-
-@tool
-@track_tool_call("multiply")
-@log_tool_call(L.MULTIPLY_CALLED)
-def multiply(a: float, b: float) -> str:
-    """Multiply two numbers.
-
-    Args:
-        a: first int
-        b: second int
-    """
-    return str(a * b)
-
-@tool
-@track_tool_call("divide")
-@log_tool_call(L.DIVIDE_CALLED)
-def divide(a: float, b: float) -> str:
-    """Divide a by b.
-
-    Args:
-        a: first int
-        b: second int
-    """
-    if b == 0:
-        return TE.DIVIDE_BY_ZERO
-    return str(a / b)
-
-@tool
-@track_tool_call("power")
-@log_tool_call(L.POWER_CALLED)
-def power(a: float, b: float) -> str:
-    """Raise a to the power of b.
-
-        Args:
-        a: first int
-        b: second int
-    """
-    return str(a ** b)
-
-@tool
-@track_tool_call("modulus")
-@log_tool_call(L.MODULUS_CALLED)
-def modulus(a: int, b: int) -> int:
-    """Get the modulus of two numbers.
-
-    Args:
-        a: first int
-        b: second int
-    """
-    return a % b
+    if operation == "add":
+        return str(a + b)
+    elif operation == "subtract":
+        return str(a - b)
+    elif operation == "multiply":
+        return str(a * b)
+    elif operation == "divide":
+        if b == 0:
+            return TE.DIVIDE_BY_ZERO
+        return str(a / b)
+    elif operation == "power":
+        return str(a ** b)
+    elif operation == "modulus":
+        return str(int(a) % int(b))
+    return f"Unknown operation: {operation}. Valid: add, subtract, multiply, divide, power, modulus"
 
 @tool
 @track_tool_call("string_reverse")
@@ -282,28 +235,48 @@ def arvix_search(query: str) -> str:
         return TE.ARXIV_SEARCH.format(error=e)
 
 @tool
-@track_tool_call("get_youtube_transcript")
-@log_tool_call(S.YOUTUBE_TRANSCRIPT_CALLED)
-def get_youtube_transcript(page_url: str) -> str:
-    """Get the transcript of a YouTube video
+@track_tool_call("youtube_tool")
+@log_tool_call(S.YOUTUBE_CALLED)
+def youtube_tool(youtube_url: str, question: str = "") -> str:
+    """Get information from a YouTube video.
+
+    Leave question empty to get the spoken transcript.
+    Provide a question to analyze the video visually using AI (use for visual content not in the transcript).
 
     Args:
-        page_url (str): YouTube URL of the video
+        youtube_url (str): The full HTTPS URL of the YouTube video.
+        question (str): Optional question about the video content. Leave empty to get the transcript.
     """
-    try:
-        # get video ID from URL
-        video_id = extract.video_id(page_url)
-
-        # get transcript
-        ytt_api = YouTubeTranscriptApi()
-        transcript = ytt_api.fetch(video_id)
-
-        # keep only text
-        txt = '\n'.join([s.text for s in transcript.snippets])
-        return txt
-    except Exception as e:
-        msg = S.YOUTUBE_TRANSCRIPT_ERROR.format(url=page_url, error=e)
-        return msg
+    if not question:
+        try:
+            video_id = extract.video_id(youtube_url)
+            ytt_api = YouTubeTranscriptApi()
+            transcript = ytt_api.fetch(video_id)
+            return '\n'.join([s.text for s in transcript.snippets])
+        except Exception as e:
+            return S.YOUTUBE_TRANSCRIPT_ERROR.format(url=youtube_url, error=e)
+    else:
+        try:
+            api_key = config.GOOGLE_API_KEY
+            if not api_key:
+                return TE.API_KEY_NOT_SET
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model=config.GEMINI_MODEL_2_5,
+                contents=[types.Content(
+                    parts=[
+                        types.Part(file_data=types.FileData(file_uri=youtube_url)),
+                        types.Part(text=question)
+                    ]
+                )],
+                config=types.GenerateContentConfig(
+                    temperature=config.GEMINI_TEMPERATURE,
+                    max_output_tokens=config.GEMINI_MAX_TOKENS,
+                )
+            )
+            return response.text
+        except Exception as e:
+            return S.ANALYZE_YOUTUBE_ERROR.format(url=youtube_url, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
 
 @tool
 @track_tool_call("get_webpage_content")
@@ -341,59 +314,42 @@ def get_webpage_content(page_url: str) -> str:
         return TE.WEBPAGE_FETCH.format(error=e)
 
 @tool
-@track_tool_call("read_excel_file")
-@log_tool_call(S.READ_EXCEL_CALLED)
-def read_excel_file(file_name: str) -> str:
+@track_tool_call("read_file")
+@log_tool_call(S.READ_FILE_CALLED)
+def read_file(file_name: str) -> str:
     """
-    Reads an Excel file (.xlsx) and returns its content as a Markdown table.
-    Use this tool to inspect data stored in Excel spreadsheets.
+    Read a file from the files directory and return its content.
+    Supports Excel spreadsheets (.xlsx) returned as a Markdown table,
+    and Python scripts (.py) returned as raw source code.
 
     Args:
-        file_name (str): The name of the file (e.g., 'data.xlsx'). Do not include the 'files/' prefix.
+        file_name (str): The name of the file (e.g., 'data.xlsx', 'script.py'). Do not include the 'files/' prefix.
 
     Returns:
-        str: The file content formatted as a Markdown table.
+        str: The file content as text.
     """
+    ext = os.path.splitext(file_name)[1].lower()
 
-    try:
-        # Get file content using helper function
-        success, data = _get_file_content(file_name, mode='binary')
-        if not success:
-            return TE.EXCEL_READ.format(data=data)
+    if ext == '.xlsx':
+        try:
+            success, data = _get_file_content(file_name, mode='binary')
+            if not success:
+                return TE.EXCEL_READ.format(data=data)
+            df = pd.read_excel(BytesIO(data))
+            return df.to_markdown(index=False)
+        except Exception as e:
+            return TE.EXCEL_READ_REASON.format(error=e)
 
-        # Read Excel from bytes
-        df = pd.read_excel(BytesIO(data))
-        return df.to_markdown(index=False)
+    elif ext == '.py':
+        try:
+            success, data = _get_file_content(file_name, mode='text')
+            if not success:
+                return TE.PYTHON_READ.format(data=data)
+            return data
+        except Exception as e:
+            return TE.PYTHON_READ_REASON.format(error=e)
 
-    except Exception as e:
-        return TE.EXCEL_READ_REASON.format(error=e)
-
-@tool
-@track_tool_call("read_python_script")
-@log_tool_call(S.READ_PYTHON_CALLED)
-def read_python_script(file_name: str) -> str:
-    """
-    Reads the source code of a Python script.
-    Use this tool to examine the code logic of a .py file.
-    Note: This does NOT execute the script, it only reads the text.
-
-    Args:
-        file_name (str): The name of the file (e.g., 'script.py'). Do not include the 'files/' prefix.
-
-    Returns:
-        str: The raw source code of the script.
-    """
-
-    try:
-        # Get file content using helper function
-        success, data = _get_file_content(file_name, mode='text')
-        if not success:
-            return TE.PYTHON_READ.format(data=data)
-
-        return data
-
-    except Exception as e:
-        return TE.PYTHON_READ_REASON.format(error=e)
+    return f"Unsupported file type: {ext}. Supported: .xlsx (Excel), .py (Python script)"
 
 @tool
 @track_tool_call("parse_audio_file")
@@ -438,46 +394,6 @@ def parse_audio_file(file_name: str) -> str:
         return TE.AUDIO_PARSE.format(error=e)
 
 @tool
-@track_tool_call("analyze_youtube_video")
-@log_tool_call(S.ANALYZE_YOUTUBE_CALLED, detail_param=1)
-def analyze_youtube_video(question: str, youtube_url: str) -> str:
-    """
-    Uses a multimodal AI model to analyze a YouTube video and answer a specific question.
-    Use this tool when you need visual or audio understanding of a YouTube video (e.g., "What is shown in the video?").
-
-    Args:
-        question (str): The question you want answered about the video content.
-        youtube_url (str): The full HTTPS URL of the YouTube video.
-    """
-
-    try:
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            return TE.API_KEY_NOT_SET
-
-        client = genai.Client(api_key=api_key)
-
-        # Add timeout and request options
-        response = client.models.generate_content(
-            model=config.GEMINI_MODEL_2_5,
-            contents=[types.Content(
-                    parts=[
-                        types.Part(file_data=types.FileData(file_uri=youtube_url)),
-                        types.Part(text=question)
-                    ]
-                )
-            ],
-            config=types.GenerateContentConfig(
-                temperature=config.GEMINI_TEMPERATURE,
-                max_output_tokens=config.GEMINI_MAX_TOKENS,
-            )
-        )
-        return response.text
-    except Exception as e:
-        error_msg = S.ANALYZE_YOUTUBE_ERROR.format(url=youtube_url, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
-        return error_msg
-
-@tool
 @track_tool_call("analyze_image")
 @log_tool_call(S.ANALYZE_IMAGE_CALLED, detail_param=1)
 def analyze_image(question: str, file_name: str) -> str:
@@ -494,7 +410,7 @@ def analyze_image(question: str, file_name: str) -> str:
     """
 
     try:
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = config.GOOGLE_API_KEY
         if not api_key:
             return TE.API_KEY_NOT_SET
 
@@ -540,23 +456,16 @@ def get_custom_tools_list() -> list:
         list: List of tool functions
     """
     tools = [
-        add,
-        subtract,
-        multiply,
-        divide,
-        power,
-        modulus,
+        calculate,
         string_reverse,
         get_current_time_in_timezone,
         websearch,
         wiki_search,
         arvix_search,
-        get_youtube_transcript,
+        youtube_tool,
         get_webpage_content,
-        read_python_script,
-        read_excel_file,
+        read_file,
         parse_audio_file,
-        analyze_youtube_video,
         analyze_image
     ]
     return tools

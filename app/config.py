@@ -65,7 +65,7 @@ GEMINI_MAX_TOKENS = 1024
 
 GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"
 
-OLLAMA_QWEN_MODEL = "qwen2.5:3b"
+OLLAMA_QWEN_MODEL = "qwen3.5:2b"
 HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
@@ -126,4 +126,7 @@ MCP_SERVERS: dict = {
 
 # Project name for Langfuse tagging (helps distinguish from other projects)
 LANGFUSE_PROJECT_NAME = "Desktop-Agent"
+LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
+LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
+LANGFUSE_HOST = os.getenv("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
 

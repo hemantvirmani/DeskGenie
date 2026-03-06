@@ -225,12 +225,7 @@ class ToolLogging:
     """Logging strings for tool operations."""
 
     # Basic utilities
-    ADD_CALLED = "Add"
-    SUBTRACT_CALLED = "Subtract"
-    MULTIPLY_CALLED = "Multiply"
-    DIVIDE_CALLED = "Divide"
-    POWER_CALLED = "Power"
-    MODULUS_CALLED = "Modulus"
+    CALCULATE_CALLED = "Calculate"
     STRING_REVERSE_CALLED = "String Reverse"
     CURRENT_TIME_CALLED = "Current Time"
 
@@ -247,19 +242,14 @@ class ToolLogging:
     ARXIV_RESULTS = "arvix_results: {count} characters"
 
     # YouTube
-    YOUTUBE_TRANSCRIPT_CALLED = "get_youtube_transcript called: {url}"
-    YOUTUBE_TRANSCRIPT_RESULT = "youtube_transcript: {count} characters"
-    YOUTUBE_TRANSCRIPT_ERROR = "Failed to get transcript for video {url}: {error}"
-    ANALYZE_YOUTUBE_CALLED = "analyze_youtube_video called: {url} with question: {question}"
-    ANALYZE_YOUTUBE_ERROR = "Error analyzing YouTube video {url}: {error}"
+    YOUTUBE_CALLED = "youtube_tool called: {url}"
 
     # Webpage
     WEBPAGE_CONTENT_CALLED = "get_webpage_content called: with url {url}"
     WEBPAGE_CONTENT_RESULT = "webpage_content: {count} characters"
 
     # Files
-    READ_EXCEL_CALLED = "read_excel_file called: with file {file_name}"
-    READ_PYTHON_CALLED = "read_python_script called: with file {file_name}"
+    READ_FILE_CALLED = "read_file called: with file {file_name}"
     PARSE_AUDIO_CALLED = "parse_audio_file called: with file {file_name}"
 
     # Image Analysis
@@ -310,9 +300,7 @@ class DesktopToolLogging:
     EXTRACT_TEXT_PDF = "extract_text_from_pdf: {input_pdf}"
 
     # Image Tools
-    IMAGE_CONVERT = "image_convert: {input_image} -> {output_image}"
-    IMAGE_RESIZE = "image_resize: {input_image} -> {output_image}"
-    IMAGE_COMPRESS = "image_compress: {input_image} -> {output_image}, target: {target_size_kb}KB"
+    PROCESS_IMAGE = "process_image: {operation} {input_image} -> {output_image}"
     BATCH_CONVERT = "batch_convert_images: {input_dir} -> {output_dir}"
 
     # File Management Tools

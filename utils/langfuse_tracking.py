@@ -43,9 +43,9 @@ class LangfuseTracker:
     def __init__(self):
         """Initialize Langfuse client if not already initialized."""
         if self._client is None and LANGFUSE_AVAILABLE:
-            public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
-            secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-            host = os.getenv("LANGFUSE_HOST", "https://us.cloud.langfuse.com")
+            public_key = config.LANGFUSE_PUBLIC_KEY
+            secret_key = config.LANGFUSE_SECRET_KEY
+            host = config.LANGFUSE_HOST
             self._project_name = config.LANGFUSE_PROJECT_NAME
 
             if public_key and secret_key:
