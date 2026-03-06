@@ -50,6 +50,11 @@ class AgentStrings:
     AGENT_INVOCATION_FAILED_RETRIES = "Agent Failed After Retries: {error}"
     AGENT_INVOCATION_FAILED = "Agent Failed: {error}"
 
+    # MCP Tools
+    MCP_TOOLS_LOADED = "Loaded {count} MCP tool(s) from {servers} MCP server(s)"
+    MCP_TOOLS_NONE_CONFIGURED = "No MCP servers configured — skipping MCP tool discovery"
+    MCP_TOOLS_FAILED = "MCP tool loading failed: {error}"
+
     # Results
     FINAL_ANSWER = "Final Answer: {answer}"
 

@@ -89,6 +89,38 @@ INTER_QUESTION_PAUSE_SECONDS = 5  # Pause between questions in batch mode (0 to 
 SCORER = "llm"  # Options: "llm" (Ollama LLM judge) | "generous" (rule-based matching)
 
 # =============================================================================
+# MCP Server Configuration
+# =============================================================================
+# Each entry: server_name → transport config
+# transport: "stdio" (local process) or "sse" (HTTP/SSE remote)
+# To disable all MCP servers, set MCP_SERVERS = {}
+MCP_SERVERS: dict = {
+    # Required env vars: HOMEASSISTANT_URL, HOMEASSISTANT_TOKEN
+    "home_assistant": {
+        "transport": "stdio",
+        "command": "uvx",
+        "args": ["ha-mcp@latest"],
+        # Optional whitelist: only expose these tools to the LLM.
+        # Remove the "tools" key entirely to expose all tools from this server.
+        # Keeping a focused subset prevents overwhelming Gemini with 90+ HA tools.
+        "tools": [
+            "ha_get_state",
+            "ha_get_states",
+            "ha_call_service",
+            "ha_search_entities",
+            "ha_get_overview",
+            "ha_config_list_areas",
+            "ha_get_history",
+            "ha_bulk_control",
+            "ha_get_entity",
+            "ha_list_services",
+            "ha_get_logbook",
+            "ha_restart",
+        ],
+    }
+}
+
+# =============================================================================
 # Langfuse Observability
 # =============================================================================
 

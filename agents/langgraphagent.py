@@ -28,6 +28,7 @@ from utils.utils import cleanup_answer, extract_text_from_content, get_default_m
 from app import config
 
 from tools.desktop_tools import get_desktop_tools_list
+from tools.mcp_tools import get_mcp_tools_list
 from utils.langfuse_tracking import track_agent_execution, track_llm_call
 from utils.log_streamer import ConsoleLogger, Logger
 from resources.ui_strings import AgentStrings as S
@@ -40,6 +41,9 @@ try:
     warnings.filterwarnings('ignore', category=GuessedAtParserWarning)
 except ImportError:
     pass
+
+# Suppress Gemini schema warnings for unsupported JSON Schema keys (e.g. additionalProperties)
+logging.getLogger("langchain_google_genai._function_utils").setLevel(logging.ERROR)
 
 
 class AgentState(TypedDict):
@@ -75,6 +79,10 @@ class LangGraphAgent:
         # Add desktop tools
         desktop_tools = get_desktop_tools_list()
         tools.extend(desktop_tools)
+
+        # Add MCP tools (auto-discovered from configured MCP servers)
+        mcp_tools = get_mcp_tools_list()
+        tools.extend(mcp_tools)
 
         return tools
 
@@ -274,7 +282,7 @@ class LangGraphAgent:
         # Build graph
         graph.add_node("init", self._init_questions)
         graph.add_node("assistant", self._assistant)
-        graph.add_node("tools", ToolNode(self.tools))
+        graph.add_node("tools", ToolNode(self.tools, handle_tool_errors=True))
         graph.add_edge(START, "init")
         graph.add_edge("init", "assistant")
         graph.add_conditional_edges(
