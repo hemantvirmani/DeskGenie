@@ -17,7 +17,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from pytube import extract
 from langchain_core.tools import tool
 from utils.langfuse_tracking import track_tool_call
-from utils.log_streamer import log_tool_call
+from utils.log_streamer import log_tool_call, get_global_logger
 from resources.ui_strings import ToolStrings as S
 from resources.log_strings import ToolLogging as L
 from resources.state_strings import ToolReturns as TR
@@ -508,6 +508,13 @@ def http_request(method: str, url: str, headers_json: str = "{}", body_json: str
         body = json.loads(body_json)
     except Exception as e:
         return TE.HTTP_REQUEST_BAD_JSON.format(param="body_json", error=e)
+
+    # Log notable body fields that are truncated by the decorator (e.g. agent name)
+    _logger = get_global_logger()
+    if isinstance(body, dict):
+        for field in ("name", "agentId", "submissionId"):
+            if field in body:
+                _logger.info(f"  {field}: {body[field]}")
 
     try:
         if method == "GET":

@@ -98,4 +98,6 @@ See `.env.example` for the full list. User-specific folder aliases and preferenc
 
 ## LLM Configuration
 
-Primary model: `gemini-3.1-pro-preview` (set in `app/config.py` as `ACTIVE_AGENT_LLM_MODEL`). Temperature `0`. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
+Primary model: `gemini-2.5-flash` (set in `app/config.py` as `GEMINI_MODEL_2_5`, resolved via `get_default_model_name()` in `utils/utils.py`). Temperature `0.1` for agent LLM, `0` for vision/analysis tools. LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
+
+Note: `GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"` is defined in `config.py` but not currently wired into the agent.

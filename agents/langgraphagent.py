@@ -23,7 +23,7 @@ from langchain_ollama import ChatOllama
 from langchain_anthropic import ChatAnthropic
 
 from tools.custom_tools import get_custom_tools_list
-from resources.system_prompt import SYSTEM_PROMPT
+from resources.system_prompt import get_system_prompt
 from utils.utils import cleanup_answer, extract_text_from_content, get_default_model_name
 from app import config
 
@@ -141,7 +141,7 @@ class LangGraphAgent:
 
         return {
             SK.MESSAGES: [
-                    SystemMessage(content=SYSTEM_PROMPT),
+                    SystemMessage(content=get_system_prompt()),
                     HumanMessage(content=question_content)
                     ],
             SK.STEP_COUNT: 0  # Initialize step counter
