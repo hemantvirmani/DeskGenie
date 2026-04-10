@@ -256,6 +256,15 @@ class ToolLogging:
     ANALYZE_IMAGE_CALLED = "analyze_image called: {file_name} with question: {question}"
     ANALYZE_IMAGE_ERROR = "Error analyzing image {file_name}: {error}"
 
+    # HTTP Request
+    HTTP_REQUEST_CALLED = "http_request called: {method} {url}"
+
+    # Home File
+    HOME_FILE_CALLED = "home_file called: {action} {filename}"
+
+    # Python execution
+    EXECUTE_PYTHON_CALLED = "execute_python called ({length} chars)"
+
 
 class QuestionRunnerLogging:
     """Logging strings for question runner operations."""

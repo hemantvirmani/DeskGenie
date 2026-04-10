@@ -48,6 +48,19 @@ class ToolErrors:
     PYTHON_READ = "Error: Failed to read Python script. {data}"
     PYTHON_READ_REASON = "Error: Failed to read the Python script. Reason: {error}"
 
+    # Python execution
+    EXECUTE_PYTHON_TIMEOUT = "execute_python: code timed out after {timeout}s"
+    EXECUTE_PYTHON_FAILED = "execute_python error: {error}"
+
+    # HTTP Request
+    HTTP_REQUEST_FAILED = "http_request failed ({method} {url}): {error}"
+    HTTP_REQUEST_BAD_JSON = "http_request: invalid JSON for {param}: {error}"
+
+    # Home File
+    HOME_FILE_TRAVERSAL = "Error: path traversal not allowed in filename"
+    HOME_FILE_READ = "Error reading home file '{filename}': {error}"
+    HOME_FILE_WRITE = "Error writing home file '{filename}': {error}"
+
     # Audio
     AUDIO_READ = "Error: Failed to read audio file. {data}"
     AUDIO_API = "Error: Could not request results from Google Web Speech API; {error}"

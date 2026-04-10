@@ -71,6 +71,9 @@ ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
 DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
 
+# LLM client timeout — increase for long-context calls (e.g. 16-question exam)
+LLM_CALL_TIMEOUT = 300  # seconds
+
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 2.0  # seconds

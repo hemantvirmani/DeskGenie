@@ -95,7 +95,7 @@ class LangGraphAgent:
                 model=get_default_model_name(model_provider),
                 temperature=config.AGENT_LLM_TEMPERATURE,
                 api_key=config.GOOGLE_API_KEY,
-                timeout=60  # Add timeout to prevent hanging
+                timeout=config.LLM_CALL_TIMEOUT
                 ).bind_tools(self.tools)
 
         elif model_provider == MP.HUGGINGFACE:

@@ -23,6 +23,9 @@ from resources.log_strings import ToolLogging as L
 from resources.state_strings import ToolReturns as TR
 from resources.error_strings import ToolErrors as TE
 
+import json
+import subprocess
+import sys
 import pandas as pd
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -444,6 +447,130 @@ def analyze_image(question: str, file_name: str) -> str:
         error_msg = S.ANALYZE_IMAGE_ERROR.format(file_name=file_name, error=str(e)[:config.QUESTION_PREVIEW_LENGTH])
         return error_msg
 
+@tool
+@track_tool_call("execute_python")
+@log_tool_call(S.EXECUTE_PYTHON_CALLED)
+def execute_python(code: str) -> str:
+    """Execute a Python code snippet and return its stdout output.
+
+    Use this for precise computations the LLM cannot do reliably in its head:
+    counting characters, implementing algorithms (ciphers, prime sieves),
+    math calculations, data transformations, etc.
+
+    Args:
+        code (str): Valid Python 3 code. Use print() to produce output.
+                    Do not read/write files or make network calls from within the code.
+
+    Returns:
+        str: stdout from the code, or an error message if execution failed.
+    """
+    timeout = 30
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip() or "(no output)"
+        return f"Exit {result.returncode}:\n{result.stderr.strip()}"
+    except subprocess.TimeoutExpired:
+        return TE.EXECUTE_PYTHON_TIMEOUT.format(timeout=timeout)
+    except Exception as e:
+        return TE.EXECUTE_PYTHON_FAILED.format(error=e)
+
+
+@tool
+@track_tool_call("http_request")
+@log_tool_call(S.HTTP_REQUEST_CALLED)
+def http_request(method: str, url: str, headers_json: str = "{}", body_json: str = "{}") -> str:
+    """Make an HTTP request with a custom method, headers, and JSON body.
+
+    Use this for POST, DELETE, or authenticated GET requests that require
+    custom headers (e.g. Authorization: Bearer ...) or a request body.
+
+    Args:
+        method (str): HTTP method — 'GET', 'POST', or 'DELETE'.
+        url (str): The full URL to call (must start with https://).
+        headers_json (str): JSON object of request headers, e.g. '{"Authorization": "Bearer TOKEN"}'.
+        body_json (str): JSON object for the request body (POST only). Use '{}' for empty body.
+
+    Returns:
+        str: Response body as text, prefixed with the HTTP status code.
+    """
+    method = method.upper()
+    try:
+        headers = json.loads(headers_json)
+    except Exception as e:
+        return TE.HTTP_REQUEST_BAD_JSON.format(param="headers_json", error=e)
+    try:
+        body = json.loads(body_json)
+    except Exception as e:
+        return TE.HTTP_REQUEST_BAD_JSON.format(param="body_json", error=e)
+
+    try:
+        if method == "GET":
+            r = requests.get(url, headers=headers, timeout=30)
+        elif method == "POST":
+            r = requests.post(url, headers=headers, json=body, timeout=30)
+        elif method == "DELETE":
+            r = requests.delete(url, headers=headers, timeout=30)
+        else:
+            return f"Unsupported method '{method}'. Use GET, POST, or DELETE."
+        # Use r.json() for JSON responses to preserve Unicode (e.g. Japanese text)
+        try:
+            content = json.dumps(r.json(), ensure_ascii=False)
+        except ValueError:
+            content = r.text
+        return f"HTTP {r.status_code}\n{content}"
+    except Exception as e:
+        return TE.HTTP_REQUEST_FAILED.format(method=method, url=url, error=e)
+
+
+@tool
+@track_tool_call("read_write_home_file")
+@log_tool_call(S.HOME_FILE_CALLED)
+def read_write_home_file(action: str, filename: str, content: str = "") -> str:
+    """Read or write a file in the user's home directory (~/).
+
+    Use this to persist or retrieve credentials and small config values
+    that must survive between sessions (e.g. '~/.kaggle-agent-id').
+
+    Args:
+        action (str): 'read' to read the file, 'write' to create/overwrite it.
+        filename (str): File name relative to the home directory (e.g. '.kaggle-agent-id').
+                        Must not contain path separators or '..' to prevent traversal.
+        content (str): Content to write (only used when action='write').
+
+    Returns:
+        str: File contents on read, confirmation message on write, or an error string.
+    """
+    if "/" in filename or "\\" in filename or ".." in filename:
+        return TE.HOME_FILE_TRAVERSAL
+
+    home = os.path.expanduser("~")
+    file_path = os.path.join(home, filename)
+
+    if action == "read":
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return f"File not found: {file_path}"
+        except Exception as e:
+            return TE.HOME_FILE_READ.format(filename=filename, error=e)
+    elif action == "write":
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            return f"Written to {file_path}"
+        except Exception as e:
+            return TE.HOME_FILE_WRITE.format(filename=filename, error=e)
+    else:
+        return f"Unknown action '{action}'. Use 'read' or 'write'."
+
+
 # ============================================================================
 # Tools List
 # ============================================================================
@@ -466,6 +593,9 @@ def get_custom_tools_list() -> list:
         get_webpage_content,
         read_file,
         parse_audio_file,
-        analyze_image
+        analyze_image,
+        execute_python,
+        http_request,
+        read_write_home_file,
     ]
     return tools

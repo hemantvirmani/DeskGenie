@@ -92,6 +92,15 @@ class ToolStrings:
     ANALYZE_IMAGE_CALLED = "Image Analysis"
     ANALYZE_IMAGE_ERROR = "Error Analyzing Image: {file_name}"
 
+    # HTTP Request
+    HTTP_REQUEST_CALLED = "HTTP {method}"
+
+    # Home File
+    HOME_FILE_CALLED = "Home File ({action})"
+
+    # Python execution
+    EXECUTE_PYTHON_CALLED = "Run Python"
+
 
 class QuestionRunnerStrings:
     """Strings for question runner operations."""
