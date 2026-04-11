@@ -7,6 +7,7 @@ import requests
 import re
 import io
 import os
+import time
 from google import genai
 from google.genai import types
 from app import config
@@ -482,6 +483,130 @@ def execute_python(code: str) -> str:
 
 
 @tool
+@track_tool_call("wait_seconds")
+@log_tool_call(S.WAIT_SECONDS_CALLED)
+def wait_seconds(seconds: int) -> str:
+    """Pause execution for a short duration.
+
+    Useful for handling API rate limits (HTTP 429) before retrying.
+
+    Args:
+        seconds (int): Number of seconds to wait. Clamped to [1, 60].
+
+    Returns:
+        str: Confirmation message after waiting.
+    """
+    try:
+        clamped = max(1, min(int(seconds), 60))
+        time.sleep(clamped)
+        return f"Waited {clamped} seconds."
+    except Exception as e:
+        return f"wait_seconds failed: {e}"
+
+
+@tool
+@track_tool_call("classical_cipher")
+@log_tool_call(S.CLASSICAL_CIPHER_CALLED)
+def classical_cipher(cipher_type: str, mode: str, text: str, keyword: str = "", period: int = 5) -> str:
+    """Encrypt or decrypt common classical ciphers.
+
+    Supported ciphers:
+    - playfair
+    - bifid
+
+    Args:
+        cipher_type (str): Cipher family: 'playfair' or 'bifid'.
+        mode (str): 'encrypt' or 'decrypt'.
+        text (str): Input text (letters only are used; j is mapped to i).
+        keyword (str): Key phrase used to build the 5x5 square.
+        period (int): Bifid period (ignored for Playfair). Default is 5.
+
+    Returns:
+        str: Transformed text in lowercase, or an error string.
+    """
+    ctype = (cipher_type or "").strip().lower()
+    op = (mode or "").strip().lower()
+    if ctype not in {"playfair", "bifid"}:
+        return "Unsupported cipher_type. Use 'playfair' or 'bifid'."
+    if op not in {"encrypt", "decrypt"}:
+        return "Unsupported mode. Use 'encrypt' or 'decrypt'."
+    if period <= 0:
+        return "Invalid period. Use a positive integer."
+
+    alphabet = "abcdefghiklmnopqrstuvwxyz"
+
+    def _normalize(s: str) -> str:
+        return re.sub(r"[^a-z]", "", (s or "").lower().replace("j", "i"))
+
+    def _build_square(key: str):
+        seen = []
+        for c in _normalize(key) + alphabet:
+            if c not in seen:
+                seen.append(c)
+        sq = [seen[i * 5:(i + 1) * 5] for i in range(5)]
+        pos = {c: (r, cidx) for r, row in enumerate(sq) for cidx, c in enumerate(row)}
+        inv = {(r, cidx): ch for r, row in enumerate(sq) for cidx, ch in enumerate(row)}
+        return sq, pos, inv
+
+    sq, pos, inv = _build_square(keyword)
+    normalized = _normalize(text)
+    if not normalized:
+        return ""
+
+    if ctype == "playfair":
+        if len(normalized) % 2 != 0:
+            normalized = normalized + "x"
+        d = -1 if op == "decrypt" else 1
+        out = []
+        for i in range(0, len(normalized), 2):
+            a, b = normalized[i], normalized[i + 1]
+            ra, ca = pos[a]
+            rb, cb = pos[b]
+            if ra == rb:
+                out.append(sq[ra][(ca + d) % 5])
+                out.append(sq[rb][(cb + d) % 5])
+            elif ca == cb:
+                out.append(sq[(ra + d) % 5][ca])
+                out.append(sq[(rb + d) % 5][cb])
+            else:
+                out.append(sq[ra][cb])
+                out.append(sq[rb][ca])
+        return "".join(out)
+
+    # bifid
+    if op == "encrypt":
+        out = []
+        for i in range(0, len(normalized), period):
+            block = normalized[i:i + period]
+            rows = []
+            cols = []
+            for ch in block:
+                r, c = pos[ch]
+                rows.append(r + 1)
+                cols.append(c + 1)
+            nums = rows + cols
+            for j in range(0, len(nums), 2):
+                rr = nums[j] - 1
+                cc = nums[j + 1] - 1
+                out.append(inv[(rr, cc)])
+        return "".join(out)
+
+    out = []
+    for i in range(0, len(normalized), period):
+        block = normalized[i:i + period]
+        nums = []
+        for ch in block:
+            r, c = pos[ch]
+            nums.extend([r + 1, c + 1])
+        half = len(block)
+        rows = nums[:half]
+        cols = nums[half:]
+        for rr, cc in zip(rows, cols):
+            out.append(inv[(rr - 1, cc - 1)])
+    return "".join(out)
+
+
+@tool
 @track_tool_call("http_request")
 @log_tool_call(S.HTTP_REQUEST_CALLED)
 def http_request(method: str, url: str, headers_json: str = "{}", body_json: str = "{}") -> str:
@@ -602,6 +727,8 @@ def get_custom_tools_list() -> list:
         parse_audio_file,
         analyze_image,
         execute_python,
+        wait_seconds,
+        classical_cipher,
         http_request,
         read_write_home_file,
     ]

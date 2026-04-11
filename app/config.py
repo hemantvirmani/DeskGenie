@@ -1,4 +1,4 @@
-"""Configuration settings for Desktop AI Agent."""
+﻿"""Configuration settings for Desktop AI Agent."""
 
 import os
 from resources.state_strings import ModelProviders
