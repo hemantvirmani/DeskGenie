@@ -59,7 +59,7 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", os.getenv("OLLAMA_BASE_URL", "http://
 
 # Model Configuration
 GEMINI_MODEL_2_5 = "gemini-2.5-flash"
-GEMINI_TEMPERATURE = 0       # Temperature for vision/analysis tools (keep deterministic)
+GEMINI_TEMPERATURE = 0       # Temperature for vision/analysis/advisor tools (keep deterministic)
 AGENT_LLM_TEMPERATURE = 0.0  # Deterministic agent responses — more consistent on tool calls and precise answers
 GEMINI_MAX_TOKENS = 1024
 

@@ -414,7 +414,7 @@ async def delete_chat_group(chat_id: str):
 # --- Static Files (Production) ---
 
 # Check if frontend build exists
-frontend_dist = os.path.join(os.path.dirname(__file__), "frontend", "dist")
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.exists(frontend_dist):
     # Serve static files from React build
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")

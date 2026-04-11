@@ -102,6 +102,7 @@ class ToolStrings:
     EXECUTE_PYTHON_CALLED = "Run Python"
     CLASSICAL_CIPHER_CALLED = "Classical Cipher"
     WAIT_SECONDS_CALLED = "Wait"
+    ASK_ADVISOR_CALLED = "Advisor (Gemini Pro)"
 
 
 class QuestionRunnerStrings:

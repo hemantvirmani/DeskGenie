@@ -318,10 +318,13 @@ DeskGenie uses different models for different tasks:
 
 | Role | Model | Configurable? |
 |------|-------|---------------|
-| Agent reasoning & orchestration | Gemini 2.5 Flash, Claude Sonnet, HuggingFace, or Ollama | ✅ via `DEFAULT_MODEL_PROVIDER` in `config.py` |
+| Agent reasoning & orchestration (executor) | Gemini 2.5 Flash (default), Claude Sonnet, HuggingFace, or Ollama | ✅ via `DEFAULT_MODEL_PROVIDER` in `config.py` |
+| Advisor (consulted when executor is stuck) | Google Gemini 3.1 Pro | ❌ fixed — most capable available model |
 | Image analysis, video understanding, YouTube Q&A | Google Gemini 2.5 Flash | ❌ fixed — best-in-class multimodal model |
 
-This means you can run the main agent on Claude (or any other provider) while all vision-intensive work is still handled by Gemini, which has native multimodal capabilities. The two layers operate independently — swapping the primary LLM has no effect on vision tool quality.
+DeskGenie implements the **Advisor Strategy**: the fast executor model handles all tool calls and reasoning end-to-end. When stuck after multiple attempts, it can choose to escalate by calling the `ask_advisor` tool backed by Gemini 3.1 Pro, receives a concise recommendation, and continues autonomously. The advisor never takes control — it only guides the next step.
+
+The executor and vision layers are also independent: swapping the primary LLM has no effect on vision tool quality.
 
 ## Configuration
 

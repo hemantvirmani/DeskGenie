@@ -607,6 +607,46 @@ def classical_cipher(cipher_type: str, mode: str, text: str, keyword: str = "", 
 
 
 @tool
+@track_tool_call("ask_advisor")
+@log_tool_call(S.ASK_ADVISOR_CALLED)
+def ask_advisor(question: str) -> str:
+    """Consult a more powerful AI model when you are stuck or uncertain after 2+ failed attempts.
+
+    Describe what you are trying to solve and what you have already tried.
+    The advisor returns a concise recommendation (2-3 sentences) to guide your next step.
+    Use sparingly — only for genuinely hard reasoning or planning problems, not for tool failures.
+
+    Args:
+        question (str): A clear description of the problem and what approaches you have already tried.
+
+    Returns:
+        str: A concise recommendation from the advisor model.
+    """
+    try:
+        api_key = config.GOOGLE_API_KEY
+        if not api_key:
+            return TE.API_KEY_NOT_SET
+
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=config.GEMINI_MODEL_3_1,
+            contents=question,
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "You are an expert advisor for an AI agent. "
+                    "The agent is stuck on a sub-problem and needs guidance. "
+                    "Give a concise, actionable recommendation in 2-3 sentences. "
+                    "Do not solve the full problem — guide the next step only."
+                ),
+                temperature=config.GEMINI_TEMPERATURE,
+            )
+        )
+        return response.text
+    except Exception as e:
+        return f"Advisor unavailable: {e}"
+
+
+@tool
 @track_tool_call("http_request")
 @log_tool_call(S.HTTP_REQUEST_CALLED)
 def http_request(method: str, url: str, headers_json: str = "{}", body_json: str = "{}") -> str:
@@ -729,6 +769,7 @@ def get_custom_tools_list() -> list:
         execute_python,
         wait_seconds,
         classical_cipher,
+        ask_advisor,
         http_request,
         read_write_home_file,
     ]
