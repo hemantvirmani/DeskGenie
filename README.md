@@ -97,7 +97,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open http://localhost:5173 (Vite proxies API calls to port 8000)
+Open <http://localhost:5173> (Vite proxies API calls to port 8000)
 
 **Production Mode**:
 
@@ -188,39 +188,52 @@ sudo apt-get install tesseract-ocr
 - Rate-limit aware waiting (`wait_seconds` for 429 handling)
 
 
-## Usage Examples
+## Usage
 
-### Using Natural Language
+DeskGenie can be used in two ways:
 
-DeskGenie understands natural language commands. Here are some examples:
+### Web UI
 
+**Development** (hot reload, frontend at port 5173):
+
+```bash
+# Terminal 1
+python app/main.py
+
+# Terminal 2
+cd frontend && npm run dev
 ```
+
+Open <http://localhost:5173>
+
+**Production** (single server, frontend built into the backend):
+
+```bash
+cd frontend && npm run build && cd ..
+python app/main.py        # serves everything at http://localhost:8000
+```
+
+Type any natural language command in the chat window. Examples:
+
+```text
 "Delete the last 2 pages from my thesis.pdf and save as thesis_trimmed.pdf"
-
 "Convert all HEIC photos in my iPhone_Photos folder to JPG"
-
 "Extract the audio from my_video.mp4 and save it as podcast.mp3"
-
 "Organize my Downloads folder by file type"
-
 "What's the duration and resolution of video.mp4?"
 ```
 
-### Programmatic Usage
+### Command Line (`--query`)
 
-```python
-from agents import MyGAIAAgents
-from desktop_tools import get_desktop_tools_list
+Run a single query directly without starting the UI:
 
-# Initialize agent with desktop tools
-agent = MyGAIAAgents()
-
-# PDF operations
-result = agent("Extract pages 1-5 from report.pdf and save as summary.pdf")
-
-# Image conversion
-result = agent("Convert photo.heic to photo.jpg with 90% quality")
+```bash
+python app/main.py --query "Convert all HEIC photos in my Downloads to JPG"
+python app/main.py --query "What is the capital of France?"
+python app/main.py --query "Fetch https://example.com/api and summarize the response"
 ```
+
+## Usage Examples
 
 ### Using Individual Tools
 
