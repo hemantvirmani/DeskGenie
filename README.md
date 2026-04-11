@@ -171,12 +171,22 @@ sudo apt-get install tesseract-ocr
 - **Compress Video**: "Compress movie.mp4 to under 100MB"
 - **Media Info**: "Get details about video.mp4"
 
-### 🔍 Research & Web Tools (from GAIA Agent)
+### 🔍 Research & Web Tools
+
 - Web search via DuckDuckGo
 - Wikipedia integration
 - ArXiv academic paper search
 - YouTube video analysis
 - Web page content extraction
+- HTTP requests (GET/POST/PUT/DELETE) for API interactions
+
+### 🛠️ Utility Tools
+
+- Python code execution (sandboxed, for calculations and data processing)
+- Classical cipher encryption/decryption (Playfair, Bifid)
+- Home directory file read/write (for credential and config persistence)
+- Rate-limit aware waiting (`wait_seconds` for 429 handling)
+
 
 ## Usage Examples
 
@@ -424,7 +434,7 @@ python app/main.py --test
 python app/main.py --test 2,4,6
 
 # Run a single query (same as UI chat)
-python app/main.py --testq "What is the capital of France?"
+python app/main.py --query "What is the capital of France?"
 
 ```
 
@@ -483,7 +493,7 @@ This project is provided as-is for educational and hobbyist purposes. The author
 ## Roadmap
 
 - [ ] Improve Web search tools
-- [ ] Add MCP Server Support. Test with MCP of Home Assistant
+- [x] Add MCP Server Support — Home Assistant MCP integrated and tested
 - [x] Make LLM provider support configurable (Google Gemini, Anthropic Claude, HuggingFace, Ollama)
 - [ ] Create simple plugin system for custom tools. does not need to be drag n drop
 - [ ] Add comprehensive test suite

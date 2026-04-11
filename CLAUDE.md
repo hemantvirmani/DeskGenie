@@ -14,7 +14,7 @@ venv\Scripts\activate
 python app/main.py
 
 # Run a single query (CLI)
-python app/main.py --testq "your query here"
+python app/main.py --query "your query here"
 
 # Run GAIA benchmark (default filter)
 python app/main.py --test
@@ -38,7 +38,7 @@ Build frontend first (`npm run build`), then `python app/main.py` serves both AP
 
 ## Architecture
 
-DeskGenie is a desktop AI assistant. The user sends natural language commands via a React UI or CLI. A LangGraph agent backed by Google Gemini processes the request using 20+ tools (file ops, PDF, images, media, web search), streaming logs back to the UI in real time.
+DeskGenie is a desktop AI assistant. The user sends natural language commands via a React UI or CLI. A LangGraph agent backed by Google Gemini processes the request using 25+ tools (file ops, PDF, images, media, web search, HTTP requests, Python execution, classical ciphers), streaming logs back to the UI in real time.
 
 ```
 React UI / CLI
@@ -67,7 +67,7 @@ Tools (tools/desktop_tools.py, tools/custom_tools.py)
 | `agents/langgraphagent.py` | Core LangGraph agent with Gemini |
 | `agents/agents.py` | `MyGAIAAgents` wrapper — the single public interface |
 | `tools/desktop_tools.py` | PDF, image, file, document, media tools |
-| `tools/custom_tools.py` | Web search, Wikipedia, ArXiv, YouTube |
+| `tools/custom_tools.py` | Web search, Wikipedia, ArXiv, YouTube, HTTP requests, Python execution, classical ciphers, rate-limit wait |
 | `utils/log_streamer.py` | `LogStreamer` (UI) and `ConsoleLogger` (CLI) |
 | `utils/chat_storage.py` | JSON chat persistence (platform-specific dirs) |
 | `resources/ui_strings.py` | All backend-facing strings (no hardcoding) |
@@ -98,6 +98,6 @@ See `.env.example` for the full list. User-specific folder aliases and preferenc
 
 ## LLM Configuration
 
-Primary model: `gemini-2.5-flash` (set in `app/config.py` as `GEMINI_MODEL_2_5`, resolved via `get_default_model_name()` in `utils/utils.py`). Temperature `0.1` for agent LLM, `0` for vision/analysis tools. LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
+Primary model: `gemini-2.5-flash` (set in `app/config.py` as `GEMINI_MODEL_2_5`, resolved via `get_default_model_name()` in `utils/utils.py`). Temperature `0` for both agent LLM and vision/analysis tools (deterministic). LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
 
 Note: `GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"` is defined in `config.py` but not currently wired into the agent.

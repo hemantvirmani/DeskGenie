@@ -69,7 +69,7 @@ class RunMode(Enum):
 class AppOptions:
     """Options parsed from command-line arguments."""
     run_mode: RunMode
-    test_query: Optional[str] = None  # For --testq
+    test_query: Optional[str] = None  # For --query
     test_filter: Optional[Tuple[int, ...]] = None  # For --test/--testall
     error: Optional[str] = None  # Parsing error message
 
@@ -124,16 +124,16 @@ def _parse_cli_args() -> AppOptions:
         help="Run GAIA benchmark. Use '--test all' for all questions, '--test' for default filter, or '--test 2,4,6' for specific questions."
     )
     parser.add_argument(
-        "--testq", type=str,
-        help="Run a single query through the agent (same as UI chat). Example: --testq \"What is the capital of France?\""
+        "--query", type=str,
+        help="Run a single query through the agent (same as UI chat). Example: --query \"What is the capital of France?\""
     )
     args = parser.parse_args()
 
-    # Handle --testq (single query mode)
-    if args.testq:
+    # Handle --query (single query mode)
+    if args.query:
         return AppOptions(
             run_mode=RunMode.CLI,
-            test_query=args.testq
+            test_query=args.query
         )
 
     # Handle --test (GAIA benchmark mode)
@@ -190,7 +190,7 @@ def main() -> None:
         uvicorn.run(app, host="0.0.0.0", port=8000)
 
     elif options.test_query:
-        # Single query mode (--testq)
+        # Single query mode (--query)
         run_single_query(options.test_query)
 
     else: # GAIA benchmark mode (--test or --testall)
