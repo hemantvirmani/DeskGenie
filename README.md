@@ -312,6 +312,17 @@ organize_files_by_type.invoke({
 | `compress_video` | Compress video to target size |
 | `get_media_info` | Get detailed media file information |
 
+## Multi-Model Architecture
+
+DeskGenie uses different models for different tasks:
+
+| Role | Model | Configurable? |
+|------|-------|---------------|
+| Agent reasoning & orchestration | Gemini 2.5 Flash, Claude Sonnet, HuggingFace, or Ollama | ✅ via `DEFAULT_MODEL_PROVIDER` in `config.py` |
+| Image analysis, video understanding, YouTube Q&A | Google Gemini 2.5 Flash | ❌ fixed — best-in-class multimodal model |
+
+This means you can run the main agent on Claude (or any other provider) while all vision-intensive work is still handled by Gemini, which has native multimodal capabilities. The two layers operate independently — swapping the primary LLM has no effect on vision tool quality.
+
 ## Configuration
 
 ### Environment Variables

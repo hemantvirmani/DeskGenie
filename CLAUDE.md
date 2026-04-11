@@ -96,6 +96,15 @@ Optional:
 
 See `.env.example` for the full list. User-specific folder aliases and preferences go in the platform config dir (Windows: `%LOCALAPPDATA%\DeskGenie\config.json`).
 
+## Multi-Model Architecture
+
+DeskGenie deliberately routes different workloads to different models:
+
+- **Agent reasoning / orchestration** — configurable via `DEFAULT_MODEL_PROVIDER` in `app/config.py`. Supports Google Gemini, Anthropic Claude, HuggingFace, and Ollama.
+- **Vision workloads** (image analysis, video understanding, YouTube Q&A) — always use Google Gemini (`genai.Client` in `tools/custom_tools.py`), regardless of the primary provider. Gemini is hardcoded here because it has native multimodal support.
+
+This means the two layers are independent: switching the primary LLM to Claude does not affect vision tool behaviour.
+
 ## LLM Configuration
 
 Primary model: `gemini-2.5-flash` (set in `app/config.py` as `GEMINI_MODEL_2_5`, resolved via `get_default_model_name()` in `utils/utils.py`). Temperature `0` for both agent LLM and vision/analysis tools (deterministic). LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
