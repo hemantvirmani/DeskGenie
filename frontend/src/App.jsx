@@ -48,8 +48,15 @@ function App() {
         const data = await response.json()
 
         if (data.chats && data.chats.length > 0) {
-          setChatGroups(data.chats)
-          setActiveGroupId(data.chats[0].id)
+          // Mark any messages stuck in 'loading' as 'interrupted' (server was restarted mid-request)
+          const sanitized = data.chats.map(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg =>
+              msg.status === 'loading' ? { ...msg, status: 'interrupted' } : msg
+            )
+          }))
+          setChatGroups(sanitized)
+          setActiveGroupId(sanitized[0].id)
         } else {
           // No saved chats, create a default one
           const newGroup = {

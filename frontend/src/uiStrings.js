@@ -39,5 +39,6 @@ export const UIStrings = {
 
   // MessageBubble.jsx strings
   PROCESSING_TEXT: "Processing...",
+  INTERRUPTED_TEXT: "Processing was interrupted (server restarted)",
 
 };
