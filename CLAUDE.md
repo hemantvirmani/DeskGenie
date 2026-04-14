@@ -32,7 +32,28 @@ npm run dev       # dev server (port 5173, proxies API to port 8000)
 npm run build     # production build → frontend/dist
 ```
 
-### Production
+### Desktop App (dev)
+
+```bash
+# GUI mode — native window with system tray
+python desktop/app.py
+
+# CLI mode — query via desktop entry point
+python desktop/app.py --query "your query here"
+python desktop/app.py --test
+
+# Enable DevTools (Edge inspector alongside the window)
+DESKGENIE_DEBUG=1 python desktop/app.py
+```
+
+### Production Build (exe)
+
+```bash
+# Builds frontend + packages everything into dist/DeskGenie/DeskGenie.exe
+python desktop/build.py
+```
+
+### Production (web server only)
 
 Build frontend first (`npm run build`), then `python app/main.py` serves both API and static files on port 8000.
 
@@ -63,17 +84,24 @@ Tools (tools/desktop_tools.py, tools/custom_tools.py)
 | File | Purpose |
 |------|---------|
 | `app/genie_api.py` | All REST endpoints, task store, SSE streaming |
-| `app/config.py` | Centralized constants (model, retry, limits) |
+| `app/config.py` | Centralized constants (model, retry, limits, ports) |
 | `agents/langgraphagent.py` | Core LangGraph agent with Gemini |
 | `agents/agents.py` | `MyGAIAAgents` wrapper — the single public interface |
 | `tools/desktop_tools.py` | PDF, image, file, document, media tools |
-| `tools/custom_tools.py` | Web search, Wikipedia, ArXiv, YouTube, HTTP requests, Python execution, classical ciphers, rate-limit wait |
+| `tools/custom_tools.py` | Web search, Wikipedia, ArXiv, YouTube, HTTP requests, Python execution, classical ciphers, rate-limit wait, advisor |
 | `utils/log_streamer.py` | `LogStreamer` (UI) and `ConsoleLogger` (CLI) |
 | `utils/chat_storage.py` | JSON chat persistence (platform-specific dirs) |
 | `resources/ui_strings.py` | All backend-facing strings (no hardcoding) |
 | `frontend/src/uiStrings.js` | All frontend-facing strings (no hardcoding) |
 | `resources/system_prompt.py` | Agent system prompt |
 | `external/scorer.py` | GAIA benchmark scorer — **do not modify** |
+| `desktop/app.py` | Desktop app entry point (GUI + CLI modes) |
+| `desktop/server.py` | Port management and uvicorn server thread |
+| `desktop/single_instance.py` | Sentinel socket for single-instance enforcement |
+| `desktop/tray.py` | System tray icon (pystray) |
+| `desktop/icon.py` | Runtime icon generation (Pillow, no external file) |
+| `desktop/desktop.spec` | PyInstaller build spec |
+| `desktop/build.py` | One-command production build (frontend + exe) |
 
 ## Coding Conventions (from `.clinerules`)
 

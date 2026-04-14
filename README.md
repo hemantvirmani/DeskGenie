@@ -190,7 +190,27 @@ sudo apt-get install tesseract-ocr
 
 ## Usage
 
-DeskGenie can be used in two ways:
+DeskGenie can be used in three ways:
+
+### Desktop App (recommended)
+
+A native window powered by the system's browser engine (Edge on Windows). No browser tab, no terminal — looks and feels like a standalone app.
+
+**Run (dev):**
+```bash
+python desktop/app.py
+```
+
+**Build for distribution (no Python required for end users):**
+```bash
+python desktop/build.py
+# Output: dist/DeskGenie/DeskGenie.exe
+```
+
+- Close button minimizes to system tray
+- Right-click tray icon → **Open** / **Quit**
+- Single instance enforced — double-launching focuses the existing window
+- Port `41955` (configured in `app/config.py` as `DESKTOP_APP_PORT`)
 
 ### Web UI
 

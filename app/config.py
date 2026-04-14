@@ -11,6 +11,7 @@ from resources.state_strings import ModelProviders
 DESKTOP_FILES_DIR = os.getenv("DESKGENIE_FILES_DIR", os.path.expanduser("~/Desktop"))
 DESKTOP_DOWNLOADS_DIR = os.getenv("DESKGENIE_DOWNLOADS_DIR", os.path.expanduser("~/Downloads"))
 DESKTOP_OUTPUT_DIR = os.getenv("DESKGENIE_OUTPUT_DIR", os.path.expanduser("~/Desktop_Agent_Output"))
+DESKTOP_APP_PORT = 41955       # Preferred port for the desktop app (uncommon to avoid conflicts)
 
 # Tool Categories (for UI organization)
 TOOL_CATEGORIES = {
