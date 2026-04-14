@@ -74,12 +74,24 @@ def _build_tool_whitelist() -> set:
     return whitelisted
 
 
-def _add_sync_wrapper(async_tool: StructuredTool) -> StructuredTool:
-    """Wrap an async-only MCP tool to support sync invocation via asyncio.run()."""
+def _friendly_server_name(server_key: str) -> str:
+    """Convert a config key like 'home_assistant' to 'Home Assistant'."""
+    return server_key.replace('_', ' ').title()
+
+
+def _add_sync_wrapper(async_tool: StructuredTool, server_key: str) -> StructuredTool:
+    """Wrap an async-only MCP tool to support sync invocation and UI log emission."""
+    from utils.log_streamer import get_global_logger
+    display = S.MCP_TOOL_CALLED.format(
+        server=_friendly_server_name(server_key),
+        tool=async_tool.name,
+    )
+
     async def arun(**kwargs):
         return await async_tool.ainvoke(kwargs)
 
     def run(**kwargs):
+        get_global_logger().tool_call(display)
         return asyncio.run(arun(**kwargs))
 
     return StructuredTool(
@@ -89,6 +101,15 @@ def _add_sync_wrapper(async_tool: StructuredTool) -> StructuredTool:
         func=run,
         coroutine=arun,
     )
+
+
+def _build_tool_to_server_map() -> dict:
+    """Map each whitelisted tool name to its server key for log display."""
+    mapping = {}
+    for server_key, cfg in config.MCP_SERVERS.items():
+        for tool_name in cfg.get('tools', []):
+            mapping[tool_name] = server_key
+    return mapping
 
 
 async def _load_tools_async() -> List:
@@ -102,7 +123,11 @@ async def _load_tools_async() -> List:
     if whitelist:
         raw_tools = [t for t in raw_tools if t.name in whitelist]
 
-    tools = [_add_sync_wrapper(t) for t in raw_tools]
+    tool_to_server = _build_tool_to_server_map()
+    tools = [
+        _add_sync_wrapper(t, tool_to_server.get(t.name, 'mcp'))
+        for t in raw_tools
+    ]
     logger.info(S.MCP_TOOLS_LOADED.format(count=len(tools), servers=len(config.MCP_SERVERS)))
     return tools
 
