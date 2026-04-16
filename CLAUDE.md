@@ -84,7 +84,7 @@ Tools (tools/desktop_tools.py, tools/custom_tools.py)
 | File | Purpose |
 |------|---------|
 | `app/genie_api.py` | All REST endpoints, task store, SSE streaming |
-| `app/config.py` | Centralized constants (model, retry, limits, ports) |
+| `app/config.py` | Internal engine constants (timeouts, retry, limits, ports) |
 | `agents/langgraphagent.py` | Core LangGraph agent with Gemini |
 | `agents/agents.py` | `MyGAIAAgents` wrapper — the single public interface |
 | `tools/desktop_tools.py` | PDF, image, file, document, media tools |
@@ -128,13 +128,11 @@ All user-facing settings live in `config.json` (platform config dir — Windows:
 
 DeskGenie deliberately routes different workloads to different models:
 
-- **Agent reasoning / orchestration** — configurable via `DEFAULT_MODEL_PROVIDER` in `app/config.py`. Supports Google Gemini, Anthropic Claude, HuggingFace, and Ollama.
-- **Vision workloads** (image analysis, video understanding, YouTube Q&A) — always use Google Gemini (`genai.Client` in `tools/custom_tools.py`), regardless of the primary provider. Gemini is hardcoded here because it has native multimodal support.
+- **Agent reasoning / orchestration** — controlled by `llm.activeProvider` in `config.json`. Supports `google`, `anthropic`, `ollama`, `huggingface`.
+- **Vision workloads** (image analysis, video understanding, YouTube Q&A) — always Google Gemini (`genai.Client` in `tools/custom_tools.py`), regardless of active provider.
 
-This means the two layers are independent: switching the primary LLM to Claude does not affect vision tool behaviour.
+The two layers are independent: switching the primary LLM has no effect on vision tool behaviour.
 
 ## LLM Configuration
 
-Primary model: `gemini-2.5-flash` (set in `app/config.py` as `GEMINI_MODEL_2_5`, resolved via `get_default_model_name()` in `utils/utils.py`). Temperature `0` for both agent LLM and vision/analysis tools (deterministic). LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
-
-Note: `GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"` is defined in `config.py` but not currently wired into the agent.
+Set via `config.json` → `llm`. Google provider has three model slots: `agentModel` (main loop), `visionModel` (image/video tools), `advisorModel` (hard-problem escalation). Temperature defaults to `0` (deterministic). LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).

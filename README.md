@@ -47,8 +47,7 @@ The script will:
 2. Create and activate a virtual environment
 3. Install all Python dependencies
 4. Install frontend (npm) dependencies
-5. Copy `config.sample.json` to the correct platform-specific location
-6. Prompt for your Google API key and save it to `.env`
+5. Copy `config.json.example` to the correct platform-specific location and fill in your API key
 
 ---
 
@@ -71,18 +70,17 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Set up environment variables**:
-```bash
-# Required for AI features — set the key for your chosen provider
-export GOOGLE_API_KEY="your_google_api_key"       # Google Gemini
-export ANTHROPIC_API_KEY="your_anthropic_api_key" # Anthropic Claude (alternative)
+4. **Set up config.json**:
 
-# Optional: Langfuse observability
-export LANGFUSE_PUBLIC_KEY="pk-lf-..."
-export LANGFUSE_SECRET_KEY="sk-lf-..."
-```
+Copy `config.json.example` to the platform config dir and fill in your API key:
 
-> **Switching providers**: Set `DEFAULT_MODEL_PROVIDER` in `app/config.py` to `ModelProviders.GOOGLE` or `ModelProviders.ANTHROPIC` (also supports `HUGGINGFACE` and `OLLAMA`).
+| Platform | Path |
+| -------- | ---- |
+| Windows | `%LOCALAPPDATA%\DeskGenie\config.json` |
+| macOS | `~/Library/Application Support/DeskGenie/config.json` |
+| Linux | `~/.local/share/DeskGenie/config.json` |
+
+Set `llm.activeProvider` to `"google"`, `"anthropic"`, `"ollama"`, or `"huggingface"`, and fill in the corresponding API key under `llm.providers`.
 
 5. **Run DeskGenie**:
 
@@ -338,9 +336,9 @@ DeskGenie uses different models for different tasks:
 
 | Role | Model | Configurable? |
 |------|-------|---------------|
-| Agent reasoning & orchestration (executor) | Gemini 2.5 Flash (default), Claude Sonnet, HuggingFace, or Ollama | ✅ via `DEFAULT_MODEL_PROVIDER` in `config.py` |
-| Advisor (consulted when executor is stuck) | Google Gemini 3.1 Pro | ❌ fixed — most capable available model |
-| Image analysis, video understanding, YouTube Q&A | Google Gemini 2.5 Flash | ❌ fixed — best-in-class multimodal model |
+| Agent reasoning & orchestration (executor) | Gemini 2.5 Flash (default), Claude Sonnet, HuggingFace, or Ollama | ✅ via `llm.activeProvider` in `config.json` |
+| Advisor (consulted when executor is stuck) | Google Gemini 3.1 Pro | ✅ via `llm.providers.google.advisorModel` in `config.json` |
+| Image analysis, video understanding, YouTube Q&A | Google Gemini 2.5 Flash | ✅ via `llm.providers.google.visionModel` in `config.json` |
 
 DeskGenie implements the **Advisor Strategy**: the fast executor model handles all tool calls and reasoning end-to-end. When stuck after multiple attempts, it can choose to escalate by calling the `ask_advisor` tool backed by Gemini 3.1 Pro, receives a concise recommendation, and continues autonomously. The advisor never takes control — it only guides the next step.
 
@@ -348,65 +346,45 @@ The executor and vision layers are also independent: swapping the primary LLM ha
 
 ## Configuration
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GOOGLE_API_KEY` | - | Google API key (required when using Gemini) |
-| `ANTHROPIC_API_KEY` | - | Anthropic API key (required when using Claude) |
-| `DESKGENIE_OUTPUT_DIR` | `~/Desktop_Agent_Output` | Default output directory |
-
-Set the active provider in `app/config.py` via `DEFAULT_MODEL_PROVIDER`. Supported providers: `GOOGLE` (Gemini 2.5 Flash), `ANTHROPIC` (Claude Sonnet), `HUGGINGFACE`, `OLLAMA`.
-
 ### User Configuration (config.json)
 
-DeskGenie supports user-defined folder aliases and preferences via a JSON config file.
+All settings live in `config.json` at the platform config dir:
 
-**Config Location:**
 | Platform | Path |
 |----------|------|
 | Windows | `%LOCALAPPDATA%\DeskGenie\config.json` |
 | macOS | `~/Library/Application Support/DeskGenie/config.json` |
 | Linux | `~/.local/share/DeskGenie/config.json` |
 
-**Setup:**
-1. Copy `config.sample.json` to the config location above
-2. Edit the file to add your folder aliases and preferences
+Copy `config.json.example` (repo root) to that location and fill in your values. Key sections:
 
-**Example config.json:**
+| Section | What it controls |
+| ------- | ---------------- |
+| `llm.activeProvider` | Which provider drives the agent (`google`, `anthropic`, `ollama`, `huggingface`) |
+| `llm.providers.*` | API keys and model names per provider |
+| `mcpServers` | MCP server definitions (same schema as Claude Code `settings.json`) |
+| `agent` | `maxSteps`, `maxRetries`, search result limits |
+| `observability.langfuse` | Langfuse tracing keys |
+| `logging.level` | Python log level (`DEBUG`/`INFO`/`WARNING`/`ERROR`) |
+| `folder_aliases` | Short names resolved in natural language commands |
+| `preferences` | Default output dir, image quality, PDF DPI |
+
+**Using Folder Aliases:**
+
 ```json
 {
   "folder_aliases": {
     "prax": "C:/Users/YourName/Projects/Prax",
-    "finance": "C:/Users/YourName/Documents/Finance",
-    "work": "C:/Users/YourName/Work",
-    "photos": "D:/Photos/2024"
-  },
-  "preferences": {
-    "default_output_dir": "downloads",
-    "image_quality": 85,
-    "pdf_dpi": 200
+    "finance": "C:/Users/YourName/Documents/Finance"
   }
 }
 ```
 
-**Using Folder Aliases:**
-
-Once configured, you can use aliases in natural language commands:
+Then use them naturally in chat:
 ```
 "List files in prax"
 "Convert all images in finance to PDF"
-"Move report.pdf to work"
 ```
-
-The agent will automatically resolve aliases like `prax` to their full paths.
-
-**Available Preferences:**
-| Key | Default | Description |
-|-----|---------|-------------|
-| `default_output_dir` | `downloads` | Default directory for output files |
-| `image_quality` | `85` | Default JPEG/WebP quality (1-100) |
-| `pdf_dpi` | `200` | Default DPI for PDF operations |
 
 ## Project Structure
 
@@ -462,24 +440,26 @@ DeskGenie/
 │
 ├── setup.sh                # Automated setup script (Linux/macOS/Git Bash)
 ├── requirements.txt        # Python dependencies
-├── config.sample.json      # Sample user configuration
+├── config.json.example     # Full config schema with inline comments
 └── README.md               # This file
 ```
 
 ## GAIA Benchmark Mode
 
-DeskGenie retains full GAIA benchmark capabilities. To run benchmark evaluations:
+DeskGenie retains full GAIA benchmark capabilities.
+
+**From the UI** — type directly in the chat input:
+
+```text
+/gaia          # run all questions
+/gaia 2,4,6   # run specific questions (1-based indices)
+```
+
+**From the CLI:**
 
 ```bash
-# Run all benchmark questions
-python app/main.py --gaia
-
-# Run specific question indices (1-based)
-python app/main.py --gaia 2,4,6
-
-# Run a single query (same as UI chat)
-python app/main.py --query "What is the capital of France?"
-
+python app/main.py --gaia          # run all questions
+python app/main.py --gaia 2,4,6   # run specific questions (1-based indices)
 ```
 
 See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAIA_Benchmark_Agent) for benchmark details.
