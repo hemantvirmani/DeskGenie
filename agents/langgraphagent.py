@@ -164,7 +164,8 @@ class LangGraphAgent:
         self.logger.step(S.STEP_CALLING_LLM.format(step=current_step, count=len(state[SK.MESSAGES])))
 
         # Invoke LLM with tools enabled, with retry logic for 504 errors and empty responses
-        max_retries = config.MAX_RETRIES
+        from utils.user_config import get_agent_config
+        max_retries = get_agent_config().get("maxRetries", 3)
         delay = config.INITIAL_RETRY_DELAY
         empty_delay = config.EMPTY_RESPONSE_RETRY_DELAY
         messages_to_send = state[SK.MESSAGES]  # may have nudge appended on empty-response retry
@@ -271,7 +272,8 @@ class LangGraphAgent:
         step_count = state.get(SK.STEP_COUNT, 0)
 
         # Stop if we've exceeded maximum steps
-        if step_count >= config.AGENT_MAX_STEPS:
+        from utils.user_config import get_agent_config
+        if step_count >= get_agent_config().get("maxSteps", 25):
             self.logger.warning(S.LANGGRAPH_MAX_STEPS)
             # Force a final answer if we don't have one
             if not state.get(SK.ANSWER):

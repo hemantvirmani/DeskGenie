@@ -81,6 +81,35 @@ DEFAULT_CONFIG: dict = {
     },
 
     # ------------------------------------------------------------------
+    # Agent behaviour
+    # ------------------------------------------------------------------
+    "agent": {
+        # Maximum number of tool-call steps the agent may take per question.
+        "maxSteps": 25,
+        # Maximum LLM retry attempts on 504 / empty-response errors.
+        "maxRetries": 3,
+        # Search result limits
+        "search": {
+            "webMaxResults": 8,
+            "wikiMaxDocs": 5,
+            "arxivMaxDocs": 3
+        }
+    },
+
+    # ------------------------------------------------------------------
+    # Observability (Langfuse)
+    # ------------------------------------------------------------------
+    "observability": {
+        "langfuse": {
+            # Get your keys at https://cloud.langfuse.com
+            "publicKey": "",
+            "secretKey": "",
+            "host": "https://us.cloud.langfuse.com",
+            "projectName": "Desktop-Agent"
+        }
+    },
+
+    # ------------------------------------------------------------------
     # MCP server configuration (same structure as Claude Code settings.json)
     # Each key is a server name; supported transports: "stdio" | "sse"
     # ------------------------------------------------------------------
@@ -277,6 +306,47 @@ def get_log_level() -> int:
         print(CM.LOG_LEVEL_INVALID.format(level=level_str))
         return logging.INFO
     return getattr(logging, level_str)
+
+
+# ---------------------------------------------------------------------------
+# Agent / search config
+# ---------------------------------------------------------------------------
+
+def get_agent_config() -> dict:
+    """Return the ``agent`` section of config.json.
+
+    Returns:
+        Dict with keys ``maxSteps``, ``maxRetries``, and ``search``.
+    """
+    return _deep_merge(
+        DEFAULT_CONFIG["agent"],
+        _load_config().get("agent", {})
+    )
+
+
+def get_search_config() -> dict:
+    """Return the ``agent.search`` sub-section of config.json.
+
+    Returns:
+        Dict with keys ``webMaxResults``, ``wikiMaxDocs``, ``arxivMaxDocs``.
+    """
+    return _deep_merge(
+        DEFAULT_CONFIG["agent"]["search"],
+        get_agent_config().get("search", {})
+    )
+
+
+def get_observability_config() -> dict:
+    """Return the ``observability`` section of config.json.
+
+    Returns:
+        Dict with a ``langfuse`` sub-dict containing ``publicKey``,
+        ``secretKey``, ``host``, and ``projectName``.
+    """
+    return _deep_merge(
+        DEFAULT_CONFIG["observability"],
+        _load_config().get("observability", {})
+    )
 
 
 # ---------------------------------------------------------------------------

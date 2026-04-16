@@ -187,7 +187,8 @@ def websearch(query: str) -> str:
 
     try:
         with DDGS() as ddgs:
-            results = ddgs.text(query, max_results=config.WEBSEARCH_MAX_RESULTS)
+            from utils.user_config import get_search_config
+            results = ddgs.text(query, max_results=get_search_config().get("webMaxResults", 8))
             if results:
                 return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
             return TE.SEARCH_NO_RESULTS
@@ -203,7 +204,8 @@ def wiki_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
-        search_docs = WikipediaLoader(query=query, load_max_docs=config.WIKI_MAX_DOCS).load()
+        from utils.user_config import get_search_config
+        search_docs = WikipediaLoader(query=query, load_max_docs=get_search_config().get("wikiMaxDocs", 5)).load()
         formatted_search_docs = "\n\n---\n\n".join(
             [
                 f'<Document source="{doc.metadata["source"]}" page="{doc.metadata.get("page", "")}"/>\n{doc.page_content}\n</Document>'
@@ -222,9 +224,10 @@ def arvix_search(query: str) -> str:
     Args:
         query: The search query."""
     try:
+        from utils.user_config import get_search_config
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(
-                lambda: ArxivLoader(query=query, load_max_docs=config.ARXIV_MAX_DOCS).load()
+                lambda: ArxivLoader(query=query, load_max_docs=get_search_config().get("arxivMaxDocs", 3)).load()
             )
             search_docs = future.result(timeout=config.ARXIV_TIMEOUT_SECONDS)
         formatted_search_docs = "\n\n---\n\n".join(

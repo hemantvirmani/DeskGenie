@@ -13,7 +13,7 @@ import time
 from typing import Any, Optional, Dict
 from contextlib import contextmanager
 
-from app import config
+from utils.user_config import get_observability_config
 from resources.log_strings import LangfuseMessages as LF
 
 # Langfuse will be imported conditionally
@@ -43,10 +43,11 @@ class LangfuseTracker:
     def __init__(self):
         """Initialize Langfuse client if not already initialized."""
         if self._client is None and LANGFUSE_AVAILABLE:
-            public_key = config.LANGFUSE_PUBLIC_KEY
-            secret_key = config.LANGFUSE_SECRET_KEY
-            host = config.LANGFUSE_HOST
-            self._project_name = config.LANGFUSE_PROJECT_NAME
+            lf_cfg = get_observability_config().get("langfuse", {})
+            public_key = lf_cfg.get("publicKey", "")
+            secret_key = lf_cfg.get("secretKey", "")
+            host = lf_cfg.get("host", "https://us.cloud.langfuse.com")
+            self._project_name = lf_cfg.get("projectName", "Desktop-Agent")
 
             if public_key and secret_key:
                 self._client = Langfuse(

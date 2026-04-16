@@ -9,7 +9,7 @@ from resources.log_strings import UtilityMessages as UM
 
 
 def retry_with_backoff(
-    max_retries: int = config.MAX_RETRIES,
+    max_retries: int = None,
     initial_delay: float = config.INITIAL_RETRY_DELAY,
     backoff_factor: float = config.RETRY_BACKOFF_FACTOR,
     exceptions: tuple = (requests.RequestException,)
@@ -26,21 +26,23 @@ def retry_with_backoff(
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
+            from utils.user_config import get_agent_config
+            _max_retries = max_retries if max_retries is not None else get_agent_config().get("maxRetries", 3)
             delay = initial_delay
             last_exception = None
 
-            for attempt in range(max_retries + 1):
+            for attempt in range(_max_retries + 1):
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
                     last_exception = e
-                    if attempt < max_retries:
-                        print(UM.RETRY_FAILED.format(attempt=attempt + 1, max_retries=max_retries, error=e))
+                    if attempt < _max_retries:
+                        print(UM.RETRY_FAILED.format(attempt=attempt + 1, max_retries=_max_retries, error=e))
                         print(UM.RETRY_WAITING.format(delay=delay))
                         time.sleep(delay)
                         delay *= backoff_factor
                     else:
-                        print(UM.RETRY_EXHAUSTED.format(max_retries=max_retries))
+                        print(UM.RETRY_EXHAUSTED.format(max_retries=_max_retries))
 
             # Re-raise the last exception if all retries failed
             raise last_exception

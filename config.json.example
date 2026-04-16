@@ -112,6 +112,29 @@
     }
   },
 
+  "agent": {
+    "$comment": "Agent behaviour tuning.",
+    "maxSteps": 25,
+    "$comment_maxSteps": "Maximum tool-call steps per question before the agent is forced to stop.",
+    "maxRetries": 3,
+    "$comment_maxRetries": "Maximum LLM retry attempts on 504 / empty-response errors.",
+    "search": {
+      "$comment": "Result limits for search tools.",
+      "webMaxResults": 8,
+      "wikiMaxDocs": 5,
+      "arxivMaxDocs": 3
+    }
+  },
+  "observability": {
+    "$comment": "Langfuse tracing — get keys at https://cloud.langfuse.com",
+    "langfuse": {
+      "publicKey": "",
+      "secretKey": "",
+      "host": "https://us.cloud.langfuse.com",
+      "$comment_host": "Change to your self-hosted Langfuse URL if applicable.",
+      "projectName": "Desktop-Agent"
+    }
+  },
   "logging": {
     "$comment": "Python log level: DEBUG | INFO | WARNING | ERROR | CRITICAL",
     "level": "INFO"
