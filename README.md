@@ -472,13 +472,10 @@ DeskGenie retains full GAIA benchmark capabilities. To run benchmark evaluations
 
 ```bash
 # Run all benchmark questions
-python app/main.py --test all
+python app/main.py --gaia
 
-# Run default filter (quick test)
-python app/main.py --test
-
-# Run specific question indices
-python app/main.py --test 2,4,6
+# Run specific question indices (1-based)
+python app/main.py --gaia 2,4,6
 
 # Run a single query (same as UI chat)
 python app/main.py --query "What is the capital of France?"

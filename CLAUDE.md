@@ -16,8 +16,8 @@ python app/main.py
 # Run a single query (CLI)
 python app/main.py --query "your query here"
 
-# Run GAIA benchmark (default filter)
-python app/main.py --test
+# Run GAIA benchmark (all questions)
+python app/main.py --gaia
 
 # Check all Python files compile
 python -m compileall . -q
@@ -40,7 +40,7 @@ python desktop/app.py
 
 # CLI mode — query via desktop entry point
 python desktop/app.py --query "your query here"
-python desktop/app.py --test
+python desktop/app.py --gaia
 
 # Enable DevTools (Edge inspector alongside the window)
 DESKGENIE_DEBUG=1 python desktop/app.py
@@ -76,7 +76,7 @@ Tools (tools/desktop_tools.py, tools/custom_tools.py)
 ### Key flows
 
 - **Async chat**: POST `/api/chat` → returns `task_id` → frontend polls `/api/task/{id}` for result, streams logs via SSE at `/api/task/{id}/logs/stream`.
-- **Sync chat**: POST `/api/chat/sync` (used by CLI/benchmark).
+- **Benchmark easter egg**: type `/gaia` in chat (all questions) or `/gaia 1,3,5` (specific 1-based indices). CLI equivalent: `--gaia` / `--gaia 1,3,5`.
 - **Agent loop**: LangGraphAgent builds a LangGraph state machine. State tracks `question`, `messages`, `answer`, `step_count`, `file_name`. Max 25 steps per iteration, recursion limit 100.
 
 ### Important files
@@ -110,19 +110,19 @@ Tools (tools/desktop_tools.py, tools/custom_tools.py)
 - Private methods prefixed with `_underscore`. Constants in `UPPER_SNAKE_CASE`. Classes in `PascalCase`.
 - Public functions get Google-style docstrings (Args, Returns, Raises). Private functions get a one-liner.
 - All agents implement the `__call__(question, file_name)` interface.
-- Configuration constants live in `app/config.py` only.
+- Internal engine constants (timeouts, retry limits, ports) live in `app/config.py`. User-facing settings (LLM provider/keys, MCP servers, agent tuning, observability) live in `config.json`.
 
-## Environment Variables
+## Configuration
 
-Required:
-- `GOOGLE_API_KEY` — Google Gemini API key (from aistudio.google.com)
+All user-facing settings live in `config.json` (platform config dir — Windows: `%LOCALAPPDATA%\DeskGenie\config.json`). See `config.json.example` at the repo root for the full schema. Key sections:
 
-Optional:
-- `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` — observability tracing
-- `DESKGENIE_OUTPUT_DIR` — output directory (default: `~/Desktop_Agent_Output`)
-- `HOST` / `PORT` — server binding (default: `0.0.0.0:8000`)
-
-See `.env.example` for the full list. User-specific folder aliases and preferences go in the platform config dir (Windows: `%LOCALAPPDATA%\DeskGenie\config.json`).
+- `llm` — active provider, API keys, model names, temperature, timeout
+- `mcpServers` — MCP server definitions (same schema as Claude Code `settings.json`)
+- `agent` — maxSteps, maxRetries, search result limits
+- `observability.langfuse` — Langfuse tracing keys
+- `logging.level` — Python log level (DEBUG/INFO/WARNING/ERROR)
+- `folder_aliases` — short names resolved in natural language commands
+- `preferences` — default output dir, image quality, PDF DPI
 
 ## Multi-Model Architecture
 

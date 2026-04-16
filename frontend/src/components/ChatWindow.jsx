@@ -147,7 +147,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
     // Easter egg: /gaia [optional comma-separated indices]
     if (trimmed.toLowerCase().startsWith('/gaia')) {
       const rest = trimmed.slice(5).trim()
-      if (rest === '') {
+      if (rest === '' || rest.toLowerCase() === 'all') {
         handleRunBenchmark(null)
       } else {
         const indices = rest.split(',')

@@ -55,7 +55,7 @@ _logging.basicConfig(level=_get_log_level())
 # ---------------------------------------------------------------------------
 # 4. Detect mode
 # ---------------------------------------------------------------------------
-_is_cli: bool = '--query' in sys.argv or '--test' in sys.argv
+_is_cli: bool = '--query' in sys.argv or '--gaia' in sys.argv
 
 # ---------------------------------------------------------------------------
 # 4. Windows console allocation for CLI mode inside a windowed exe
@@ -74,7 +74,7 @@ if _is_cli and _is_frozen and sys.platform == 'win32':
 # CLI mode
 # ---------------------------------------------------------------------------
 def _run_cli() -> None:
-    """Delegate to app/main.py CLI handling (--query and --test)."""
+    """Delegate to app/main.py CLI handling (--query and --gaia)."""
     from utils.log_streamer import set_global_logger, ConsoleLogger
     set_global_logger(ConsoleLogger(task_id='cli'))
 

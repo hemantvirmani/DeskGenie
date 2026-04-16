@@ -74,7 +74,7 @@ class AppOptions:
     """Options parsed from command-line arguments."""
     run_mode: RunMode
     test_query: Optional[str] = None  # For --query
-    test_filter: Optional[Tuple[int, ...]] = None  # For --test/--testall
+    test_filter: Optional[Tuple[int, ...]] = None  # For --gaia
     error: Optional[str] = None  # Parsing error message
 
 
@@ -124,8 +124,8 @@ def _parse_cli_args() -> AppOptions:
     """
     parser = argparse.ArgumentParser(description="Run the agent application.")
     parser.add_argument(
-        "--test", type=str, nargs='?', const='default',
-        help="Run GAIA benchmark. Use '--test all' for all questions, '--test' for default filter, or '--test 2,4,6' for specific questions."
+        "--gaia", type=str, nargs='?', const='all',
+        help="Run GAIA benchmark. '--gaia' or '--gaia all' runs every question; '--gaia 2,4,6' runs specific 1-based indices."
     )
     parser.add_argument(
         "--query", type=str,
@@ -140,19 +140,17 @@ def _parse_cli_args() -> AppOptions:
             test_query=args.query
         )
 
-    # Handle --test (GAIA benchmark mode)
-    if args.test:
+    # Handle --gaia (GAIA benchmark mode)
+    if args.gaia is not None:
         test_filter = None
-        if args.test.lower() == 'all':
-            test_filter = None  # None means all questions
-        else:
+        if args.gaia.lower() != 'all':
             try:
                 # User provides 1-based indices, convert to 0-based
-                test_filter = tuple(int(idx.strip()) - 1 for idx in args.test.split(','))
+                test_filter = tuple(int(idx.strip()) - 1 for idx in args.gaia.split(','))
             except ValueError:
                 return AppOptions(
                     run_mode=RunMode.CLI,
-                    error=f"Invalid --test value '{args.test}'. Use 'all' to run every question, or comma-separated 1-based indices (e.g., 1,2,3)."
+                    error=f"Invalid --gaia value '{args.gaia}'. Use '--gaia' for all questions, or comma-separated 1-based indices (e.g., 1,2,3)."
                 )
 
         return AppOptions(
@@ -195,7 +193,7 @@ def main() -> None:
         # Single query mode (--query)
         run_single_query(options.test_query)
 
-    else: # GAIA benchmark mode (--test or --testall)
+    else: # GAIA benchmark mode (--gaia)
         filter_desc = len(options.test_filter) if options.test_filter else 'ALL'
         print(CLI.RUNNING_BENCHMARK.format(count=filter_desc))
 
