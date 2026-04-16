@@ -1,7 +1,9 @@
 """MCP (Model Context Protocol) tool loader.
 
-Loads LangChain-compatible tools from all configured MCP servers defined in config.MCP_SERVERS.
-Adding a new MCP server requires only a single config entry — tools are auto-discovered.
+Loads LangChain-compatible tools from all configured MCP servers defined in
+the ``mcpServers`` section of config.json.
+Adding a new MCP server requires only a single config.json entry — tools are
+auto-discovered at startup.
 """
 
 import asyncio
@@ -18,7 +20,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 import langchain_mcp_adapters.sessions as _mcp_sessions
 from mcp.client.stdio import stdio_client as _orig_stdio_client
 
-from app import config
+from utils.user_config import get_mcp_servers
 from resources.ui_strings import AgentStrings as S
 
 logger = logging.getLogger(__name__)
@@ -51,9 +53,12 @@ def _build_server_configs() -> dict:
       get_default_environment() filters env vars and drops custom ones
       like HOMEASSISTANT_URL).
     - Strips DeskGenie-specific keys (e.g. "tools") not recognized by the library.
+    - Merges any ``env`` block from the server config on top of os.environ so
+      that secrets stored in config.json (e.g. HOMEASSISTANT_TOKEN) are passed
+      through even when they are not set as system environment variables.
     """
     servers = {}
-    for name, cfg in config.MCP_SERVERS.items():
+    for name, cfg in get_mcp_servers().items():
         cfg = {k: v for k, v in cfg.items() if k not in _DESKGENIE_KEYS}
         if cfg.get("transport") == "stdio":
             custom_env = cfg.get("env", {})
@@ -68,7 +73,7 @@ def _build_tool_whitelist() -> set:
     Returns an empty set if no server specifies a whitelist (meaning include all).
     """
     whitelisted: set = set()
-    for cfg in config.MCP_SERVERS.values():
+    for cfg in get_mcp_servers().values():
         if "tools" in cfg:
             whitelisted.update(cfg["tools"])
     return whitelisted
@@ -106,7 +111,7 @@ def _add_sync_wrapper(async_tool: StructuredTool, server_key: str) -> Structured
 def _build_tool_to_server_map() -> dict:
     """Map each whitelisted tool name to its server key for log display."""
     mapping = {}
-    for server_key, cfg in config.MCP_SERVERS.items():
+    for server_key, cfg in get_mcp_servers().items():
         for tool_name in cfg.get('tools', []):
             mapping[tool_name] = server_key
     return mapping
@@ -114,7 +119,8 @@ def _build_tool_to_server_map() -> dict:
 
 async def _load_tools_async() -> List:
     """Async helper that connects to all configured MCP servers and retrieves their tools."""
-    if not config.MCP_SERVERS:
+    mcp_servers = get_mcp_servers()
+    if not mcp_servers:
         return []
     client = MultiServerMCPClient(_build_server_configs())
     raw_tools = await client.get_tools()
@@ -128,7 +134,7 @@ async def _load_tools_async() -> List:
         _add_sync_wrapper(t, tool_to_server.get(t.name, 'mcp'))
         for t in raw_tools
     ]
-    logger.info(S.MCP_TOOLS_LOADED.format(count=len(tools), servers=len(config.MCP_SERVERS)))
+    logger.info(S.MCP_TOOLS_LOADED.format(count=len(tools), servers=len(mcp_servers)))
     return tools
 
 
@@ -145,7 +151,7 @@ def get_mcp_tools_list() -> List:
         List of LangChain tools auto-discovered from MCP servers.
         Returns empty list if no servers configured or if loading fails.
     """
-    if not config.MCP_SERVERS:
+    if not get_mcp_servers():
         logger.debug(S.MCP_TOOLS_NONE_CONFIGURED)
         return []
 

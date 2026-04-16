@@ -261,12 +261,14 @@ def youtube_tool(youtube_url: str, question: str = "") -> str:
             return S.YOUTUBE_TRANSCRIPT_ERROR.format(url=youtube_url, error=e)
     else:
         try:
-            api_key = config.GOOGLE_API_KEY
+            from utils.user_config import get_provider_config
+            google_cfg = get_provider_config("google")
+            api_key = google_cfg.get("apiKey", "")
             if not api_key:
                 return TE.API_KEY_NOT_SET
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
-                model=config.GEMINI_MODEL_2_5,
+                model=google_cfg.get("visionModel", "gemini-2.5-flash"),
                 contents=[types.Content(
                     parts=[
                         types.Part(file_data=types.FileData(file_uri=youtube_url)),
@@ -274,8 +276,8 @@ def youtube_tool(youtube_url: str, question: str = "") -> str:
                     ]
                 )],
                 config=types.GenerateContentConfig(
-                    temperature=config.GEMINI_TEMPERATURE,
-                    max_output_tokens=config.GEMINI_MAX_TOKENS,
+                    temperature=google_cfg.get("visionTemperature", 0),
+                    max_output_tokens=google_cfg.get("maxOutputTokens", 1024),
                 )
             )
             return response.text
@@ -414,7 +416,9 @@ def analyze_image(question: str, file_name: str) -> str:
     """
 
     try:
-        api_key = config.GOOGLE_API_KEY
+        from utils.user_config import get_provider_config
+        google_cfg = get_provider_config("google")
+        api_key = google_cfg.get("apiKey", "")
         if not api_key:
             return TE.API_KEY_NOT_SET
 
@@ -427,7 +431,7 @@ def analyze_image(question: str, file_name: str) -> str:
 
         # Use Gemini vision model with image data
         response = client.models.generate_content(
-            model=config.GEMINI_MODEL_2_5,
+            model=google_cfg.get("visionModel", "gemini-2.5-flash"),
             contents=[types.Content(
                 parts=[
                     types.Part(inline_data=types.Blob(
@@ -438,8 +442,8 @@ def analyze_image(question: str, file_name: str) -> str:
                 ]
             )],
             config=types.GenerateContentConfig(
-                temperature=config.GEMINI_TEMPERATURE,
-                max_output_tokens=config.GEMINI_MAX_TOKENS,
+                temperature=google_cfg.get("visionTemperature", 0),
+                max_output_tokens=google_cfg.get("maxOutputTokens", 1024),
             )
         )
         return response.text
@@ -623,13 +627,15 @@ def ask_advisor(question: str) -> str:
         str: A concise recommendation from the advisor model.
     """
     try:
-        api_key = config.GOOGLE_API_KEY
+        from utils.user_config import get_provider_config
+        google_cfg = get_provider_config("google")
+        api_key = google_cfg.get("apiKey", "")
         if not api_key:
             return TE.API_KEY_NOT_SET
 
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model=config.GEMINI_MODEL_3_1,
+            model=google_cfg.get("advisorModel", "gemini-2.5-flash"),
             contents=question,
             config=types.GenerateContentConfig(
                 system_instruction=(
@@ -638,7 +644,7 @@ def ask_advisor(question: str) -> str:
                     "Give a concise, actionable recommendation in 2-3 sentences. "
                     "Do not solve the full problem — guide the next step only."
                 ),
-                temperature=config.GEMINI_TEMPERATURE,
+                temperature=google_cfg.get("visionTemperature", 0),
             )
         )
         return response.text

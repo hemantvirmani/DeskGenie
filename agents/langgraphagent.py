@@ -26,6 +26,7 @@ from tools.custom_tools import get_custom_tools_list
 from resources.system_prompt import get_system_prompt
 from utils.utils import cleanup_answer, extract_text_from_content, get_default_model_name
 from app import config
+from utils.user_config import get_active_provider, get_llm_config, get_provider_config
 
 from tools.desktop_tools import get_desktop_tools_list
 from tools.mcp_tools import get_mcp_tools_list
@@ -64,8 +65,9 @@ class LangGraphAgent:
         """
         self.logger = logger or ConsoleLogger()
 
-        # Validate API keys
-        if not config.GOOGLE_API_KEY:
+        # Validate API key for the active provider
+        _active = get_active_provider()
+        if _active == MP.GOOGLE and not get_provider_config(MP.GOOGLE).get("apiKey"):
             self.logger.warning(S.GOOGLE_API_KEY_NOT_FOUND)
 
         self.tools = self._get_all_tools()
@@ -86,46 +88,52 @@ class LangGraphAgent:
 
         return tools
 
-    def _create_llm_client(self, model_provider: str = config.DEFAULT_MODEL_PROVIDER):
+    def _create_llm_client(self, model_provider: str = None):
         """Create and return the LLM client with tools bound based on the model provider."""
+        llm_cfg = get_llm_config()
+        model_provider = model_provider or get_active_provider()
+        temperature: float = llm_cfg.get("agentTemperature", 0.0)
+        timeout: int = llm_cfg.get("callTimeout", 300)
 
         if model_provider == MP.GOOGLE:
-
+            google_cfg = get_provider_config(MP.GOOGLE)
             return ChatGoogleGenerativeAI(
                 model=get_default_model_name(model_provider),
-                temperature=config.AGENT_LLM_TEMPERATURE,
-                api_key=config.GOOGLE_API_KEY,
-                timeout=config.LLM_CALL_TIMEOUT
+                temperature=temperature,
+                api_key=google_cfg.get("apiKey", ""),
+                timeout=timeout
                 ).bind_tools(self.tools)
 
         elif model_provider == MP.HUGGINGFACE:
-
+            hf_cfg = get_provider_config(MP.HUGGINGFACE)
             llmObject = HuggingFaceEndpoint(  # type: ignore[call-arg]
-                repo_id=config.HUGGINGFACE_LLAMA_MODEL,  # type: ignore[call-arg]
+                repo_id=hf_cfg.get("model", "meta-llama/Llama-3.1-8B-Instruct"),  # type: ignore[call-arg]
                 task="text-generation",  # type: ignore[call-arg]
                 max_new_tokens=512,  # type: ignore[call-arg]
                 temperature=0.7,  # type: ignore[call-arg]
                 do_sample=False,  # type: ignore[call-arg]
                 repetition_penalty=1.03,  # type: ignore[call-arg]
-                huggingfacehub_api_token=config.HUGGINGFACE_API_KEY  # type: ignore[call-arg]
+                huggingfacehub_api_token=hf_cfg.get("apiKey", "")  # type: ignore[call-arg]
             )
             return ChatHuggingFace(llm=llmObject).bind_tools(self.tools)
 
         elif model_provider == MP.OLLAMA:
             # Ollama runs locally - ensure Ollama server is running with the model pulled
             # e.g., `ollama serve` then `ollama pull qwen2.5:14b-instruct`
+            ollama_cfg = get_provider_config(MP.OLLAMA)
             return ChatOllama(  # type: ignore[call-arg]
-                model=config.OLLAMA_QWEN_MODEL,
-                base_url=config.OLLAMA_BASE_URL,
-                temperature=config.AGENT_LLM_TEMPERATURE,
+                model=ollama_cfg.get("model", "qwen3.5:2b"),
+                base_url=ollama_cfg.get("baseUrl", "http://127.0.0.1:11434"),
+                temperature=temperature,
                 num_ctx=4096,  # Context window size
             ).bind_tools(self.tools)
 
         elif model_provider == MP.ANTHROPIC:
+            anthropic_cfg = get_provider_config(MP.ANTHROPIC)
             return ChatAnthropic(  # type: ignore[call-arg]
                 model=get_default_model_name(model_provider),
-                api_key=config.ANTHROPIC_API_KEY,  # type: ignore[call-arg]
-                temperature=config.AGENT_LLM_TEMPERATURE  # type: ignore[call-arg]
+                api_key=anthropic_cfg.get("apiKey", ""),  # type: ignore[call-arg]
+                temperature=temperature  # type: ignore[call-arg]
             ).bind_tools(self.tools)
 
         raise ValueError(f"Unsupported model provider: {model_provider}")

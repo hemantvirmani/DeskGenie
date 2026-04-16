@@ -47,6 +47,10 @@ def _cleanup():
 # Import configuration
 from app import config
 
+# Apply log level from config.json (before any other logging calls)
+from utils.user_config import get_log_level as _get_log_level
+logging.basicConfig(level=_get_log_level())
+
 # Import benchmark runner
 from runners.question_runner import run_gaia_questions
 
@@ -139,9 +143,7 @@ def _parse_cli_args() -> AppOptions:
     # Handle --test (GAIA benchmark mode)
     if args.test:
         test_filter = None
-        if args.test == 'default':
-            test_filter = config.DEFAULT_TEST_FILTER
-        elif args.test.lower() == 'all':
+        if args.test.lower() == 'all':
             test_filter = None  # None means all questions
         else:
             try:
@@ -150,7 +152,7 @@ def _parse_cli_args() -> AppOptions:
             except ValueError:
                 return AppOptions(
                     run_mode=RunMode.CLI,
-                    error=f"Invalid test indices '{args.test}'. Use 'all', or comma-separated question numbers (e.g., 1,2,3)"
+                    error=f"Invalid --test value '{args.test}'. Use 'all' to run every question, or comma-separated 1-based indices (e.g., 1,2,3)."
                 )
 
         return AppOptions(

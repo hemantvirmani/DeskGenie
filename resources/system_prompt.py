@@ -1,4 +1,4 @@
-﻿from app import config as _config
+﻿from utils.utils import get_default_model_name as _get_default_model_name
 
 _SYSTEM_PROMPT_TEMPLATE = """You are an intelligent desktop assistant that helps users with file operations, information retrieval, and everyday tasks.
 
@@ -106,7 +106,7 @@ def get_system_prompt() -> str:
     Returns:
         str: The fully resolved system prompt string.
     """
-    return _SYSTEM_PROMPT_TEMPLATE.replace("{model}", _config.GEMINI_MODEL_2_5)
+    return _SYSTEM_PROMPT_TEMPLATE.replace("{model}", _get_default_model_name())
 
 
 # Backward-compat alias for any code that imports SYSTEM_PROMPT directly.

@@ -1,0 +1,139 @@
+{
+  "$comment": [
+    "DeskGenie configuration file.",
+    "",
+    "LOCATION (first found wins):",
+    "  Windows : %LOCALAPPDATA%\\DeskGenie\\config.json",
+    "  macOS   : ~/Library/Application Support/DeskGenie/config.json",
+    "  Linux   : ~/.local/share/DeskGenie/config.json",
+    "  Fallback: config.json next to DeskGenie.exe / python entry point",
+    "",
+    "Copy this file to the location above, rename it config.json,",
+    "and fill in your API keys and preferences.",
+    "",
+    "DO NOT commit your real config.json to version control —",
+    "it contains API keys and personal tokens."
+  ],
+
+  "llm": {
+    "$comment": "LLM settings. Only the activeProvider section is used for the agent loop.",
+
+    "activeProvider": "google",
+
+    "$comment_activeProvider": [
+      "Which provider drives the main agent loop.",
+      "One of: 'google' | 'anthropic' | 'ollama' | 'huggingface'"
+    ],
+
+    "agentTemperature": 0.0,
+    "$comment_agentTemperature": "Agent response temperature (0 = deterministic). Applied to all providers.",
+
+    "callTimeout": 300,
+    "$comment_callTimeout": "Seconds to wait for a single LLM API call before timing out.",
+
+    "providers": {
+
+      "google": {
+        "$comment": "Google Gemini — get key at https://aistudio.google.com",
+        "apiKey": "YOUR_GOOGLE_API_KEY_HERE",
+        "agentModel": "gemini-2.5-flash",
+        "$comment_agentModel": "Main agent model (used when activeProvider = 'google').",
+        "visionModel": "gemini-2.5-flash",
+        "$comment_visionModel": "Model used by image/video analysis tools (always Google regardless of activeProvider).",
+        "advisorModel": "gemini-3.1-pro-preview",
+        "$comment_advisorModel": "Model used by the advisor tool for hard reasoning problems.",
+        "visionTemperature": 0,
+        "$comment_visionTemperature": "Temperature for vision/analysis/advisor calls. Keep 0 for determinism.",
+        "maxOutputTokens": 1024,
+        "$comment_maxOutputTokens": "Max tokens returned by vision/analysis calls."
+      },
+
+      "anthropic": {
+        "$comment": "Anthropic Claude — get key at https://console.anthropic.com",
+        "apiKey": "YOUR_ANTHROPIC_API_KEY_HERE",
+        "model": "claude-sonnet-4-5-20250929"
+      },
+
+      "ollama": {
+        "$comment": "Ollama (local) — run `ollama serve` and pull your model first.",
+        "baseUrl": "http://127.0.0.1:11434",
+        "model": "qwen3.5:2b"
+      },
+
+      "huggingface": {
+        "$comment": "HuggingFace Inference API — get token at https://huggingface.co/settings/tokens",
+        "apiKey": "YOUR_HUGGINGFACE_TOKEN_HERE",
+        "model": "meta-llama/Llama-3.1-8B-Instruct"
+      }
+    }
+  },
+
+  "mcpServers": {
+    "$comment": [
+      "MCP server configuration. Same structure as Claude Code settings.json.",
+      "Each key is a server name. Supported transports: 'stdio' | 'sse'.",
+      "Set to {} to disable all MCP servers.",
+      "",
+      "stdio servers: 'command' + 'args' launch a local process.",
+      "  Use 'env' to pass secrets (merged on top of os.environ).",
+      "  Use 'tools' to whitelist specific tools (omit to expose all).",
+      "",
+      "sse servers: 'url' points to a running HTTP/SSE MCP endpoint.",
+      "  Example: { 'transport': 'sse', 'url': 'http://localhost:3000/sse' }"
+    ],
+
+    "home_assistant": {
+      "$comment": "Home Assistant via ha-mcp. Requires `uvx` installed (part of uv).",
+      "transport": "stdio",
+      "command": "uvx",
+      "args": ["ha-mcp@latest"],
+      "env": {
+        "HOMEASSISTANT_URL": "http://YOUR_HA_IP:8123",
+        "HOMEASSISTANT_TOKEN": "YOUR_HA_LONG_LIVED_TOKEN"
+      },
+      "$comment_tools": [
+        "Whitelist keeps the tool list manageable.",
+        "Remove the 'tools' key entirely to expose every tool from this server."
+      ],
+      "tools": [
+        "ha_get_state",
+        "ha_get_states",
+        "ha_call_service",
+        "ha_search_entities",
+        "ha_get_overview",
+        "ha_config_list_areas",
+        "ha_get_history",
+        "ha_bulk_control",
+        "ha_get_entity",
+        "ha_list_services",
+        "ha_get_logbook",
+        "ha_restart"
+      ]
+    }
+  },
+
+  "logging": {
+    "$comment": "Python log level: DEBUG | INFO | WARNING | ERROR | CRITICAL",
+    "level": "INFO"
+  },
+
+  "folder_aliases": {
+    "$comment": [
+      "Short names you can use in chat instead of full paths.",
+      "Example: say 'list my prax folder' and DeskGenie resolves it.",
+      "Keys are case-insensitive."
+    ],
+    "prax": "C:/Users/YourName/Work/Praxis",
+    "finance": "C:/Users/YourName/Documents/Finance"
+  },
+
+  "preferences": {
+    "$comment": "Tool behaviour defaults.",
+    "default_output_dir": "downloads",
+    "$comment_default_output_dir": "Alias for where generated files are saved. Built-in aliases: downloads, desktop, documents, etc.",
+    "image_quality": 85,
+    "$comment_image_quality": "Default JPEG quality (1–100) for image conversion / compression tools.",
+    "pdf_dpi": 200,
+    "$comment_pdf_dpi": "Default DPI when converting PDF pages to images."
+  }
+}

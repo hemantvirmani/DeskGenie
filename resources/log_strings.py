@@ -146,6 +146,29 @@ class ConfigMessages:
     CONFIG_READ_ERROR = "[WARNING] Could not read config.json: {error}. Using default settings."
     CONFIG_PATH_INFO = "  Config location: {path}"
 
+    # Two-path fallback loader
+    CONFIG_NOT_FOUND_DEFAULT = (
+        "[CONFIG] config.json not found at default location: {path}\n"
+        "         Falling back to: {fallback}"
+    )
+    CONFIG_LOADED_FALLBACK = "[CONFIG] Loaded config.json from fallback location: {path}"
+    CONFIG_LOADED = "[CONFIG] Loaded config.json from: {path}"
+    CONFIG_NOT_FOUND_ANYWHERE = (
+        "[CONFIG] config.json not found in default location ({default}) or fallback ({fallback}).\n"
+        "         Using built-in defaults. Create config.json to customise settings.\n"
+        "         Example file: config.json.example in the DeskGenie folder."
+    )
+
+    # LLM config warnings
+    LLM_API_KEY_MISSING = (
+        "[CONFIG] Warning: API key for provider '{provider}' is empty in config.json.\n"
+        "         LLM calls will fail. Set llm.providers.{provider}.apiKey in config.json."
+    )
+    LLM_UNKNOWN_PROVIDER = "[CONFIG] Unknown LLM provider '{provider}'. Falling back to 'google'."
+
+    # Log level
+    LOG_LEVEL_INVALID = "[CONFIG] Invalid log level '{level}' in config.json. Using INFO."
+
 
 class LangfuseMessages:
     """Messages for Langfuse tracking operations."""

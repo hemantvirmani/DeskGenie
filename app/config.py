@@ -1,7 +1,14 @@
-﻿"""Configuration settings for Desktop AI Agent."""
+﻿"""Configuration settings for Desktop AI Agent.
+
+LLM settings, MCP servers, and log level have moved to config.json.
+Edit %LOCALAPPDATA%\\DeskGenie\\config.json (or the config.json next to the
+exe) to change those values.  See config.json.example for the full schema.
+
+This file now holds only internal engine constants that end-users do not
+need to touch: timeouts, retry logic, search limits, benchmark settings, etc.
+"""
 
 import os
-from resources.state_strings import ModelProviders
 
 # =============================================================================
 # Desktop Agent Configuration
@@ -23,7 +30,7 @@ TOOL_CATEGORIES = {
 }
 
 # =============================================================================
-# Configuration (Original)
+# Internal Engine Constants
 # =============================================================================
 
 AGENT_TIMEOUT_SECONDS = 180  # 3 minutes max per question
@@ -38,9 +45,6 @@ FETCH_TIMEOUT = 15
 SUBMIT_TIMEOUT = 60
 WEBPAGE_TIMEOUT = 30
 
-# Test Configuration
-DEFAULT_TEST_FILTER = (4, 7, 15)  # Q2, Q5, Q8, Q16
-
 # Display Configuration
 QUESTION_PREVIEW_LENGTH = 200  # Characters to show in question preview
 ERROR_MESSAGE_LENGTH = 100  # Characters to show in error messages
@@ -49,31 +53,8 @@ SEPARATOR_WIDTH = 60  # Width of separator lines
 # Search Tool Limits
 WEBSEARCH_MAX_RESULTS = 8   # DuckDuckGo results per query (was 5)
 WIKI_MAX_DOCS = 5            # Wikipedia docs per query (was 3)
-ARXIV_MAX_DOCS = 3           # ArXiv docs per query (unchanged)
+ARXIV_MAX_DOCS = 5           # ArXiv docs per query (unchanged)
 ARXIV_TIMEOUT_SECONDS = 30  # Max wait for ArXiv loader before giving up
-
-# Environment Variables
-GOOGLE_API_KEY = os.getenv("GOOGLE_DESKGENIE_KEY", "")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_DESKGENIE_KEY", "")
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACEHUB_DESKGENIE_TOKEN", "")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"))
-
-# Model Configuration
-GEMINI_MODEL_2_5 = "gemini-2.5-flash"
-GEMINI_TEMPERATURE = 0       # Temperature for vision/analysis/advisor tools (keep deterministic)
-AGENT_LLM_TEMPERATURE = 0.0  # Deterministic agent responses — more consistent on tool calls and precise answers
-GEMINI_MAX_TOKENS = 1024
-
-GEMINI_MODEL_3_1 = "gemini-3.1-pro-preview"
-
-OLLAMA_QWEN_MODEL = "qwen3.5:2b"
-HUGGINGFACE_LLAMA_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
-
-DEFAULT_MODEL_PROVIDER = ModelProviders.GOOGLE
-
-# LLM client timeout — increase for long-context calls (e.g. 16-question exam)
-LLM_CALL_TIMEOUT = 300  # seconds
 
 # Retry Configuration for 504 DEADLINE_EXCEEDED errors
 MAX_RETRIES = 3
@@ -91,38 +72,6 @@ INTER_QUESTION_PAUSE_SECONDS = 5  # Pause between questions in batch mode (0 to 
 
 # Scorer Configuration
 SCORER = "llm"  # Options: "llm" (Ollama LLM judge) | "generous" (rule-based matching)
-
-# =============================================================================
-# MCP Server Configuration
-# =============================================================================
-# Each entry: server_name → transport config
-# transport: "stdio" (local process) or "sse" (HTTP/SSE remote)
-# To disable all MCP servers, set MCP_SERVERS = {}
-MCP_SERVERS: dict = {
-    # Required env vars: HOMEASSISTANT_URL, HOMEASSISTANT_TOKEN
-    "home_assistant": {
-        "transport": "stdio",
-        "command": "uvx",
-        "args": ["ha-mcp@latest"],
-        # Optional whitelist: only expose these tools to the LLM.
-        # Remove the "tools" key entirely to expose all tools from this server.
-        # Keeping a focused subset prevents overwhelming Gemini with 90+ HA tools.
-        "tools": [
-            "ha_get_state",
-            "ha_get_states",
-            "ha_call_service",
-            "ha_search_entities",
-            "ha_get_overview",
-            "ha_config_list_areas",
-            "ha_get_history",
-            "ha_bulk_control",
-            "ha_get_entity",
-            "ha_list_services",
-            "ha_get_logbook",
-            "ha_restart",
-        ],
-    }
-}
 
 # =============================================================================
 # Langfuse Observability

@@ -8,7 +8,7 @@ if Ollama is unavailable or times out.
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from app import config
+from utils.user_config import get_provider_config
 from utils.generous_scorer import generous_question_scorer
 
 _JUDGE_SYSTEM = (
@@ -25,9 +25,10 @@ def _get_llm_client() -> ChatOllama:
     """Return the shared Ollama client, creating it on first call."""
     global _llm_client
     if _llm_client is None:
+        ollama_cfg = get_provider_config("ollama")
         _llm_client = ChatOllama(
-            model=config.OLLAMA_QWEN_MODEL,
-            base_url=config.OLLAMA_BASE_URL,
+            model=ollama_cfg.get("model", "qwen3.5:2b"),
+            base_url=ollama_cfg.get("baseUrl", "http://127.0.0.1:11434"),
             temperature=0,
         )
     return _llm_client

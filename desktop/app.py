@@ -46,7 +46,14 @@ except ImportError:
     pass  # python-dotenv not installed — silently skip
 
 # ---------------------------------------------------------------------------
-# 3. Detect mode
+# 3. Apply log level from config.json (before any logging calls)
+# ---------------------------------------------------------------------------
+import logging as _logging
+from utils.user_config import get_log_level as _get_log_level
+_logging.basicConfig(level=_get_log_level())
+
+# ---------------------------------------------------------------------------
+# 4. Detect mode
 # ---------------------------------------------------------------------------
 _is_cli: bool = '--query' in sys.argv or '--test' in sys.argv
 
