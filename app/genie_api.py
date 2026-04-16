@@ -23,12 +23,11 @@ from typing import Optional
 import uuid
 import os
 
-from app import config
 from agents.agents import MyGAIAAgents
 from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
-from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
+from utils.chat_storage import list_chats, save_chat, delete_chat
 from resources.ui_strings import APIStrings as S
 from resources.log_strings import APIMessages as API
 
@@ -92,11 +91,6 @@ class TaskStatus(BaseModel):
     result: Optional[str] = None
     error: Optional[str] = None
 
-class ToolInfo(BaseModel):
-    name: str
-    description: str
-    category: str
-
 class BenchmarkRequest(BaseModel):
     filter_indices: Optional[list[int]] = None  # e.g., [0, 2, 5] or None for all
 
@@ -128,22 +122,6 @@ class ChatGroup(BaseModel):
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok", "service": S.SERVICE_NAME}
-
-@app.get("/api/tools", response_model=list[ToolInfo])
-async def get_tools():
-    """Get list of available tools."""
-    tools = []
-
-    # Get tool categories from config
-    for category, tool_names in config.TOOL_CATEGORIES.items():
-        for tool_name in tool_names:
-            tools.append(ToolInfo(
-                name=tool_name,
-                description=f"{tool_name.replace('_', ' ').title()}",
-                category=category
-            ))
-
-    return tools
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
@@ -227,26 +205,6 @@ async def get_task_status(task_id: str):
         error=task["error"]
     )
 
-@app.post("/api/chat/sync")
-async def chat_sync(request: ChatRequest):
-    """Synchronous chat endpoint (waits for response)."""
-    try:
-        loop = asyncio.get_event_loop()
-
-        def execute_with_tracking():
-            with track_session("Chat_Sync", {
-                "has_file": request.file_name is not None,
-                "message_length": len(request.message),
-                "mode": "chat_sync"
-            }):
-                agent = MyGAIAAgents()
-                return agent(request.message, request.file_name)
-
-        result = await loop.run_in_executor(None, execute_with_tracking)
-        return {"status": "completed", "result": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 # --- Benchmark Endpoints ---
 
 @app.post("/api/benchmark", response_model=BenchmarkResponse)
@@ -320,15 +278,6 @@ async def run_predefined_task(task_id: str, filter_indices: list = None):
 
 # --- SSE Endpoints for Log Streaming ---
 
-@app.get("/api/task/{task_id}/logs")
-async def get_task_logs(task_id: str, since: float = 0):
-    """Get logs for a task (polling endpoint)."""
-    logger = LogStreamer.get(task_id)
-    if not logger:
-        return {"logs": []}
-    return {"logs": logger.get_logs(since=since)}
-
-
 @app.get("/api/task/{task_id}/logs/stream")
 async def stream_task_logs(task_id: str):
     """Stream logs for a task via SSE."""
@@ -385,14 +334,6 @@ async def get_all_chats():
     """Get all saved chat groups."""
     chats = list_chats()
     return {"chats": chats}
-
-@app.get("/api/chats/{chat_id}")
-async def get_chat_by_id(chat_id: str):
-    """Get a specific chat group by ID."""
-    chat = get_chat(chat_id)
-    if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
-    return chat
 
 @app.post("/api/chats")
 async def save_chat_group(chat: ChatGroup):

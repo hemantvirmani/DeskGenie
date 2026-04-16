@@ -14,15 +14,6 @@ need to touch: timeouts, retry logic, search limits, benchmark settings, etc.
 
 DESKTOP_APP_PORT = 41955       # Preferred port for the desktop app (uncommon to avoid conflicts)
 
-# Tool Categories (for UI organization)
-TOOL_CATEGORIES = {
-    "pdf": ["pdf_extract_pages", "pdf_delete_pages", "pdf_merge", "pdf_split", "pdf_to_images"],
-    "image": ["image_convert", "image_resize", "image_compress", "batch_convert_images"],
-    "file": ["batch_rename_files", "organize_files_by_type", "find_duplicate_files"],
-    "document": ["word_to_pdf", "extract_text_from_pdf", "ocr_image"],
-    "media": ["video_to_audio", "compress_video", "get_media_info"],
-}
-
 # =============================================================================
 # Internal Engine Constants
 # =============================================================================
