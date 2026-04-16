@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { X } from 'lucide-react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
 import { UIStrings } from '../uiStrings'
@@ -7,8 +6,6 @@ import { LogStrings, formatLog } from '../logStrings'
 
 function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLogsPanel, onNewChat }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [showCustomModal, setShowCustomModal] = useState(false)
-  const [customQuestions, setCustomQuestions] = useState('')
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -139,9 +136,29 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
   }
 
   const handleSendMessage = async (content) => {
-    // Check for /new command first (exact match, case-insensitive)
-    if (content.trim().toLowerCase() === '/new') {
+    const trimmed = content.trim()
+
+    // Check for /new command (exact match, case-insensitive)
+    if (trimmed.toLowerCase() === '/new') {
       if (onNewChat) onNewChat()
+      return
+    }
+
+    // Easter egg: /gaia [optional comma-separated indices]
+    if (trimmed.toLowerCase().startsWith('/gaia')) {
+      const rest = trimmed.slice(5).trim()
+      if (rest === '') {
+        handleRunBenchmark(null)
+      } else {
+        const indices = rest.split(',')
+          .map(s => parseInt(s.trim(), 10))
+          .filter(n => !isNaN(n) && n > 0)
+        if (indices.length === 0) {
+          if (addLog) addLog(LogStrings.ERROR_INVALID_INDICES, 'error')
+        } else {
+          handleRunBenchmark(indices)
+        }
+      }
       return
     }
 
@@ -255,22 +272,6 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
     }
   }
 
-  const handleCustomSubmit = () => {
-    const questions = customQuestions
-      .split(',')
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => !isNaN(n))
-
-    if (questions.length === 0) {
-      if (addLog) addLog(LogStrings.ERROR_INVALID_INDICES, 'error')
-      return
-    }
-
-    setShowCustomModal(false)
-    setCustomQuestions('')
-    handleRunBenchmark(questions)
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
@@ -294,60 +295,7 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
       <ChatInput
         onSendMessage={handleSendMessage}
         disabled={isLoading}
-        onRunPresets={() => handleRunBenchmark(null)}
-        onRunCustom={() => setShowCustomModal(true)}
       />
-
-      {/* Custom Questions Modal */}
-      {showCustomModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-white">
-                {UIStrings.CUSTOM_QUESTIONS_TITLE}
-              </h3>
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="p-1 hover:bg-slate-700 rounded"
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-            </div>
-
-            <div className="p-4">
-              <label className="block text-sm font-medium text-slate-400 mb-2">
-                {UIStrings.CUSTOM_QUESTIONS_LABEL}
-              </label>
-              <input
-                type="text"
-                value={customQuestions}
-                onChange={(e) => setCustomQuestions(e.target.value)}
-                placeholder={UIStrings.CUSTOM_QUESTIONS_PLACEHOLDER}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
-                autoFocus
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                {UIStrings.CUSTOM_QUESTIONS_EXAMPLE}
-              </p>
-            </div>
-
-            <div className="p-4 border-t border-slate-700 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCustomModal(false)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
-              >
-                {UIStrings.CANCEL_BUTTON}
-              </button>
-              <button
-                onClick={handleCustomSubmit}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
-              >
-                {UIStrings.RUN_BUTTON}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

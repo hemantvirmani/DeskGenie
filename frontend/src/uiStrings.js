@@ -20,18 +20,8 @@ export const UIStrings = {
   RENAME_CHAT: "Rename",
   DELETE_CHAT: "Delete",
 
-  // Custom Questions Modal
-  CUSTOM_QUESTIONS_TITLE: "Custom Question Numbers",
-  CUSTOM_QUESTIONS_LABEL: "Enter comma-separated question numbers (1-20)",
-  CUSTOM_QUESTIONS_PLACEHOLDER: "e.g., 1, 5, 10, 15",
-  CUSTOM_QUESTIONS_EXAMPLE: "Example: \"1, 3, 6\" will run questions at indices 0, 2, and 5.",
-  CANCEL_BUTTON: "Cancel",
-  RUN_BUTTON: "Run",
-
   // ChatInput.jsx strings
   INPUT_PLACEHOLDER: "Ask a question or give a command...",
-  GAIA_PRESETS_BUTTON: "GAIA: All Ques",
-  CUSTOM_GAIA_BUTTON: "GAIA: Custom Ques",
 
   // ChatWindow.jsx strings
   WELCOME_TITLE: "Welcome to DeskGenie!",
