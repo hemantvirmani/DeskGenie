@@ -82,6 +82,20 @@
       "  Example: { 'transport': 'sse', 'url': 'http://localhost:3000/sse' }"
     ],
 
+    "deskgenie-files": {
+      "$comment": [
+        "Built-in DeskGenie file-ops MCP server.",
+        "Exposes PDF, image, file management, document and media tools.",
+        "Replace 'python' with the full path to your venv Python if needed,",
+        "e.g. 'C:/path/to/DeskGenie/venv/Scripts/python.exe'.",
+        "Replace the arg with the absolute path to file_ops_server.py if",
+        "you launch DeskGenie from outside the project root."
+      ],
+      "transport": "stdio",
+      "command": "python",
+      "args": ["mcp_servers/file_ops_server.py"]
+    },
+
     "home_assistant": {
       "$comment": "Home Assistant via ha-mcp. Requires `uvx` installed (part of uv).",
       "transport": "stdio",
