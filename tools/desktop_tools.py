@@ -553,34 +553,11 @@ def get_desktop_tools_list() -> list:
     Returns:
         list: List of tool functions
     """
+    # NOTE: PDF, image, file management, document and media tools (17 tools) are
+    # served via the deskgenie-files MCP server (mcp_servers/file_ops_server.py)
+    # and loaded at runtime by tools/mcp_tools.py. They are no longer registered
+    # here to avoid duplicate tool definitions when the MCP server is active.
     return [
-        # PDF Tools
-        pdf_extract_pages,
-        pdf_delete_pages,
-        pdf_merge,
-        pdf_split,
-        pdf_to_images,
-
-        # Image Tools
-        process_image,
-        images_to_pdf,
-        batch_convert_images,
-
-        # File Management Tools
-        batch_rename_files,
-        organize_files_by_type,
-        find_duplicate_files,
-
-        # Document Tools
-        word_to_pdf,
-        extract_text_from_pdf,
-        ocr_image,
-
-        # Media Tools
-        video_to_audio,
-        compress_video,
-        get_media_info,
-
         # System Directory Tools
         get_directory,
         resolve_path,
