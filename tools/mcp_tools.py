@@ -8,14 +8,12 @@ auto-discovered at startup.
 
 import asyncio
 import contextlib
-import io
 import logging
 import os
 import traceback
-from contextlib import redirect_stderr
 from typing import List
 
-from langchain_core.tools import StructuredTool
+from langchain_core.tools import BaseTool, StructuredTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 import langchain_mcp_adapters.sessions as _mcp_sessions
 from mcp.client.stdio import stdio_client as _orig_stdio_client
@@ -27,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.asynccontextmanager
-async def _quiet_stdio_client(server, errlog=None):
+async def _quiet_stdio_client(server, **_kwargs):
     """Wrap stdio_client to suppress MCP server startup banners (sent to stderr).
 
     Uses os.devnull (a real file with fileno()) — required on Windows since
@@ -67,24 +65,12 @@ def _build_server_configs() -> dict:
     return servers
 
 
-def _build_tool_whitelist() -> set:
-    """Collect all whitelisted tool names across all servers.
-
-    Returns an empty set if no server specifies a whitelist (meaning include all).
-    """
-    whitelisted: set = set()
-    for cfg in get_mcp_servers().values():
-        if "tools" in cfg:
-            whitelisted.update(cfg["tools"])
-    return whitelisted
-
-
 def _friendly_server_name(server_key: str) -> str:
     """Convert a config key like 'home_assistant' to 'Home Assistant'."""
     return server_key.replace('_', ' ').title()
 
 
-def _add_sync_wrapper(async_tool: StructuredTool, server_key: str) -> StructuredTool:
+def _add_sync_wrapper(async_tool: BaseTool, server_key: str) -> StructuredTool:
     """Wrap an async-only MCP tool to support sync invocation and UI log emission."""
     from utils.log_streamer import get_global_logger
     display = S.MCP_TOOL_CALLED.format(
@@ -99,43 +85,55 @@ def _add_sync_wrapper(async_tool: StructuredTool, server_key: str) -> Structured
         get_global_logger().tool_call(display)
         return asyncio.run(arun(**kwargs))
 
+    if async_tool.args_schema is not None:
+        return StructuredTool(
+            name=async_tool.name,
+            description=async_tool.description,
+            args_schema=async_tool.args_schema,
+            func=run,
+            coroutine=arun,
+        )
     return StructuredTool(
         name=async_tool.name,
         description=async_tool.description,
-        args_schema=async_tool.args_schema,
         func=run,
         coroutine=arun,
     )
 
 
-def _build_tool_to_server_map() -> dict:
-    """Map each whitelisted tool name to its server key for log display."""
-    mapping = {}
-    for server_key, cfg in get_mcp_servers().items():
-        for tool_name in cfg.get('tools', []):
-            mapping[tool_name] = server_key
-    return mapping
-
-
 async def _load_tools_async() -> List:
-    """Async helper that connects to all configured MCP servers and retrieves their tools."""
-    mcp_servers = get_mcp_servers()
-    if not mcp_servers:
+    """Async helper that connects to each MCP server independently and retrieves tools.
+
+    Filters per-server so a whitelist on one server does not affect tools
+    from other servers.
+    """
+    server_configs = _build_server_configs()
+    if not server_configs:
         return []
-    client = MultiServerMCPClient(_build_server_configs())
-    raw_tools = await client.get_tools()
 
-    whitelist = _build_tool_whitelist()
-    if whitelist:
-        raw_tools = [t for t in raw_tools if t.name in whitelist]
+    all_tools: List = []
+    mcp_servers_cfg = get_mcp_servers()
 
-    tool_to_server = _build_tool_to_server_map()
-    tools = [
-        _add_sync_wrapper(t, tool_to_server.get(t.name, 'mcp'))
-        for t in raw_tools
-    ]
-    logger.info(S.MCP_TOOLS_LOADED.format(count=len(tools), servers=len(mcp_servers)))
-    return tools
+    for server_key, cfg in server_configs.items():
+        try:
+            client = MultiServerMCPClient({server_key: cfg})
+            server_tools = await client.get_tools()
+
+            # Apply this server's whitelist if one is configured
+            whitelist = mcp_servers_cfg.get(server_key, {}).get("tools")
+            if whitelist is not None:
+                whitelist_set = set(whitelist)
+                server_tools = [t for t in server_tools if t.name in whitelist_set]
+
+            for t in server_tools:
+                all_tools.append(_add_sync_wrapper(t, server_key))
+
+        except Exception as e:
+            logger.warning(S.MCP_TOOLS_FAILED.format(error=f"{server_key}: {e}"))
+            logger.warning(traceback.format_exc())
+
+    logger.info(S.MCP_TOOLS_LOADED.format(count=len(all_tools), servers=len(server_configs)))
+    return all_tools
 
 
 def _log_error(e: Exception) -> None:

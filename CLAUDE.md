@@ -136,3 +136,15 @@ The two layers are independent: switching the primary LLM has no effect on visio
 ## LLM Configuration
 
 Set via `config.json` → `llm`. Google provider has three model slots: `agentModel` (main loop), `visionModel` (image/video tools), `advisorModel` (hard-problem escalation). Temperature defaults to `0` (deterministic). LLM call timeout: 300s. Retry logic: 3 retries, 2s initial delay, 2× backoff (handles `504 DEADLINE_EXCEEDED`).
+
+## CLI Tool Usage — Always Verify Before Suggesting
+
+**Never suggest CLI commands for third-party tools (fastmcp, uvx, npx, etc.) from memory.** CLI APIs change between versions and remembered syntax is frequently wrong or outdated.
+
+Before suggesting any CLI command for an installed tool:
+
+1. Run `<tool> --help` or `<tool> <subcommand> --help` first
+2. Read the actual output to confirm flags and syntax
+3. Only then suggest the command
+
+This applies to: `fastmcp`, `uvx`, `npx`, `pyinstaller`, `langchain-cli`, and any other tool where the installed version may differ from training data.

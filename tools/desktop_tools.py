@@ -553,15 +553,14 @@ def get_desktop_tools_list() -> list:
     Returns:
         list: List of tool functions
     """
-    # NOTE: PDF, image, file management, document and media tools (17 tools) are
-    # served via the deskgenie-files MCP server (mcp_servers/file_ops_server.py)
-    # and loaded at runtime by tools/mcp_tools.py. They are no longer registered
-    # here to avoid duplicate tool definitions when the MCP server is active.
+    # NOTE: PDF, image, file management, document and media tools (17 tools) plus
+    # list_directory are served via the deskgenie-files MCP server
+    # (mcp_servers/file_ops_server.py) and loaded at runtime by tools/mcp_tools.py.
+    # They are no longer registered here to avoid duplicate tool definitions.
     return [
         # System Directory Tools
         get_directory,
         resolve_path,
-        list_directory,
 
         # User Config Tools (read-only)
         get_user_preference,
