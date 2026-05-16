@@ -4,9 +4,11 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 
-**Your Intelligent Desktop Assistant** - An AI-powered desktop agent that performs file operations, document manipulation, media processing, and more using natural language commands.
+**DeskGenie** lets you control your desktop through plain English — rename files, manipulate PDFs, convert images, extract audio, search the web, and run Python code, all from a single chat interface.
 
-> **Note**: This is a hobbyist open-source project for educational purposes. It demonstrates how to build AI agents that can interact with desktop environments using natural language.
+Under the hood: a LangGraph agent with multi-model support (Gemini, Claude, Ollama, HuggingFace), 25+ tools, and MCP server integration.
+
+> Started as a hobbyist project to learn agentic AI in practice. Now a tool I actually use daily and where I prototype ideas before writing about them.
 
 ## License
 
@@ -47,7 +49,7 @@ The script will:
 2. Create and activate a virtual environment
 3. Install all Python dependencies
 4. Install frontend (npm) dependencies
-5. Copy `config.json.example` to the correct platform-specific location and fill in your API key
+5. Copy `config.sample.json` to the correct platform-specific location as `config.json`
 
 ---
 
@@ -152,6 +154,7 @@ sudo apt-get install tesseract-ocr
 - **Format Conversion**: "Convert photo.heic to jpg" (supports HEIC, PNG, JPG, WebP, BMP, GIF, TIFF)
 - **Resize Images**: "Resize image.png to 800x600"
 - **Compress Images**: "Compress photo.jpg to under 500KB"
+- **Images to PDF**: "Combine these 5 photos into a single PDF"
 - **Batch Convert**: "Convert all images in Downloads to JPG"
 
 ### 📁 File Management
@@ -256,9 +259,10 @@ python app/main.py --query "Fetch https://example.com/api and summarize the resp
 ### Using Individual Tools
 
 ```python
-from desktop_tools import (
+from tools.desktop_tools import (
     pdf_extract_pages,
-    image_convert,
+    process_image,
+    images_to_pdf,
     video_to_audio,
     organize_files_by_type
 )
@@ -271,10 +275,17 @@ pdf_extract_pages.invoke({
 })
 
 # Convert HEIC to JPG
-image_convert.invoke({
+process_image.invoke({
+    "operation": "convert",
     "input_image": "photo.heic",
     "output_image": "photo.jpg",
     "quality": 85
+})
+
+# Combine images into a PDF
+images_to_pdf.invoke({
+    "image_files": "photo1.jpg, photo2.jpg, photo3.jpg",
+    "output_pdf": "combined.pdf"
 })
 
 # Extract audio from video
@@ -304,10 +315,9 @@ organize_files_by_type.invoke({
 ### Image Tools
 | Tool | Description |
 |------|-------------|
-| `image_convert` | Convert between formats (HEIC, PNG, JPG, WebP, etc.) |
-| `image_resize` | Resize images with aspect ratio control |
-| `image_compress` | Compress to target file size |
-| `batch_convert_images` | Convert all images in a directory |
+| `process_image` | Convert, resize, or compress an image (`operation`: `convert`/`resize`/`compress`) |
+| `images_to_pdf` | Combine one or more images into a single PDF |
+| `batch_convert_images` | Convert all images in a directory to a target format |
 
 ### File Management Tools
 | Tool | Description |
@@ -330,6 +340,38 @@ organize_files_by_type.invoke({
 | `compress_video` | Compress video to target size |
 | `get_media_info` | Get detailed media file information |
 
+## File-Ops MCP Server (optional)
+
+The file-ops tools (PDF, image, file management, document, media) are built into DeskGenie and available to the agent automatically. They are also exposed as a standalone MCP server so external clients like **Claude Desktop** can use them without running the full DeskGenie app.
+
+### Run the server
+
+```bash
+# From the project root, with the venv active
+python mcp_servers/file_ops_server.py
+```
+
+### Configure in an external MCP client
+
+Add this to your client's MCP config (e.g. Claude Desktop's `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "deskgenie-files": {
+      "command": "C:/path/to/DeskGenie/.venv/Scripts/python.exe",
+      "args": ["C:/path/to/DeskGenie/mcp_servers/file_ops_server.py"]
+    }
+  }
+}
+```
+
+Replace the paths with your actual venv Python and project location.
+
+> **Note:** You do NOT need this entry in DeskGenie's own `config.json` — the tools are already loaded directly by the agent.
+
+---
+
 ## Multi-Model Architecture
 
 DeskGenie uses different models for different tasks:
@@ -337,7 +379,7 @@ DeskGenie uses different models for different tasks:
 | Role | Model | Configurable? |
 |------|-------|---------------|
 | Agent reasoning & orchestration (executor) | Gemini 2.5 Flash (default), Claude Sonnet, HuggingFace, or Ollama | ✅ via `llm.activeProvider` in `config.json` |
-| Advisor (consulted when executor is stuck) | Google Gemini 3.1 Pro | ✅ via `llm.providers.google.advisorModel` in `config.json` |
+| Advisor (consulted when executor is stuck) | Gemini 2.5 Flash (default, configurable to a more powerful model) | ✅ via `llm.providers.google.advisorModel` in `config.json` |
 | Image analysis, video understanding, YouTube Q&A | Google Gemini 2.5 Flash | ✅ via `llm.providers.google.visionModel` in `config.json` |
 
 DeskGenie implements the **Advisor Strategy**: the fast executor model handles all tool calls and reasoning end-to-end. When stuck after multiple attempts, it can choose to escalate by calling the `ask_advisor` tool backed by Gemini 3.1 Pro, receives a concise recommendation, and continues autonomously. The advisor never takes control — it only guides the next step.
@@ -391,56 +433,67 @@ Then use them naturally in chat:
 ```
 DeskGenie/
 ├── app/
-│   ├── main.py             # Main application entry point (renamed from app.py)
-│   ├── config.py           # Configuration settings
-│   └── genie_api.py        # FastAPI backend (REST API)
+│   ├── main.py             # Main application entry point
+│   ├── config.py           # Internal engine constants (ports, timeouts, limits)
+│   └── genie_api.py        # FastAPI backend (REST API + SSE streaming)
 │
 ├── agents/
-│   ├── agents.py           # Agent wrapper/factory
-│   ├── langgraphagent.py   # Custom LangGraph agent
+│   ├── agents.py           # MyGAIAAgents wrapper — single public interface
+│   └── langgraphagent.py   # LangGraph agent with Gemini
 │
 ├── tools/
-│   ├── custom_tools.py     # Web search, analysis tools
-│   └── desktop_tools.py    # PDF, image, file, document, media tools
+│   ├── core/
+│   │   └── files.py        # Core file-ops logic (shared by desktop_tools + MCP server)
+│   ├── custom_tools.py     # Web search, Wikipedia, ArXiv, YouTube, HTTP, Python execution, ciphers
+│   ├── desktop_tools.py    # PDF, image, file, document, media tools (registered as agent tools)
+│   └── mcp_tools.py        # Loads tools from configured MCP servers at runtime
+│
+├── mcp_servers/
+│   └── file_ops_server.py  # Standalone MCP server exposing file-ops tools (optional, for external clients)
+│
+├── desktop/
+│   ├── app.py              # Desktop app entry point (GUI + CLI modes)
+│   ├── server.py           # Port management and uvicorn server thread
+│   ├── tray.py             # System tray icon (pystray)
+│   ├── icon.py             # Runtime icon generation (Pillow)
+│   ├── single_instance.py  # Sentinel socket for single-instance enforcement
+│   ├── build.py            # One-command production build (frontend + exe)
+│   └── desktop.spec        # PyInstaller build spec
 │
 ├── utils/
 │   ├── utils.py            # Helper functions
-│   ├── langfuse_tracking.py # Observability
-│   ├── log_streamer.py     # Logging functionality
-│   ├── result_formatter.py # Result formatting utilities
-│   ├── validators.py       # Input validation utilities
+│   ├── langfuse_tracking.py # Observability / tracing
+│   ├── log_streamer.py     # LogStreamer (UI) and ConsoleLogger (CLI)
 │   ├── data_dir.py         # Cross-platform directory paths
-│   ├── user_config.py      # User preferences and folder aliases
-│   └── chat_storage.py     # Chat persistence
+│   ├── user_config.py      # config.json reader (LLM, MCP, preferences, aliases)
+│   └── chat_storage.py     # JSON chat persistence
 │
 ├── runners/
 │   ├── agent_runner.py     # Execution orchestrator
 │   └── question_runner.py  # Benchmark runner
 │
 ├── resources/
-│   ├── state_strings.py    # State-related strings
-│   ├── error_strings.py    # Error messages
-│   ├── ui_strings.py       # UI-related strings
-│   └── system_prompt.py    # Agent instructions
+│   ├── ui_strings.py       # All backend-facing strings
+│   └── system_prompt.py    # Agent system prompt
 │
 ├── external/
-│   └── scorer.py           # Third-party GAIA scorer
+│   └── scorer.py           # Third-party GAIA scorer (do not modify)
 │
 ├── frontend/               # React + Tailwind CSS frontend
 │   ├── src/
 │   │   ├── App.jsx         # Main React app
 │   │   ├── components/     # UI components (ChatWindow, Sidebar, etc.)
+│   │   ├── uiStrings.js    # All frontend-facing strings
 │   │   └── index.css       # Tailwind CSS
-│   ├── package.json        # Node.js dependencies
-│   └── vite.config.js      # Vite bundler config
+│   ├── package.json
+│   └── vite.config.js      # Vite bundler config (proxies API to port 8000)
 │
-├── files/                  # Data files
-│   ├── metadata.jsonl      # Metadata
-│   └── questions.json      # Benchmark questions
+├── files/                  # GAIA benchmark data files
 │
 ├── setup.sh                # Automated setup script (Linux/macOS/Git Bash)
 ├── requirements.txt        # Python dependencies
-├── config.json.example     # Full config schema with inline comments
+├── config.json.example     # Full config schema with inline documentation
+├── config.sample.json      # Minimal clean config (bundled in exe, used by setup.sh)
 └── README.md               # This file
 ```
 
@@ -488,6 +541,39 @@ See the original [GAIA Agent documentation](https://github.com/hemantvirmani/GAI
 - For large PDF operations, process in batches
 - Use batch operations for multiple files
 
+## CI / CD
+
+Two GitHub Actions workflows run automatically:
+
+### `ci.yml` — runs on every push and PR to `main`
+
+- Python compile check (`compileall`)
+- Frontend build (`npm run build`)
+
+Fast feedback — catches broken imports or build failures before merge. No release artifact is produced.
+
+### `release.yml` — runs on `v*` tags
+
+Full Windows build + GitHub Release:
+
+1. Install Python and Node dependencies
+2. Build frontend + PyInstaller exe (`python desktop/build.py`)
+3. Smoke-test the exe (`--query "2+2"`)
+4. Zip `dist/DeskGenie/` and upload as a **draft** GitHub Release with auto-generated notes
+
+The release is created as a **draft** — you review it and publish manually.
+
+### Releasing a new version
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+Then go to the GitHub Releases page, review the draft, and publish.
+
+---
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
@@ -519,7 +605,7 @@ This project is provided as-is for educational and hobbyist purposes. The author
 - [ ] Improve Web search tools
 - [x] Add MCP Server Support — Home Assistant MCP integrated and tested
 - [x] Make LLM provider support configurable (Google Gemini, Anthropic Claude, HuggingFace, Ollama)
-- [ ] Create simple plugin system for custom tools. does not need to be drag n drop
+- [ ] Create a simple plugin system for custom tools
 - [ ] Add comprehensive test suite
 - [ ] Improve documentation and tutorials
 - [ ] Make it easy to access it, other than chat interface. Ideas TBD.

@@ -130,7 +130,7 @@ mkdir -p "$CONFIG_DIR"
 if [ -f "$CONFIG_DIR/config.json" ]; then
   print_warn "Config already exists at: $CONFIG_DIR/config.json"
 else
-  cp config.sample.json "$CONFIG_DIR/config.json"
+  cp config.json.example "$CONFIG_DIR/config.json"
   print_ok "Config copied to: $CONFIG_DIR/config.json"
   echo "      Edit this file to add your folder aliases and preferences."
 fi

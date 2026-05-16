@@ -42,7 +42,7 @@ a = Analysis(
         # Benchmark/data files
         (os.path.join(project_root, 'files'), 'files'),
         # Sample config
-        (os.path.join(project_root, 'config.sample.json'), '.'),
+        (os.path.join(project_root, 'config.json.example'), '.'),
         # Package metadata needed by importlib.metadata.version() at runtime
         *_extra_datas,
     ],
