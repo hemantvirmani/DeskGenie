@@ -63,7 +63,7 @@ pytesseract
 # MCP (Model Context Protocol)
 # =============================================================================
 langchain-mcp-adapters
-fastmcp
+fastmcp[server]
 
 # =============================================================================
 # Observability
