@@ -46,21 +46,14 @@ except ImportError:
     pass  # python-dotenv not installed — silently skip
 
 # ---------------------------------------------------------------------------
-# 3. Apply log level from config.json (before any logging calls)
-# ---------------------------------------------------------------------------
-import logging as _logging
-from utils.user_config import get_log_level as _get_log_level
-_logging.basicConfig(level=_get_log_level())
-
-# ---------------------------------------------------------------------------
-# 4. Detect mode
+# 3. Detect mode
 # ---------------------------------------------------------------------------
 _is_cli: bool = '--query' in sys.argv or '--gaia' in sys.argv
 
 # ---------------------------------------------------------------------------
-# 4. Windows console allocation for CLI mode inside a windowed exe
-#    print() output is invisible in a --windowed build unless we allocate
-#    a console explicitly. On Mac/Linux this is never needed.
+# 4. Windows console allocation for CLI mode inside a windowed exe.
+#    Must happen BEFORE basicConfig so the StreamHandler captures a valid
+#    sys.stderr (windowed exes have sys.stderr = None by default).
 # ---------------------------------------------------------------------------
 if _is_cli and _is_frozen and sys.platform == 'win32':
     import ctypes
@@ -68,6 +61,13 @@ if _is_cli and _is_frozen and sys.platform == 'win32':
     sys.stdout = open('CONOUT$', 'w', encoding='utf-8')
     sys.stderr = open('CONOUT$', 'w', encoding='utf-8')
     sys.stdin  = open('CONIN$',  'r', encoding='utf-8')
+
+# ---------------------------------------------------------------------------
+# 5. Apply log level from config.json (after console is ready)
+# ---------------------------------------------------------------------------
+import logging as _logging
+from utils.user_config import get_log_level as _get_log_level
+_logging.basicConfig(level=_get_log_level())
 
 
 # ---------------------------------------------------------------------------

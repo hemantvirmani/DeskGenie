@@ -288,6 +288,7 @@ DeskGenie/
 ## Roadmap
 
 - [ ] Memory Support
+- [ ] Smoke tests for the desktop exe (CI)
 - [ ] Comprehensive test suite
 - [ ] LiteLLM for enhanced routing to different providers
 - [x] MCP server support (Home Assistant integrated)
