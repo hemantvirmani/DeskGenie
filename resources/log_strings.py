@@ -350,6 +350,17 @@ class DesktopToolLogging:
     GET_MEDIA_INFO = "get_media_info: {file_path}"
 
 
+class MemoryMessages:
+    """Log strings for memory (episodic + semantic) operations."""
+    CHROMADB_INIT_ERROR = "[MEMORY] ChromaDB init failed: {error}"
+    EPISODIC_INDEXED = "[MEMORY] Indexed episode {doc_id}"
+    EPISODIC_INDEX_ERROR = "[MEMORY] Failed to index episode: {error}"
+    EPISODIC_QUERY_ERROR = "[MEMORY] Episodic query failed: {error}"
+    EPISODIC_SKIPPED_ERROR = "[MEMORY] Skipping indexing — answer is an error response"
+    EPISODIC_SKIPPED_DISABLED = "[MEMORY] Episodic memory disabled — skipping"
+    BACKFILL_COMPLETE = "[MEMORY] Backfill complete: indexed {total} episodes from {chats} chats"
+
+
 class APILogging:
     """Logging strings for API operations."""
 

@@ -59,6 +59,14 @@ class AgentStrings:
     # Results
     FINAL_ANSWER = "Final Answer: {answer}"
 
+    # Memory
+    MEMORY_EPISODIC_HEADER = (
+        "## What I already know about this user\n\n"
+        "The following was established in prior conversations with this user. "
+        "Use it to answer questions — do not say you lack access to this information."
+    )
+    MEMORY_EPISODIC_RETRIEVED = "[Memory] Retrieved {count} relevant past episode(s)"
+
 
 class ToolStrings:
     """Strings for tool operations."""

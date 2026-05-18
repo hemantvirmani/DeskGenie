@@ -56,6 +56,17 @@ def get_config_path() -> Path:
     return get_data_dir() / "config.json"
 
 
+def get_memory_dir() -> Path:
+    """Get the memory storage directory (ChromaDB + semantic_memory.md).
+
+    Returns:
+        Path to the memory directory
+    """
+    memory_dir = get_data_dir() / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    return memory_dir
+
+
 # --- Standard User Directories ---
 
 def get_home_dir() -> Path:

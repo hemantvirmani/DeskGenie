@@ -139,10 +139,16 @@ DEFAULT_CONFIG: dict = {
     },
 
     # ------------------------------------------------------------------
-    # Memory (Phase 1: short-term context only)
+    # Memory
     # ------------------------------------------------------------------
     "memory": {
-        "currentChatMaxMessages": 6
+        "enabled": True,
+        "currentChatMaxMessages": 6,
+        "episodic": {
+            "enabled": True,
+            "topK": 3,
+            "similarityThreshold": 0.40
+        }
     }
 }
 

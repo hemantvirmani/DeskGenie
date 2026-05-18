@@ -29,6 +29,7 @@ from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
 from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
 from utils.user_config import get_memory_config
+from utils.memory import MemoryManager
 from resources.ui_strings import APIStrings as S
 from resources.log_strings import APIMessages as API
 
@@ -204,8 +205,14 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, chat
 
         chat_history = _extract_chat_history(chat_id)
 
+        # Load chat metadata once for Phase 2 indexing
+        chat_data = get_chat(chat_id) if chat_id else None
+        chat_name = chat_data.get("name", "Chat") if chat_data else "Chat"
+        current_msg_count = len(chat_data.get("messages", [])) if chat_data else 0
+
         # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
+        memory = MemoryManager()
 
         def execute_with_tracking():
             with track_session("Chat_Request", {
@@ -214,8 +221,24 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None, chat
                 "message_length": len(message),
                 "mode": "chat"
             }):
+                # Phase 2: retrieve episodic context from past sessions
+                episodic_context = memory.build_context(message, chat_id)
+
                 agent = MyGAIAAgents(logger=logger)
-                return agent(message, file_name, chat_history=chat_history)
+                result = agent(message, file_name, chat_history=chat_history, episodic_context=episodic_context)
+
+                # Phase 2: index this episode after a successful run
+                if chat_id:
+                    memory.post_run_index(
+                        chat_id=chat_id,
+                        chat_name=chat_name,
+                        msg_index=current_msg_count,
+                        question=message,
+                        answer=result,
+                        has_file=file_name is not None,
+                    )
+
+                return result
 
         result = await loop.run_in_executor(None, execute_with_tracking)
 

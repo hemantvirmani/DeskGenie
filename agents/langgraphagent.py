@@ -53,7 +53,8 @@ class AgentState(TypedDict):
     answer: str
     step_count: int
     file_name: str
-    chat_history: list  # prior Q&A pairs from current session; read-only after init
+    chat_history: list      # prior Q&A pairs from current session; read-only after init
+    episodic_context: str   # formatted past episodes from other sessions; read-only after init
 
 
 class LangGraphAgent:
@@ -147,7 +148,14 @@ class LangGraphAgent:
         if state.get(SK.FILE_NAME):
             question_content += AR.FILE_REFERENCE_NOTE.format(file_name=state[SK.FILE_NAME])
 
-        messages = [SystemMessage(content=get_system_prompt())]
+        # Build system prompt — append episodic context block if available
+        system_content = get_system_prompt()
+        episodic = state.get(SK.EPISODIC_CONTEXT, "")
+        if episodic:
+            system_content += f"\n\n{S.MEMORY_EPISODIC_HEADER}\n{episodic}"
+            self.logger.info(S.MEMORY_EPISODIC_RETRIEVED.format(count=episodic.count("[") ))
+
+        messages = [SystemMessage(content=system_content)]
 
         for pair in state.get(SK.CHAT_HISTORY, []):
             messages.append(HumanMessage(content=pair["user"]))
@@ -307,13 +315,14 @@ class LangGraphAgent:
         return graph.compile()
 
     @track_agent_execution("LangGraph")
-    def __call__(self, question: str, file_name: Optional[str] = None, chat_history: Optional[list] = None) -> str:
+    def __call__(self, question: str, file_name: Optional[str] = None, chat_history: Optional[list] = None, episodic_context: Optional[str] = None) -> str:
         """Invoke the agent graph with the given question and return the final answer.
 
         Args:
             question: The question to answer
             file_name: Optional file name if the question references a file
             chat_history: Prior Q&A pairs from the current chat session
+            episodic_context: Formatted past episodes from other chat sessions
         """
 
         truncated_q = f"{question[:50]}..." if len(question) > 50 else question
@@ -330,6 +339,7 @@ class LangGraphAgent:
                     SK.STEP_COUNT: 0,
                     SK.FILE_NAME: file_name or "",
                     SK.CHAT_HISTORY: chat_history or [],
+                    SK.EPISODIC_CONTEXT: episodic_context or "",
                 },
                 config={"recursion_limit": config.AGENT_RECURSION_LIMIT}
             )

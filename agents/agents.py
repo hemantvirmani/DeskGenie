@@ -20,15 +20,16 @@ class MyGAIAAgents:
         self.logger = logger or ConsoleLogger()
         self.agent = LangGraphAgent(logger=self.logger)
 
-    def __call__(self, question: str, file_name: str = None, chat_history: list = None) -> str:
+    def __call__(self, question: str, file_name: str = None, chat_history: list = None, episodic_context: str = None) -> str:
         """Invoke the active agent with the given question.
 
         Args:
             question: The question to answer
             file_name: Optional file name if the question references a file
             chat_history: Prior Q&A pairs from the current chat session
+            episodic_context: Formatted past episodes from other chat sessions
 
         Returns:
             The agent's answer as a string
         """
-        return self.agent(question, file_name, chat_history=chat_history)
+        return self.agent(question, file_name, chat_history=chat_history, episodic_context=episodic_context)

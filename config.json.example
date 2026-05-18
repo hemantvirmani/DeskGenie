@@ -161,8 +161,18 @@
   },
 
   "memory": {
-    "$comment": "Short-term chat context injected into every agent prompt.",
+    "$comment": "Memory configuration — short-term context + episodic store (ChromaDB).",
+    "enabled": true,
+    "$comment_enabled": "Master switch. Set false to disable all memory features instantly.",
     "currentChatMaxMessages": 6,
-    "$comment_currentChatMaxMessages": "Number of prior messages (user + assistant) from the current chat to inject as context. Must be even (pairs). Default 6 = last 3 Q&A pairs."
+    "$comment_currentChatMaxMessages": "Number of prior messages (user + assistant) from the current chat to inject as context. Must be even (pairs). Default 6 = last 3 Q&A pairs.",
+    "episodic": {
+      "$comment": "Episodic memory via ChromaDB (built-in ONNX embeddings — no API key, ~22 MB cached on first use).",
+      "enabled": true,
+      "topK": 3,
+      "$comment_topK": "Maximum number of past episodes to inject per request.",
+      "similarityThreshold": 0.40,
+      "$comment_similarityThreshold": "Minimum cosine similarity (0–1) for an episode to be included. 0.40 works well for all-MiniLM-L6-v2; raise to be stricter."
+    }
   }
 }
