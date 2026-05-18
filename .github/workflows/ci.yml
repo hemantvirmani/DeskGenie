@@ -24,7 +24,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Python compile check
-        run: python -m compileall . -q --exclude "venv|\.venv|node_modules|dist|frontend"
+        run: python -m compileall . -q -x "venv|\.venv|node_modules|dist|frontend"
 
       - name: Set up Node
         uses: actions/setup-node@v4
