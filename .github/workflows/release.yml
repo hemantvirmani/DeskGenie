@@ -38,7 +38,7 @@ jobs:
 
       - name: Smoke test
         run: |
-          $proc = Start-Process -FilePath "dist\DeskGenie\DeskGenie.exe" -ArgumentList '--query "what is the answer of 2+2?"' -PassThru -Wait -WindowStyle Hidden
+          $proc = Start-Process -FilePath "dist\DeskGenie\DeskGenie.exe" -ArgumentList '--smoke-test' -PassThru -Wait -WindowStyle Hidden
           if ($proc.ExitCode -ne 0) {
             Write-Error "Smoke test failed with exit code $($proc.ExitCode)"
             exit 1

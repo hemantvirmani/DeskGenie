@@ -49,6 +49,7 @@ except ImportError:
 # 3. Detect mode
 # ---------------------------------------------------------------------------
 _is_cli: bool = '--query' in sys.argv or '--gaia' in sys.argv
+_is_smoke_test: bool = '--smoke-test' in sys.argv
 
 # ---------------------------------------------------------------------------
 # 4. Windows console allocation for CLI mode inside a windowed exe.
@@ -146,7 +147,18 @@ def _run_gui() -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == '__main__':
-    if _is_cli:
+    if _is_smoke_test:
+        # Verify critical bundled imports without making any LLM or network calls.
+        # Used by CI smoke test to confirm PyInstaller packaged everything correctly.
+        try:
+            import chromadb          # noqa: F401
+            import onnxruntime       # noqa: F401
+            from agents.langgraphagent import LangGraphAgent  # noqa: F401
+        except ImportError as exc:
+            sys.stderr.write(f"Smoke test failed: {exc}\n") if sys.stderr else None
+            sys.exit(1)
+        sys.exit(0)
+    elif _is_cli:
         _run_cli()
     else:
         _run_gui()
