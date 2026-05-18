@@ -47,6 +47,11 @@ jobs:
           }
         shell: pwsh
 
+      - name: Add config template and install guide to release
+        run: |
+          Copy-Item config.json.example dist\DeskGenie\config.json.example
+          Copy-Item INSTALL.md dist\DeskGenie\INSTALL.md
+
       - name: Zip release artifact
         run: Compress-Archive -Path dist\DeskGenie\* -DestinationPath DeskGenie-${{ github.ref_name }}-windows.zip
 
