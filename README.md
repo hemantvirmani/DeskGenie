@@ -157,6 +157,20 @@ All settings live in `config.json` (see path above). The full schema with explan
 | `logging.level` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
 | `folder_aliases` | Short names you can use in chat |
 | `preferences` | Default output dir, image quality, PDF DPI |
+| `memory.enabled` | Master switch for all memory features |
+| `memory.currentChatMaxMessages` | Prior turns injected from current session (default: 6) |
+| `memory.episodic.similarityThreshold` | Cosine similarity cutoff for cross-session recall (default: 0.40) |
+
+### Memory
+
+DeskGenie maintains two layers of memory across conversations:
+
+- **Short-term** — the last N messages from the current chat are injected as conversation history so follow-up references ("sort them", "do the same") work naturally.
+- **Episodic** — past Q&A from other chat groups is stored in a local ChromaDB vector store and retrieved by semantic similarity. The embedding model (`all-MiniLM-L6-v2`, ~79 MB) is downloaded once on first use — no API key required.
+
+Memory is off by default on the first run and requires no configuration to work. To disable it entirely, set `memory.enabled: false` in `config.json`.
+
+See [MEMORY_ARCHITECTURE.md](MEMORY_ARCHITECTURE.md) for the full design, guardrails, and planned Phase 3 (semantic memory).
 
 ### Folder aliases
 
@@ -278,7 +292,9 @@ DeskGenie/
 │   └── file_ops_server.py  # Standalone MCP server (optional)
 ├── desktop/                # Native app (PyInstaller)
 ├── frontend/               # React + Tailwind UI
-├── utils/                  # Logging, config, storage helpers
+├── utils/
+│   ├── memory/             # Episodic memory (ChromaDB) + MemoryManager
+│   └── ...                 # Logging, config, storage helpers
 ├── resources/              # Strings, system prompt
 └── config.json.example     # Full config reference
 ```
@@ -287,7 +303,9 @@ DeskGenie/
 
 ## Roadmap
 
-- [ ] Memory Support
+- [x] Memory — short-term (current session) 
+- [x] Memory — episodic cross-session recall (ChromaDB)
+- [ ] Memory — semantic layer: distilled user facts injected into every prompt (Phase 3)
 - [ ] Scheduled tasks (run agent headlessly on a schedule, results visible in UI)
 - [ ] Smoke tests for the desktop exe (CI)
 - [ ] Comprehensive test suite
