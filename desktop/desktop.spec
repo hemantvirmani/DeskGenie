@@ -23,6 +23,7 @@ _metadata_packages = [
     'uvicorn',
     'pywebview',
     'pystray',
+    'chromadb',
 ]
 
 _extra_datas = []
@@ -80,6 +81,26 @@ a = Analysis(
         # Google GenAI
         'google.genai',
         'google.genai.types',
+        # ChromaDB — uses dynamic imports for segment implementations
+        'chromadb',
+        'chromadb.api',
+        'chromadb.api.client',
+        'chromadb.config',
+        'chromadb.segment',
+        'chromadb.segment.impl',
+        'chromadb.segment.impl.manager',
+        'chromadb.segment.impl.manager.local',
+        'chromadb.segment.impl.vector',
+        'chromadb.segment.impl.vector.local_persistent_hnsw',
+        'chromadb.segment.impl.metadata',
+        'chromadb.segment.impl.metadata.sqlite',
+        'chromadb.telemetry',
+        'chromadb.telemetry.product',
+        'chromadb.telemetry.product.posthog',
+        # ONNX runtime — used by ChromaDB's default embedding function
+        'onnxruntime',
+        'onnxruntime.capi',
+        'onnxruntime.capi.onnxruntime_inference_collection',
     ],
     hookspath=[],
     runtime_hooks=[],
