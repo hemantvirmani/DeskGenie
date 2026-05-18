@@ -15,6 +15,7 @@ class StateKeys:
     ANSWER = "answer"
     STEP_COUNT = "step_count"
     FILE_NAME = "file_name"
+    CHAT_HISTORY = "chat_history"
 
 
 class ModelProviders:

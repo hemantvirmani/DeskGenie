@@ -288,6 +288,7 @@ DeskGenie/
 ## Roadmap
 
 - [ ] Memory Support
+- [ ] Scheduled tasks (run agent headlessly on a schedule, results visible in UI)
 - [ ] Smoke tests for the desktop exe (CI)
 - [ ] Comprehensive test suite
 - [ ] LiteLLM for enhanced routing to different providers

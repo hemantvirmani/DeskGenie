@@ -286,6 +286,17 @@ files" works without re-stating context.
 
 No new dependencies. No vector DB. Pure JSON reads from existing chat files.
 
+#### Design decision — chat_id ownership
+
+`chat_id` is a session identifier, not frontend intelligence. The frontend passes
+it because it knows which conversation the user is looking at; all reasoning about
+what to do with it (load history, inject into prompts) is entirely backend.
+
+Programmatic callers (CLI, scheduled tasks) have no frontend to supply `chat_id`.
+The fix for those callers is not to remove `chat_id` from the API, but to have
+the backend create the chat group and return its ID at task-creation time so the
+caller can pass it explicitly. See the Scheduled Tasks section for the full design.
+
 ---
 
 ### Phase 2 — Episodic memory
@@ -396,3 +407,39 @@ The plain markdown format makes every rewrite inspectable and manually correctab
 Begin with **Phase 1**. It delivers the highest day-to-day value (session coherence)
 with no new dependencies. Phase 2 adds cross-session recall. Phase 3 adds the
 "agent knows you" layer on top of the same infrastructure.
+
+---
+
+## Future: Scheduled Tasks
+
+Scheduled tasks (agent runs triggered on a schedule, without the UI open) have
+two requirements the current CLI `--query` path does not satisfy:
+
+1. **Persistence** — results must be written to a chat group so the user can
+   review what ran when they next open the UI.
+2. **Context** — each run should see what the previous run of the same task did,
+   using Phase 1 history injection.
+
+### Design
+
+Each scheduled task type gets a **dedicated chat group** (e.g. "Weekly folder
+cleanup", "Daily email summary"). Each run appends its Q&A to that group. The
+user opens the UI and sees the full history of past runs in the sidebar.
+
+### What needs to change
+
+The current `run_agent_task` in `app/genie_api.py` has no concept of saving
+results — saving is done by the frontend after polling. Headless runs have no
+frontend, so `run_agent_task` needs a `save_result: bool = False` flag path
+that calls `save_chat()` directly after the agent returns.
+
+`_extract_chat_history` already accepts a `chat_id` — a scheduled task passes
+its dedicated group's ID, and automatically gets the last N prior runs as
+context. No new memory infrastructure needed.
+
+### What to avoid
+
+Do **not** reuse the CLI `--query` path for scheduled tasks. It is intentionally
+ephemeral (no persistence, no chat group) and suits one-shot scripting and CI
+smoke tests. Scheduled tasks are a different contract: persistent, reviewable,
+and context-aware.

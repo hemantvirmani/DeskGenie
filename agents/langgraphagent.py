@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore', module='tensorflow')
 warnings.filterwarnings('ignore', module='tf_keras')
 
 from typing import Any, TypedDict, Optional, Annotated
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langgraph.errors import GraphRecursionError
 from langgraph.graph import MessagesState, StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -49,10 +49,11 @@ logging.getLogger("langchain_google_genai._function_utils").setLevel(logging.ERR
 
 class AgentState(TypedDict):
     question: str
-    messages: Annotated[list , add_messages]   # for LangGraph
+    messages: Annotated[list, add_messages]
     answer: str
-    step_count: int  # Track number of iterations to prevent infinite loops
-    file_name: str  # Optional file name for questions that reference files
+    step_count: int
+    file_name: str
+    chat_history: list  # prior Q&A pairs from current session; read-only after init
 
 
 class LangGraphAgent:
@@ -140,20 +141,21 @@ class LangGraphAgent:
 
     # Nodes
     def _init_questions(self, state: AgentState):
-        """Initialize the messages in the state with system prompt and user question."""
+        """Initialize the messages in the state with system prompt, chat history, and current question."""
 
-        # Build the question message, including file name if available
         question_content = state[SK.QUESTION]
         if state.get(SK.FILE_NAME):
             question_content += AR.FILE_REFERENCE_NOTE.format(file_name=state[SK.FILE_NAME])
 
-        return {
-            SK.MESSAGES: [
-                    SystemMessage(content=get_system_prompt()),
-                    HumanMessage(content=question_content)
-                    ],
-            SK.STEP_COUNT: 0  # Initialize step counter
-                }
+        messages = [SystemMessage(content=get_system_prompt())]
+
+        for pair in state.get(SK.CHAT_HISTORY, []):
+            messages.append(HumanMessage(content=pair["user"]))
+            messages.append(AIMessage(content=pair["assistant"]))
+
+        messages.append(HumanMessage(content=question_content))
+
+        return {SK.MESSAGES: messages, SK.STEP_COUNT: 0}
 
     @track_llm_call(get_default_model_name())
     def _assistant(self, state: AgentState):
@@ -305,12 +307,13 @@ class LangGraphAgent:
         return graph.compile()
 
     @track_agent_execution("LangGraph")
-    def __call__(self, question: str, file_name: Optional[str] = None) -> str:
+    def __call__(self, question: str, file_name: Optional[str] = None, chat_history: Optional[list] = None) -> str:
         """Invoke the agent graph with the given question and return the final answer.
 
         Args:
             question: The question to answer
             file_name: Optional file name if the question references a file
+            chat_history: Prior Q&A pairs from the current chat session
         """
 
         truncated_q = f"{question[:50]}..." if len(question) > 50 else question
@@ -320,7 +323,14 @@ class LangGraphAgent:
 
         try:
             response = self.graph.invoke(
-                {SK.QUESTION: question, SK.MESSAGES: [], SK.ANSWER: "", SK.STEP_COUNT: 0, SK.FILE_NAME: file_name or ""},
+                {
+                    SK.QUESTION: question,
+                    SK.MESSAGES: [],
+                    SK.ANSWER: "",
+                    SK.STEP_COUNT: 0,
+                    SK.FILE_NAME: file_name or "",
+                    SK.CHAT_HISTORY: chat_history or [],
+                },
                 config={"recursion_limit": config.AGENT_RECURSION_LIMIT}
             )
 

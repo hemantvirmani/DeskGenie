@@ -27,7 +27,7 @@ from agents.agents import MyGAIAAgents
 from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
-from utils.chat_storage import list_chats, save_chat, delete_chat
+from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
 from resources.ui_strings import APIStrings as S
 from resources.log_strings import APIMessages as API
 
@@ -80,6 +80,7 @@ tasks_store = {}
 class ChatRequest(BaseModel):
     message: str
     file_name: Optional[str] = None
+    chat_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     task_id: str
@@ -123,6 +124,44 @@ async def health_check():
     """Health check endpoint."""
     return {"status": "ok", "service": S.SERVICE_NAME}
 
+def _extract_chat_history(chat_id: Optional[str], max_pairs: int = 3) -> list:
+    """Load the last N completed Q&A pairs from a saved chat for context injection.
+
+    Only includes pairs where the assistant responded successfully (non-empty content,
+    no loading/interrupted status). The current in-progress message is never included
+    because it has no assistant response yet.
+
+    Args:
+        chat_id: The chat group ID to load history from.
+        max_pairs: Maximum number of prior Q&A pairs to return.
+
+    Returns:
+        List of dicts with 'user' and 'assistant' keys, oldest first.
+    """
+    if not chat_id:
+        return []
+    chat = get_chat(chat_id)
+    if not chat:
+        return []
+
+    messages = chat.get("messages", [])
+    pairs = []
+    i = 0
+    while i < len(messages) - 1:
+        user_msg = messages[i]
+        asst_msg = messages[i + 1]
+        if (user_msg.get("role") == "user"
+                and asst_msg.get("role") == "assistant"
+                and asst_msg.get("status") not in ("loading", "interrupted")
+                and asst_msg.get("content", "").strip()):
+            pairs.append({"user": user_msg["content"], "assistant": asst_msg["content"]})
+            i += 2
+        else:
+            i += 1
+
+    return pairs[-max_pairs:]
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Send a message to the agent and get a task ID for tracking."""
@@ -139,14 +178,15 @@ async def chat(request: ChatRequest):
     task = asyncio.create_task(run_agent_task(
         task_id=task_id,
         message=request.message,
-        file_name=request.file_name
+        file_name=request.file_name,
+        chat_id=request.chat_id,
     ))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 
     return ChatResponse(task_id=task_id, status="pending")
 
-async def run_agent_task(task_id: str, message: str, file_name: str = None):
+async def run_agent_task(task_id: str, message: str, file_name: str = None, chat_id: str = None):
     """Run agent task in background."""
     logger = create_logger(task_id, streaming=True)
 
@@ -157,6 +197,8 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None):
     try:
         tasks_store[task_id]["status"] = "running"
         start_time = time.time()
+
+        chat_history = _extract_chat_history(chat_id)
 
         # Run agent in thread pool to avoid blocking with Langfuse tracking
         loop = asyncio.get_event_loop()
@@ -169,7 +211,7 @@ async def run_agent_task(task_id: str, message: str, file_name: str = None):
                 "mode": "chat"
             }):
                 agent = MyGAIAAgents(logger=logger)
-                return agent(message, file_name)
+                return agent(message, file_name, chat_history=chat_history)
 
         result = await loop.run_in_executor(None, execute_with_tracking)
 

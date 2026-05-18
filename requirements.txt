@@ -2,6 +2,7 @@
 # Core Dependencies
 # =============================================================================
 fastapi
+starlette<0.51.0
 uvicorn[standard]
 requests
 huggingface_hub

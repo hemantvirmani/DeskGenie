@@ -330,6 +330,7 @@ function App() {
               addLog={addLog}
               setShowLogsPanel={setShowLogsPanel}
               onNewChat={createChatGroup}
+              activeGroupId={activeGroupId}
             />
           </div>
 

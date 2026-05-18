@@ -4,7 +4,7 @@ import ChatInput from './ChatInput'
 import { UIStrings } from '../uiStrings'
 import { LogStrings, formatLog } from '../logStrings'
 
-function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLogsPanel, onNewChat }) {
+function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLogsPanel, onNewChat, activeGroupId }) {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
 
@@ -182,7 +182,8 @@ function ChatWindow({ messages, addMessage, updateLastMessage, addLog, setShowLo
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: content
+          message: content,
+          chat_id: activeGroupId ?? null,
         })
       })
 
