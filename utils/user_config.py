@@ -136,6 +136,13 @@ DEFAULT_CONFIG: dict = {
         "default_output_dir": "downloads",
         "image_quality": 85,
         "pdf_dpi": 200
+    },
+
+    # ------------------------------------------------------------------
+    # Memory (Phase 1: short-term context only)
+    # ------------------------------------------------------------------
+    "memory": {
+        "currentChatMaxMessages": 6
     }
 }
 
@@ -453,6 +460,18 @@ def get_all_preferences() -> dict:
         Dictionary of all preferences.
     """
     return _load_config().get("preferences", {})
+
+
+def get_memory_config() -> dict:
+    """Return the ``memory`` section of config.json.
+
+    Returns:
+        Dict with memory settings; falls back to defaults for missing keys.
+    """
+    return _deep_merge(
+        DEFAULT_CONFIG["memory"],
+        _load_config().get("memory", {})
+    )
 
 
 # ---------------------------------------------------------------------------

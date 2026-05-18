@@ -28,6 +28,7 @@ from runners.question_runner import run_gaia_questions
 from utils.langfuse_tracking import track_session
 from utils.log_streamer import LogStreamer, create_logger, set_global_logger, get_global_logger
 from utils.chat_storage import list_chats, get_chat, save_chat, delete_chat
+from utils.user_config import get_memory_config
 from resources.ui_strings import APIStrings as S
 from resources.log_strings import APIMessages as API
 
@@ -124,7 +125,7 @@ async def health_check():
     """Health check endpoint."""
     return {"status": "ok", "service": S.SERVICE_NAME}
 
-def _extract_chat_history(chat_id: Optional[str], max_pairs: int = 3) -> list:
+def _extract_chat_history(chat_id: Optional[str]) -> list:
     """Load the last N completed Q&A pairs from a saved chat for context injection.
 
     Only includes pairs where the assistant responded successfully (non-empty content,
@@ -143,6 +144,9 @@ def _extract_chat_history(chat_id: Optional[str], max_pairs: int = 3) -> list:
     chat = get_chat(chat_id)
     if not chat:
         return []
+
+    max_messages = get_memory_config().get("currentChatMaxMessages", 6)
+    max_pairs = max_messages // 2
 
     messages = chat.get("messages", [])
     pairs = []

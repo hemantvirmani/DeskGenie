@@ -158,5 +158,11 @@
     "$comment_image_quality": "Default JPEG quality (1–100) for image conversion / compression tools.",
     "pdf_dpi": 200,
     "$comment_pdf_dpi": "Default DPI when converting PDF pages to images."
+  },
+
+  "memory": {
+    "$comment": "Short-term chat context injected into every agent prompt.",
+    "currentChatMaxMessages": 6,
+    "$comment_currentChatMaxMessages": "Number of prior messages (user + assistant) from the current chat to inject as context. Must be even (pairs). Default 6 = last 3 Q&A pairs."
   }
 }
